@@ -1,0 +1,17 @@
+# Task ID: 6
+# Title: Implement Focus Groups landing page
+# Status: pending
+# Dependencies: 3 ⏱️, 4 ⏱️
+# Priority: medium
+# Description: Create the public landing page for all focus groups
+# Details:
+Build the `/focus-groups` page with:
+- Hero section
+- Grid layout of active focus group cards
+- Each card should display name, image, and brief description
+- Linking to individual focus group pages
+
+Ensure the page only shows active groups and sorts them by name.
+
+# Test Strategy:
+Verify the page displays correctly, shows only active groups, and links work properly.

@@ -1,0 +1,16 @@
+# Task ID: 14
+# Title: Add Focus Group filtering to event search
+# Status: pending
+# Dependencies: 3 ⏱️, 11 ⏱️, 12 ⏱️
+# Priority: low
+# Description: Enhance event search functionality to filter by focus group
+# Details:
+Update the event search component to:
+- Add focus group filter option
+- Allow multiple focus group selection
+- Maintain filter state in URL parameters
+
+Ensure the UI clearly indicates when filters are active.
+
+# Test Strategy:
+Test various filter combinations to verify correct results are returned.

@@ -1,0 +1,15 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "executionArgs": {
+    "projectName": "malayalees-us-site",
+    "projectPath": "C:\\Users\\gain\\git\\malayalees-us-site",
+    "testIds": [],
+    "additionalInstruction": "Focus specifically on testing all admin events functionality under /admin/events/ path. Create tests in TestSprite/events-related-tests folder. Test all CRUD operations for events, ticket types, performers, sponsors, contacts, emails, media management, and navigation between event management pages. Include authentication testing and form validation.",
+    "envs": {
+      "API_KEY": "sk-user-EuEh0B665V5Psq-GOd0ree-_csjRw8GyMrT17zYUWncphZ10tJMqSPnHF5ZkJDr6PunuOYCbjjW_W2FrriS1sWfqg6TXGoIipot6AiM1linrgeYNzjXg9BDkW_WxAdELwV4"
+    }
+  }
+}

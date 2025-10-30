@@ -1,0 +1,17 @@
+# Task ID: 9
+# Title: Implement Focus Group events management page
+# Status: pending
+# Dependencies: 3 ⏱️, 5 ⏱️, 8 ⏱️
+# Priority: high
+# Description: Create the admin page for linking events to focus groups
+# Details:
+Build the `/admin/focus-groups/[id]/events` page with:
+- List of currently linked events
+- Search/filter functionality to find events
+- UI for linking new events to the focus group
+- Ability to unlink events
+
+Ensure the page handles pagination for large numbers of events.
+
+# Test Strategy:
+Test linking and unlinking events, verify the changes are reflected in both the admin UI and public pages.

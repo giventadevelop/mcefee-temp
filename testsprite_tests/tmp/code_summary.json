@@ -1,0 +1,194 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js 15.1.1",
+    "React 18.2.0",
+    "Tailwind CSS 3.4.1",
+    "Clerk Authentication 4.29.9",
+    "Stripe Payments",
+    "Prisma 6.6.0",
+    "PostgreSQL",
+    "tRPC 11.1.0",
+    "TanStack React Query 5.74.4",
+    "Radix UI",
+    "React Icons 5.5.0",
+    "React Hook Form 7.62.0",
+    "Zod Validation 3.24.3",
+    "Date-fns 4.1.0",
+    "Lucide React",
+    "JWT Authentication"
+  ],
+  "features": [
+    {
+      "name": "Admin Events Analytics Dashboard",
+      "description": "Main event analytics dashboard with comprehensive statistics and navigation",
+      "files": [
+        "src/app/admin/events/page.tsx",
+        "src/app/admin/events/dashboard/page.tsx",
+        "src/app/admin/events/dashboard/EventDashboardClient.tsx",
+        "src/app/admin/events/dashboard/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "Event Management Hub",
+      "description": "Central management interface for individual events with navigation to all event features",
+      "files": [
+        "src/app/admin/events/[id]/page.tsx",
+        "src/app/admin/events/[id]/edit/page.tsx",
+        "src/components/EventForm.tsx"
+      ]
+    },
+    {
+      "name": "Event Media Management",
+      "description": "Upload, manage, and organize event images, videos, and documents",
+      "files": [
+        "src/app/admin/events/[id]/media/page.tsx",
+        "src/app/admin/events/[id]/media/list/page.tsx",
+        "src/app/admin/events/[id]/media/ApiServerActions.ts",
+        "src/components/ui/ImageUpload.tsx"
+      ]
+    },
+    {
+      "name": "Ticket Types Management",
+      "description": "Create, edit, and manage different ticket types with pricing and availability",
+      "files": [
+        "src/app/admin/events/[id]/ticket-types/list/page.tsx",
+        "src/app/admin/events/[id]/ticket-types/list/TicketTypeListClient.tsx",
+        "src/app/admin/events/[id]/ticket-types/list/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "Event Performers Management",
+      "description": "Manage featured performers, artists, and their details for events",
+      "files": [
+        "src/app/admin/events/[id]/performers/page.tsx",
+        "src/app/admin/events/[id]/performers/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "Event Sponsors Management",
+      "description": "Manage event sponsors, partnerships, and sponsor assignments",
+      "files": [
+        "src/app/admin/events/[id]/sponsors/page.tsx",
+        "src/app/admin/events/[id]/sponsors/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "Event Contacts Management",
+      "description": "Manage event contact persons with name, phone, and email information",
+      "files": [
+        "src/app/admin/events/[id]/contacts/page.tsx",
+        "src/app/admin/events/[id]/contacts/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "Event Emails Management",
+      "description": "Manage event-related email communications and templates",
+      "files": [
+        "src/app/admin/events/[id]/emails/page.tsx",
+        "src/app/admin/events/[id]/emails/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "Program Directors Management",
+      "description": "Manage event program directors and leadership team",
+      "files": [
+        "src/app/admin/events/[id]/program-directors/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "Event Tickets List",
+      "description": "View and manage individual event tickets and registrations",
+      "files": [
+        "src/app/admin/events/[id]/tickets/list/page.tsx",
+        "src/app/admin/events/[id]/tickets/list/TicketListClient.tsx",
+        "src/app/admin/events/[id]/tickets/list/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "Event Registration Management",
+      "description": "Comprehensive registration management system with search, filter, and export capabilities",
+      "files": [
+        "src/app/admin/events/registrations/page.tsx",
+        "src/app/admin/events/registrations/RegistrationManagementClient.tsx",
+        "src/app/admin/events/registrations/ApiServerActions.ts"
+      ]
+    },
+    {
+      "name": "New Event Creation",
+      "description": "Create new events with complete setup wizard and form validation",
+      "files": [
+        "src/app/admin/events/new/page.tsx"
+      ]
+    },
+    {
+      "name": "Event Settings Management",
+      "description": "Global event settings and configuration management",
+      "files": [
+        "src/app/admin/events/settings/page.tsx"
+      ]
+    },
+    {
+      "name": "Event Reports & Analytics",
+      "description": "Generate reports and analytics for event performance and registration data",
+      "files": [
+        "src/app/admin/events/reports/page.tsx"
+      ]
+    },
+    {
+      "name": "Admin Navigation System",
+      "description": "Main admin navigation component with role-based access and responsive design",
+      "files": [
+        "src/components/AdminNavigation.tsx"
+      ]
+    },
+    {
+      "name": "Data Table Component",
+      "description": "Reusable data table with sorting, pagination, and CRUD operations",
+      "files": [
+        "src/components/ui/DataTable.tsx"
+      ]
+    },
+    {
+      "name": "Modal Components",
+      "description": "Modal system for forms, confirmations, and detailed views",
+      "files": [
+        "src/components/ui/Modal.tsx"
+      ]
+    },
+    {
+      "name": "Event Management API Proxy",
+      "description": "API proxy handlers for secure backend communication with JWT authentication",
+      "files": [
+        "src/pages/api/proxy/event-details/[...slug].ts",
+        "src/pages/api/proxy/event-details/index.ts",
+        "src/pages/api/proxy/event-ticket-types/[...slug].ts",
+        "src/pages/api/proxy/event-ticket-types/index.ts",
+        "src/pages/api/proxy/event-featured-performers/[...slug].ts",
+        "src/pages/api/proxy/event-sponsors/[...slug].ts",
+        "src/pages/api/proxy/event-contacts/[...slug].ts",
+        "src/pages/api/proxy/event-contacts/index.ts",
+        "src/pages/api/proxy/event-emails/[...slug].ts",
+        "src/pages/api/proxy/event-emails/index.ts"
+      ]
+    },
+    {
+      "name": "Authentication & Security",
+      "description": "JWT-based authentication system with multi-tenant support and secure API calls",
+      "files": [
+        "src/lib/api/jwt.ts",
+        "src/lib/proxyHandler.ts",
+        "src/lib/withTenantId.ts",
+        "src/lib/env.ts",
+        "src/middleware.ts"
+      ]
+    },
+    {
+      "name": "Type Definitions",
+      "description": "Comprehensive TypeScript interfaces and DTOs for all event-related entities",
+      "files": [
+        "src/types/index.ts"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Authentication via Social Login",
+    "description": "Verify users can authenticate successfully using integrated social login providers and create user profiles.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Click on available social login button (e.g., Google, Facebook)"
+      },
+      {
+        "type": "action",
+        "description": "Complete social login flow and consent if prompted"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify redirection to user profile creation page if profile does not exist"
+      },
+      {
+        "type": "action",
+        "description": "Complete user profile form and submit"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify profile is created and user is redirected to home/dashboard relevant to tenant"
+      },
+      {
+        "type": "action",
+        "description": "Logout and repeat with different social login providers"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all supported social logins authenticate seamlessly"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Event Creation and Configuration Workflow",
+    "description": "Ensure event organizers can create, configure, save, and publish events with all required settings.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as event organizer with admin dashboard access"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to Event Management section and click 'Create New Event'"
+      },
+      {
+        "type": "action",
+        "description": "Fill in all mandatory fields: event name, description, location, date/time"
+      },
+      {
+        "type": "action",
+        "description": "Configure event settings: ticket types, prices, registration open/close dates"
+      },
+      {
+        "type": "action",
+        "description": "Upload event media such as images or flyers"
+      },
+      {
+        "type": "action",
+        "description": "Save draft and verify no errors are shown"
+      },
+      {
+        "type": "action",
+        "description": "Publish the event"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify event is listed in admin dashboard and visible under tenant’s event listings"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to create event with invalid or missing required fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify appropriate validation error messages are displayed"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Event Registration and Stripe Payment Processing",
+    "description": "Test user registration flow including ticket selection, payment through Stripe, and status updates.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Authenticate as a user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to a published event registration page"
+      },
+      {
+        "type": "action",
+        "description": "Select ticket type and quantity"
+      },
+      {
+        "type": "action",
+        "description": "Fill in required registration form fields including guest management if applicable"
+      },
+      {
+        "type": "action",
+        "description": "Proceed to payment"
+      },
+      {
+        "type": "action",
+        "description": "Complete credit card payment using Stripe test card credentials"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify payment is successful and confirmation page is shown"
+      },
+      {
+        "type": "assertion",
+        "description": "Check database/registration status is set to confirmed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify QR code ticket is generated and displayed for download or email"
+      },
+      {
+        "type": "action",
+        "description": "Attempt registration with payment failure or cancellation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system displays appropriate payment failure feedback and registration is not confirmed"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "QR Code Generation and Attendee Check-in",
+    "description": "Test QR code generation post-registration and validate QR code scanning and check-in workflow.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Complete successful event registration to receive QR code ticket"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify QR code is unique, valid, and scannable on attendee’s device or printed ticket"
+      },
+      {
+        "type": "action",
+        "description": "Use admin dashboard or dedicated check-in app to scan attendee QR code"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm attendee check-in is recorded in system and status updated in real-time"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to scan the same QR code again"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system prevents duplicate check-in and displays appropriate error/warning"
+      },
+      {
+        "type": "action",
+        "description": "Attempt scanning an invalid or malformed QR code"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system handles error gracefully without crashes"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Multi-Tenant Data Isolation Verification",
+    "description": "Verify that data from one tenant is completely isolated and inaccessible by users from other tenants.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a user from Tenant A and navigate to event listings and registrations"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only Tenant A’s events and related data are visible"
+      },
+      {
+        "type": "action",
+        "description": "Login as a user from Tenant B and attempt to access or guess Tenant A’s event URLs and data endpoints"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied with appropriate authorization error"
+      },
+      {
+        "type": "action",
+        "description": "Try to submit a form or API request with tenant ID from another tenant"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that data injection or leakage does not occur and request is blocked"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Admin Dashboard Event Analytics and Reporting",
+    "description": "Confirm admin dashboard loads event analytics and reports accurately and updates in real-time.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as admin user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to event analytics dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify summary metrics for registrations, payments, and attendance are displayed correctly"
+      },
+      {
+        "type": "action",
+        "description": "Generate event report for a selected date range"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify report data matches underlying registration and payment records"
+      },
+      {
+        "type": "action",
+        "description": "Trigger new registration and verify real-time dashboard update"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that analytics and UI refresh to reflect new data without errors"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Search and Filtering of Events and Registrants",
+    "description": "Verify advanced search and filtering functionality returns accurate results quickly for events and attendee lists.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to event listings or registrations management page"
+      },
+      {
+        "type": "action",
+        "description": "Enter search terms such as event name, dates, or registrant details"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify filtered results match search criteria"
+      },
+      {
+        "type": "action",
+        "description": "Apply multiple filters simultaneously (e.g., event date range and ticket type)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that combined filters narrow down results accordingly"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to search with special characters and SQL injection patterns"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system handles input safely and does not crash or expose data"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Email Notification System for Event Communications",
+    "description": "Test automated email notifications triggered by event registration, payment confirmation, and admin messages.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Register for an event and complete payment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify payment confirmation email with QR code ticket is sent to registrant"
+      },
+      {
+        "type": "action",
+        "description": "Admin sends a bulk email notification to event attendees"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify all recipients receive the email with correct content and formatting"
+      },
+      {
+        "type": "action",
+        "description": "Trigger email with invalid recipient address"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system handles bounce or error without failure"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Media Upload and Management",
+    "description": "Verify file uploads for event media succeed and media assets are properly linked and accessible within events.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login to admin dashboard and navigate to media management page"
+      },
+      {
+        "type": "action",
+        "description": "Upload various media types (images, documents) with allowed file size and format"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify upload success message and media visible in list"
+      },
+      {
+        "type": "action",
+        "description": "Assign uploaded media to an event and save"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify media appears correctly in event details or public event page"
+      },
+      {
+        "type": "action",
+        "description": "Attempt upload of unsupported file types or oversized files"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation errors are shown and upload is rejected"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "UI Accessibility and Responsiveness",
+    "description": "Ensure that all user-facing pages and admin interfaces load without critical UI errors and are accessible on different devices.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to various pages: login, event list, event registration, admin dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no critical UI or layout errors on desktop browsers"
+      },
+      {
+        "type": "action",
+        "description": "Resize browser and test responsiveness on tablet and mobile screen sizes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI components adjust correctly and remain usable on all tested screen sizes"
+      },
+      {
+        "type": "action",
+        "description": "Use keyboard navigation to interact with critical UI elements such as forms and buttons"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify focus states, tab order, and ARIA labels are correct for accessibility"
+      }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+# Task ID: 13
+# Title: Implement Focus Group membership controls
+# Status: pending
+# Dependencies: 3 ⏱️, 5 ⏱️, 7 ⏱️
+# Priority: medium
+# Description: Add UI elements for users to join/leave focus groups
+# Details:
+Add functionality for:
+- Authenticated users to request to join a focus group
+- Members to leave a focus group
+- Display membership status to the user
+
+Ensure proper handling of different membership statuses (ACTIVE/INACTIVE/PENDING).
+
+# Test Strategy:
+Test the join/leave functionality with different user accounts and verify status changes are correctly reflected.

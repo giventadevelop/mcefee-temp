@@ -1,0 +1,16 @@
+# Task ID: 2
+# Title: Create DTOs for Focus Group entities
+# Status: pending
+# Dependencies: 1 ⏱️
+# Priority: high
+# Description: Define TypeScript DTOs for the Focus Group related entities
+# Details:
+Add the following DTOs to `src/types/index.ts`:
+- `FocusGroupDTO`
+- `FocusGroupMemberDTO`
+- `EventFocusGroupDTO`
+
+Ensure all DTOs are flat, serializable, and use uppercase enums for consistency.
+
+# Test Strategy:
+Verify the DTOs match the backend entities and include all required fields.

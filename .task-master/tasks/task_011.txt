@@ -1,0 +1,16 @@
+# Task ID: 11
+# Title: Update event calendar to support Focus Group filtering
+# Status: pending
+# Dependencies: 3 ⏱️, 7 ⏱️
+# Priority: medium
+# Description: Enhance the event calendar to filter events by focus group
+# Details:
+Modify the existing event calendar to:
+- Accept `?focusGroup=slug` query parameter
+- Filter events based on focus group association
+- Update UI to indicate when a filter is active
+
+Ensure backward compatibility with existing calendar functionality.
+
+# Test Strategy:
+Test filtering by various focus groups and verify correct events are displayed.

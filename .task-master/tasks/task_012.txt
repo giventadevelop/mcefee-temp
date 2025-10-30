@@ -1,0 +1,16 @@
+# Task ID: 12
+# Title: Update event listing to show Focus Group associations
+# Status: pending
+# Dependencies: 3 ⏱️, 7 ⏱️
+# Priority: medium
+# Description: Enhance event listings to display associated focus groups
+# Details:
+Modify event listing components to:
+- Display focus group tags/badges on event cards
+- Link these tags to respective focus group pages
+- Update event detail pages to show associated focus groups
+
+Ensure consistent styling with the rest of the application.
+
+# Test Strategy:
+Verify focus group associations are correctly displayed on event listings and detail pages.

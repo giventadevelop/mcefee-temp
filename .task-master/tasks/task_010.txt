@@ -1,0 +1,17 @@
+# Task ID: 10
+# Title: Implement Focus Group members management page
+# Status: pending
+# Dependencies: 3 ⏱️, 5 ⏱️, 8 ⏱️
+# Priority: high
+# Description: Create the admin page for managing focus group membership
+# Details:
+Build the `/admin/focus-groups/[id]/members` page with:
+- List of current members with their roles and statuses
+- Add new members functionality
+- Change role and status capabilities
+- Remove members functionality
+
+Ensure proper validation for role and status values (uppercase normalization).
+
+# Test Strategy:
+Test adding, updating, and removing members with different roles and statuses.
