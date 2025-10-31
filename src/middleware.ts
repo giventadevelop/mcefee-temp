@@ -10,10 +10,17 @@ import { NextResponse } from "next/server";
  * - Client-side: useAuth() and useUser() hooks in client components
  */
 
-// Compute satellite config safely for production to avoid missing domain/proxyUrl
-const isSatEnv = process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true' || process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com') || false;
-const satDomain = process.env.NEXT_PUBLIC_CLERK_DOMAIN || (process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com') ? 'mosc-temp.com' : undefined);
-const satProxyUrl = process.env.NEXT_PUBLIC_CLERK_PROXY_URL;
+// Compute satellite config ONLY in production to avoid dev (localhost) misconfiguration
+const isProd = process.env.NODE_ENV === 'production';
+const isSatEnv = isProd && (
+  process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true' ||
+  process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com') ||
+  false
+);
+const satDomain = isProd
+  ? (process.env.NEXT_PUBLIC_CLERK_DOMAIN || (process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com') ? 'mosc-temp.com' : undefined))
+  : undefined;
+const satProxyUrl = isProd ? process.env.NEXT_PUBLIC_CLERK_PROXY_URL : undefined;
 const satConfig: any = {};
 if (isSatEnv) {
   if (satDomain) {

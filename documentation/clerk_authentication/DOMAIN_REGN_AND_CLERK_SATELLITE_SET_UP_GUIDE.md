@@ -760,6 +760,67 @@ const clerkProps = {
 
 ---
 
+## Primary Domain Canonicalization and Setup Order
+
+### Which host to use as the primary (production) domain?
+
+- Use your canonical host with "www": **https://www.<your-domain>**.
+- Keep the apex `<your-domain>` as an additional domain and 301-redirect it to `www`.
+- Rationale: `www` is simpler operationally (CNAME-friendly, CDN edge patterns). Apex works with ALIAS/ANAME in Route 53, but choose one canonical and be consistent.
+
+For example, if you set up a new pair like `event-site-manager.com` (primary) and `mcefee-temp.com` (satellite):
+- Set Clerk production domain to: **https://www.event-site-manager.com**
+- Configure `event-site-manager.com` (apex) to redirect → `https://www.event-site-manager.com`
+- Add both `www.event-site-manager.com` and `event-site-manager.com` in Amplify domain settings (redirect apex → www)
+
+### Recommended order of operations (fastest, safest)
+
+1. Provision domain(s) and Route 53 hosted zone(s).
+2. Deploy the app(s) in Amplify and attach both `www` and the apex; set apex → www redirect; verify HTTPS works.
+3. In Clerk, set the production domain to `https://www.<primary-domain>`; add the apex as an additional domain. Verify DNS and deploy certs.
+4. Add the satellite domain(s) (and optional `www` variant) in Clerk; verify and deploy certs.
+5. Update environment variables (note: changing the production domain rotates the Clerk publishable key) and redeploy apps.
+
+### TL;DR
+
+- Canonicalize to `https://www.<primary-domain>`; apex redirects to `www`.
+- Set up Amplify + HTTPS first, then configure Clerk domains and certs.
+- Satellites point sign-in/sign-up URLs to the primary's routes.
+
+---
+
+## Serving Frontend (Amplify) and Backend API (ALB) on one domain
+
+Goal: `https://www.<primary-domain>` serves the Next.js frontend, while `https://www.<primary-domain>/api/*` forwards to an ALB (ECS/Fargate).
+
+### What Amplify can/can't do directly
+
+- Amplify-managed hosting (its default CloudFront) does not expose multi-origin routing for external backends. "Rewrites & redirects" can proxy simple cases but is not ideal for a production API.
+
+### Recommended patterns
+
+- Preferred (simplest): use a subdomain for APIs
+  - `https://api.<primary-domain>` → ALB (Target Group for ECS/Fargate)
+  - `https://www.<primary-domain>` → Amplify (frontend)
+  - Clean separation, easy TLS, straightforward DNS
+
+- Single host with path-based routing (advanced): use your own CloudFront distribution
+  - Create a CloudFront distribution with two origins:
+    - Origin A: the Amplify app’s CloudFront domain (frontend)
+    - Origin B: the ALB (backend)
+  - Behaviors:
+    - `/api/*` → Origin B (ALB)
+    - `/*` → Origin A (Amplify)
+  - Attach the alternate domain name(s) (`www.<primary-domain>`) and ACM cert (in us-east-1)
+  - Point Route 53 A/AAAA (ALIAS) to this CloudFront distribution
+  - Remove the custom domain from Amplify’s built-in domain management (Amplify becomes just an origin)
+
+Notes:
+- If you later move to this multi-origin CloudFront model, update Clerk/redirects to continue using the same canonical host.
+- Keep health checks, caching headers, and timeouts appropriate for API traffic on the ALB origin.
+
+---
+
 ## Key Differences from preview.adwiise.com Setup
 
 | Aspect | preview.adwiise.com | www.mosc-temp.com |

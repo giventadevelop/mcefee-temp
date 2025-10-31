@@ -23,12 +23,14 @@ export default async function RootLayout({
   // Satellite domain configuration for multi-domain support
   // Primary domain: www.adwiise.com
   // Satellite domains: www.mosc-temp.com (and future tenant domains)
+  // IMPORTANT: Only apply satellite config in production, not in development (localhost)
 
   const headersList = await headers();
   const hostname = headersList.get('host') || '';
+  const isProd = process.env.NODE_ENV === 'production';
 
-  // Detect if this is a satellite domain
-  const isSatellite = hostname.includes('mosc-temp.com');
+  // Detect if this is a satellite domain (only in production)
+  const isSatellite = isProd && hostname.includes('mosc-temp.com');
 
   // Satellite domains must redirect to primary domain for authentication
   const clerkProps = isSatellite
@@ -39,8 +41,8 @@ export default async function RootLayout({
       signUpUrl: 'https://www.adwiise.com/sign-up',
     }
     : {
-      // Primary domain allows redirects from satellites
-      allowedRedirectOrigins: ['https://www.mosc-temp.com'], // Full URL with www is OK here
+      // Primary domain allows redirects from satellites (or default config for localhost)
+      allowedRedirectOrigins: isProd ? ['https://www.mosc-temp.com'] : [],
     };
 
   // Determine tenant-scoped admin flag on the server
