@@ -1,15 +1,21 @@
 // Satellite domain - redirect to primary domain for authentication
+// Primary domain - show Clerk component with redirect_url handling
 // For localhost - show Clerk component directly for development
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SignUp } from '@clerk/nextjs';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [isLocalhost, setIsLocalhost] = useState(false);
+  const [isPrimaryDomain, setIsPrimaryDomain] = useState(false);
+
+  // Get redirect_url from query parameters (for satellite domain redirects)
+  const redirectUrl = searchParams?.get('redirect_url') || '/';
 
   useEffect(() => {
     // Check if we're on a satellite domain
@@ -32,6 +38,9 @@ export default function SignUpPage() {
         // Clerk will redirect back to this URL after successful authentication
         const redirectUrl = `https://www.event-site-manager.com/sign-up?redirect_url=${encodeURIComponent(currentUrl)}`;
         window.location.href = redirectUrl;
+      } else {
+        // We're on the primary domain (event-site-manager.com)
+        setIsPrimaryDomain(true);
       }
     }
   }, []);
@@ -57,6 +66,19 @@ export default function SignUpPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Redirecting to sign up...</p>
         </div>
+      </main>
+    );
+  }
+
+  // Show Clerk component for primary domain with redirect URL handling
+  if (isPrimaryDomain) {
+    console.log('[SignUpPage] 📍 Primary domain - Redirect URL:', redirectUrl);
+    return (
+      <main className="flex flex-col items-center justify-center flex-1 py-2">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-center text-gray-900">Create Account</h1>
+        </div>
+        <SignUp redirectUrl={redirectUrl} afterSignUpUrl={redirectUrl} />
       </main>
     );
   }

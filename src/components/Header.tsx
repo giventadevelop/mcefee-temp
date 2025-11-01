@@ -113,6 +113,56 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
+  // CRITICAL: Check for sign-out flag IMMEDIATELY on mount, before Clerk loads
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const clerkSignedOut = urlParams.get('clerk_signout');
+
+    if (clerkSignedOut === 'true') {
+      sessionStorage.setItem('clerk_signout_detected', new Date().toISOString());
+      console.log('[Header] ===== DETECTED clerk_signout=true FLAG! =====');
+
+      // Clear any Clerk-related storage on satellite domain
+      try {
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('clerk') || key.includes('__clerk')) {
+            localStorage.removeItem(key);
+          }
+        });
+        Object.keys(sessionStorage).forEach(key => {
+          if (key !== 'clerk_signout_detected' && (key.includes('clerk') || key.includes('__clerk'))) {
+            sessionStorage.removeItem(key);
+          }
+        });
+        console.log('[Header] Cleared Clerk-related storage');
+      } catch (e) {
+        console.error('[Header] Error clearing storage:', e);
+      }
+
+      // Remove the flag from URL and force hard reload
+      urlParams.delete('clerk_signout');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.location.replace(newUrl);
+    }
+  }, []);
+
+  // Listen for sign-out events from other tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'clerk_signout_broadcast' && e.newValue) {
+        console.log('[Header] ===== SIGN-OUT DETECTED FROM ANOTHER TAB =====');
+        setTimeout(() => window.location.reload(), 100);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Debug: Log auth state changes
   useEffect(() => {
     console.log('[Header] Auth state:', {
@@ -152,10 +202,44 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
   };
 
   const handleSignOut = async () => {
+    console.log('[Header] =============== SIGN OUT STARTED ===============');
+    console.log('[Header] Sign out button clicked at:', new Date().toISOString());
+
+    setIsSigningOut(true);
+
+    // Broadcast sign-out to all other tabs BEFORE redirecting
     try {
-      setIsSigningOut(true);
+      localStorage.setItem('clerk_signout_broadcast', Date.now().toString());
+      console.log('[Header] Broadcasted sign-out to other tabs');
+    } catch (e) {
+      console.error('[Header] Failed to broadcast sign-out:', e);
+    }
+
+    // For satellite domains, redirect to primary domain's sign-out URL
+    // This is the ONLY way to properly clear Clerk cookies set by the primary domain
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isSatellite = hostname.includes('mcefee-temp.com');
+
+    if (isSatellite) {
+      console.log('[Header] Satellite domain detected, redirecting to primary domain sign-out...');
+
+      // Redirect to primary domain's dedicated sign-out page
+      // This page will call Clerk's signOut() and redirect back to satellite
+      const primarySignOutUrl = 'https://www.event-site-manager.com/auth/signout-redirect';
+      const returnUrl = encodeURIComponent(window.location.origin);
+
+      console.log('[Header] Redirecting to:', `${primarySignOutUrl}?redirect_url=${returnUrl}`);
+
+      // Redirect to primary domain for sign out
+      window.location.href = `${primarySignOutUrl}?redirect_url=${returnUrl}`;
+      return;
+    }
+
+    // For primary domain, use normal Clerk sign out
+    try {
+      console.log('[Header] Primary domain - using Clerk signOut()...');
       await signOut();
-      // Redirect to home page after sign out
+      console.log('[Header] Sign out successful');
       window.location.href = '/';
     } catch (error) {
       console.error('[Header] Error signing out:', error);

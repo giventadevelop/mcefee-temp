@@ -1,19 +1,25 @@
 // Satellite domain - redirect to primary domain for authentication
+// Primary domain - show Clerk component with redirect_url handling
 // For localhost - show Clerk component directly for development
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SignIn } from '@clerk/nextjs';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { bootstrapUserProfile } from '@/components/ProfileBootstrapperApiServerActions';
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [isLocalhost, setIsLocalhost] = useState(false);
+  const [isPrimaryDomain, setIsPrimaryDomain] = useState(false);
   const { isSignedIn, userId, isLoaded } = useAuth();
   const { user } = useUser();
+
+  // Get redirect_url from query parameters (for satellite domain redirects)
+  const redirectUrl = searchParams?.get('redirect_url') || '/';
 
   useEffect(() => {
     // After sign-in completes locally, bootstrap tenant-scoped profile (upsert)
@@ -41,9 +47,12 @@ export default function SignInPage() {
         // Clerk will redirect back to this URL after successful authentication
         const redirectUrl = `https://www.event-site-manager.com/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`;
         window.location.href = redirectUrl;
+      } else {
+        // We're on the primary domain (event-site-manager.com)
+        setIsPrimaryDomain(true);
       }
     }
-  }, []);
+  }, [isLoaded, isSignedIn, userId, user]);
 
   // Show Clerk component for localhost development
   if (isLocalhost) {
@@ -66,6 +75,20 @@ export default function SignInPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Redirecting to sign in...</p>
         </div>
+      </main>
+    );
+  }
+
+  // Show Clerk component for primary domain with redirect URL handling
+  if (isPrimaryDomain) {
+    console.log('[SignInPage] 📍 Primary domain - Redirect URL:', redirectUrl);
+    return (
+      <main className="flex flex-col items-center justify-center flex-1 py-2">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-center text-gray-900">Welcome Back</h1>
+          <p className="mt-2 text-center text-gray-600">Sign in to continue</p>
+        </div>
+        <SignIn redirectUrl={redirectUrl} />
       </main>
     );
   }
