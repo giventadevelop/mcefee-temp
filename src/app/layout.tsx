@@ -35,7 +35,7 @@ export default async function RootLayout({
   const clerkProps = isSatellite
     ? {
       isSatellite: true,
-      domain: 'mcefee-temp.com', // Bare domain without www (required by Clerk)
+      domain: process.env.NEXT_PUBLIC_CLERK_DOMAIN || 'www.mcefee-temp.com', // Use env var to match DNS record
       signInUrl: 'https://www.event-site-manager.com/sign-in',
       signUpUrl: 'https://www.event-site-manager.com/sign-up',
     }
