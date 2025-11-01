@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 /**
  * Primary Clerk domain for Frontend API
  */
-const CLERK_FRONTEND_API = 'https://clerk.adwiise.com';
+const CLERK_FRONTEND_API = 'https://clerk.event-site-manager.com';
 
 /**
  * Handles all HTTP methods (GET, POST, PUT, PATCH, DELETE, etc.)

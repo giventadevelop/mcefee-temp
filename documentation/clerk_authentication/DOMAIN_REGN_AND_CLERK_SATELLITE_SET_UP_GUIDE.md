@@ -421,6 +421,80 @@ Should return the Amplify App #2 domain (e.g., `main.yyyyy.amplifyapp.com`).
 
 ---
 
+### STEP 4: Quick Reference - Automated DNS Setup for Satellite Domain
+
+For satellite domains (like `www.mcefee-temp.com`), you only need **1 CNAME record** (unlike primary domains which need 5).
+
+#### Option A: Automated Script (Recommended)
+
+Use the dedicated satellite DNS script:
+
+```powershell
+# Navigate to documentation folder
+cd documentation\clerk_authentication
+
+# Run the satellite DNS script
+.\Add-ClerkSatelliteDnsRecord.ps1 `
+  -Domain "www.mcefee-temp.com" `
+  -HostedZoneId "Z0478253VJVESPY8V1ZT"
+```
+
+**What you need:**
+1. **Hosted Zone ID**: Find it with:
+   ```powershell
+   aws route53 list-hosted-zones --query "HostedZones[?Name=='mcefee-temp.com.'].Id" --output text
+   ```
+
+2. **Domain name**: The exact satellite domain from Clerk Dashboard (e.g., `www.mcefee-temp.com`)
+
+**What the script creates:**
+- `clerk.www.mcefee-temp.com` → `frontend-api.clerk.services`
+
+#### Option B: Manual Setup via AWS CLI
+
+If you prefer manual setup:
+
+```powershell
+# Step 1: Create JSON file with CNAME configuration
+@'
+{
+  "Comment": "Add Clerk CNAME for satellite domain",
+  "Changes": [{
+    "Action": "UPSERT",
+    "ResourceRecordSet": {
+      "Name": "clerk.www.mcefee-temp.com",
+      "Type": "CNAME",
+      "TTL": 3600,
+      "ResourceRecords": [{"Value": "frontend-api.clerk.services"}]
+    }
+  }]
+}
+'@ | Set-Content -NoNewline -Path .\clerk-satellite-cname.json
+
+# Step 2: Get hosted zone ID (if not known)
+aws route53 list-hosted-zones --query "HostedZones[?Name=='mcefee-temp.com.'].Id" --output text
+
+# Step 3: Apply the CNAME record to Route53
+aws route53 change-resource-record-sets --hosted-zone-id Z0478253VJVESPY8V1ZT --change-batch file://clerk-satellite-cname.json
+
+# Step 4: Verify the record was created
+aws route53 list-resource-record-sets --hosted-zone-id Z0478253VJVESPY8V1ZT --query "ResourceRecordSets[?Name=='clerk.www.mcefee-temp.com.']"
+```
+
+#### Option C: Via Route 53 Console
+
+1. Go to **AWS Route 53 Console** → **Hosted zones**
+2. Select your domain's hosted zone (e.g., `mcefee-temp.com`)
+3. Click **Create record**
+4. Configure:
+   - **Record name**: `clerk.www`
+   - **Record type**: `CNAME`
+   - **Value**: `frontend-api.clerk.services`
+   - **TTL**: `3600` (or default)
+5. Click **Create records**
+
+---
+
 ### STEP 4: Add Clerk Verification CNAME (2 min)
 
 Add the Clerk verification record to **mosc-temp.com's hosted zone**.
@@ -531,15 +605,352 @@ Aliases:  clerk.www.mosc-temp.com
 **If verification fails**:
 - Wait longer (DNS can take time)
 - Double-check CNAME values match exactly
-- Try "Verify" button again after 5 minutes
+- Try "Verify configuration" button again after 5 minutes
+- Verify DNS propagation: `nslookup clerk.www.mcefee-temp.com`
+
+**DNS Verification Checklist:**
+- [ ] CNAME record exists in Route 53: `clerk.www.mcefee-temp.com` → `frontend-api.clerk.services`
+- [ ] DNS propagated (wait 5-60 minutes)
+- [ ] `nslookup clerk.www.mcefee-temp.com` returns `frontend-api.clerk.services`
+- [ ] Clerk Dashboard shows "Verified" status (green checkmark)
+
+---
+
+## Code Changes Required for Satellite Domain Setup
+
+### Overview: What Code Needs to Change
+
+When setting up a primary and satellite domain pair, you need to update **code in both projects** (not just environment variables). This section documents all code locations that must be modified.
+
+### Primary Domain Project (event-site-manager)
+
+**Location**: `E:\project_workspace\event-site-manager`
+
+#### 1. `src/app/layout.tsx` - Allow Redirects from Satellite
+
+**Purpose**: Allows the primary domain to accept redirects from satellite domains after authentication.
+
+**Current Code** (example from adwiise.com setup):
+```typescript
+// Primary domain configuration - allow redirects from satellite domains
+const clerkProps = {
+  allowedRedirectOrigins: ['https://www.mosc-temp.com'],
+};
+```
+
+**Required Change** for event-site-manager.com + mcefee-temp.com:
+```typescript
+// Primary domain configuration - allow redirects from satellite domains
+const clerkProps = {
+  allowedRedirectOrigins: ['https://www.mcefee-temp.com'],
+};
+```
+
+**File Path**: `src/app/layout.tsx`
+**Line**: ~67-69
+
+---
+
+#### 2. `src/middleware.ts` - CORS Headers for Clerk Proxy Routes
+
+**Purpose**: Enables CORS for `/__clerk` proxy requests from satellite domains.
+
+**Current Code** (example from adwiise.com setup):
+```typescript
+afterAuth(auth, req) {
+  // Add CORS headers for Clerk proxy requests from satellite domains
+  if (req.nextUrl.pathname.startsWith('/__clerk')) {
+    if (req.method === 'OPTIONS') {
+      const response = new NextResponse(null, { status: 200 });
+      response.headers.set('Access-Control-Allow-Origin', 'https://www.mosc-temp.com');
+      // ... other CORS headers
+      return response;
+    }
+
+    const response = NextResponse.next();
+    response.headers.set('Access-Control-Allow-Origin', 'https://www.mosc-temp.com');
+    // ... other CORS headers
+    return response;
+  }
+  // ...
+}
+```
+
+**Required Change** for event-site-manager.com + mcefee-temp.com:
+```typescript
+afterAuth(auth, req) {
+  // Add CORS headers for Clerk proxy requests from satellite domains
+  if (req.nextUrl.pathname.startsWith('/__clerk')) {
+    if (req.method === 'OPTIONS') {
+      const response = new NextResponse(null, { status: 200 });
+      response.headers.set('Access-Control-Allow-Origin', 'https://www.mcefee-temp.com');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+      return response;
+    }
+
+    const response = NextResponse.next();
+    response.headers.set('Access-Control-Allow-Origin', 'https://www.mcefee-temp.com');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    return response;
+  }
+  // ...
+}
+```
+
+**File Path**: `src/middleware.ts`
+**Lines**: ~65, ~74
+
+---
+
+### Satellite Domain Project (mcefee-temp)
+
+**Location**: `E:\project_workspace\mcefee-temp`
+
+#### 1. `src/app/layout.tsx` - Satellite Configuration
+
+**Purpose**: Configures Clerk to operate in satellite mode, redirecting authentication to the primary domain.
+
+**Current Code** (example from mosc-temp.com setup):
+```typescript
+// Satellite domain configuration for multi-domain support
+// Primary domain: www.adwiise.com
+// Satellite domains: www.mosc-temp.com (and future tenant domains)
+const headersList = await headers();
+const hostname = headersList.get('host') || '';
+const isProd = process.env.NODE_ENV === 'production';
+
+// Detect if this is a satellite domain (only in production)
+const isSatellite = isProd && hostname.includes('mosc-temp.com');
+
+const clerkProps = isSatellite
+  ? {
+      isSatellite: true,
+      domain: 'mosc-temp.com', // Bare domain without www (required by Clerk)
+      signInUrl: 'https://www.adwiise.com/sign-in',
+      signUpUrl: 'https://www.adwiise.com/sign-up',
+    }
+  : {
+      // Primary domain allows redirects from satellites (or default config for localhost)
+      allowedRedirectOrigins: isProd ? ['https://www.mosc-temp.com'] : [],
+    };
+```
+
+**Required Change** for event-site-manager.com + mcefee-temp.com:
+```typescript
+// Satellite domain configuration for multi-domain support
+// Primary domain: www.event-site-manager.com
+// Satellite domains: www.mcefee-temp.com (and future tenant domains)
+const headersList = await headers();
+const hostname = headersList.get('host') || '';
+const isProd = process.env.NODE_ENV === 'production';
+
+// Detect if this is a satellite domain (only in production)
+const isSatellite = isProd && hostname.includes('mcefee-temp.com');
+
+const clerkProps = isSatellite
+  ? {
+      isSatellite: true,
+      domain: 'mcefee-temp.com', // Bare domain without www (required by Clerk)
+      signInUrl: 'https://www.event-site-manager.com/sign-in',
+      signUpUrl: 'https://www.event-site-manager.com/sign-up',
+    }
+  : {
+      // Primary domain allows redirects from satellites (or default config for localhost)
+      allowedRedirectOrigins: isProd ? ['https://www.mcefee-temp.com'] : [],
+    };
+```
+
+**File Path**: `src/app/layout.tsx`
+**Lines**: ~23-46
+
+**Critical Notes**:
+- `domain` must be **bare domain** (no `www` prefix): `mcefee-temp.com`
+- `signInUrl` and `signUpUrl` must be **full URLs** with `www`: `https://www.event-site-manager.com/...`
+- `allowedRedirectOrigins` must use **full URL** with `www`: `https://www.mcefee-temp.com`
+
+---
+
+#### 2. `src/middleware.ts` - Satellite Detection Logic
+
+**Purpose**: Detects satellite domain in production and applies satellite configuration to middleware.
+
+**Current Code** (example from mosc-temp.com setup):
+```typescript
+const isProd = process.env.NODE_ENV === 'production';
+const isSatEnv = isProd && (
+  process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true' ||
+  process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com') ||
+  false
+);
+const satDomain = isProd
+  ? (process.env.NEXT_PUBLIC_CLERK_DOMAIN || (process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com') ? 'mosc-temp.com' : undefined))
+  : undefined;
+```
+
+**Required Change** for event-site-manager.com + mcefee-temp.com:
+```typescript
+const isProd = process.env.NODE_ENV === 'production';
+const isSatEnv = isProd && (
+  process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true' ||
+  process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com') ||
+  false
+);
+const satDomain = isProd
+  ? (process.env.NEXT_PUBLIC_CLERK_DOMAIN || (process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com') ? 'mcefee-temp.com' : undefined))
+  : undefined;
+```
+
+**Also Update signInUrl in middleware**:
+```typescript
+signInUrl: process.env.NEXT_PUBLIC_APP_URL?.includes('amplifyapp.com') || process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com')
+  ? 'https://www.event-site-manager.com/sign-in'
+  : '/sign-in',
+```
+
+**File Path**: `src/middleware.ts`
+**Lines**: ~14-22, ~59-61
+
+---
+
+#### 3. `src/app/(auth)/sign-in/[[...sign-in]]/page.tsx` - Redirect Logic
+
+**Purpose**: Client-side redirect to primary domain if user is on satellite domain.
+
+**Current Code** (example from mosc-temp.com setup):
+```typescript
+// If on satellite domain, redirect to primary domain with return URL
+if (hostname.includes('mosc-temp.com')) {
+  setShouldRedirect(true);
+  const currentUrl = window.location.origin;
+  const redirectUrl = `https://www.adwiise.com/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`;
+  window.location.href = redirectUrl;
+}
+```
+
+**Required Change** for event-site-manager.com + mcefee-temp.com:
+```typescript
+// If on satellite domain, redirect to primary domain with return URL
+if (hostname.includes('mcefee-temp.com')) {
+  setShouldRedirect(true);
+  const currentUrl = window.location.origin;
+  const redirectUrl = `https://www.event-site-manager.com/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`;
+  window.location.href = redirectUrl;
+}
+```
+
+**File Path**: `src/app/(auth)/sign-in/[[...sign-in]]/page.tsx`
+**Line**: ~35
+
+---
+
+#### 4. `src/app/(auth)/sign-up/[[...sign-up]]/page.tsx` - Redirect Logic
+
+**Purpose**: Client-side redirect to primary domain if user is on satellite domain.
+
+**Current Code** (example from mosc-temp.com setup):
+```typescript
+// If on satellite domain, redirect to primary domain with return URL
+if (hostname.includes('mosc-temp.com')) {
+  setShouldRedirect(true);
+  const currentUrl = window.location.origin;
+  const redirectUrl = `https://www.adwiise.com/sign-up?redirect_url=${encodeURIComponent(currentUrl)}`;
+  window.location.href = redirectUrl;
+}
+```
+
+**Required Change** for event-site-manager.com + mcefee-temp.com:
+```typescript
+// If on satellite domain, redirect to primary domain with return URL
+if (hostname.includes('mcefee-temp.com')) {
+  setShouldRedirect(true);
+  const currentUrl = window.location.origin;
+  const redirectUrl = `https://www.event-site-manager.com/sign-up?redirect_url=${encodeURIComponent(currentUrl)}`;
+  window.location.href = redirectUrl;
+}
+```
+
+**File Path**: `src/app/(auth)/sign-up/[[...sign-up]]/page.tsx`
+**Line**: ~26
+
+---
+
+#### 5. `src/app/__clerk/[...path]/route.ts` - Proxy Frontend API (Optional)
+
+**Purpose**: If using Clerk proxy configuration, this route proxies requests to the primary domain's Clerk Frontend API.
+
+**Current Code** (example from adwiise.com setup):
+```typescript
+const CLERK_FRONTEND_API = 'https://clerk.adwiise.com';
+```
+
+**Required Change** for event-site-manager.com + mcefee-temp.com:
+```typescript
+const CLERK_FRONTEND_API = 'https://clerk.event-site-manager.com';
+```
+
+**File Path**: `src/app/__clerk/[...path]/route.ts`
+**Line**: ~18
+
+**Note**: This file may not exist if you're using DNS verification (not proxy). Only update if you use proxy configuration.
+
+---
+
+### Summary Checklist: Code Changes for New Domain Pair
+
+**For Primary Domain Project (event-site-manager):**
+
+- [ ] **`src/app/layout.tsx`**: Update `allowedRedirectOrigins` to include `'https://www.mcefee-temp.com'`
+- [ ] **`src/middleware.ts`**: Update CORS `Access-Control-Allow-Origin` headers to `'https://www.mcefee-temp.com'` (2 locations)
+
+**For Satellite Domain Project (mcefee-temp):**
+
+- [ ] **`src/app/layout.tsx`**:
+  - [ ] Update comment: Primary domain to `www.event-site-manager.com`
+  - [ ] Update `isSatellite` detection: change `hostname.includes('mosc-temp.com')` to `hostname.includes('mcefee-temp.com')`
+  - [ ] Update `domain`: change `'mosc-temp.com'` to `'mcefee-temp.com'` (bare domain, no www)
+  - [ ] Update `signInUrl`: change to `'https://www.event-site-manager.com/sign-in'`
+  - [ ] Update `signUpUrl`: change to `'https://www.event-site-manager.com/sign-up'`
+  - [ ] Update `allowedRedirectOrigins`: change to `['https://www.mcefee-temp.com']`
+
+- [ ] **`src/middleware.ts`**:
+  - [ ] Update `isSatEnv` detection: change `includes('mosc-temp.com')` to `includes('mcefee-temp.com')`
+  - [ ] Update `satDomain` fallback: change `'mosc-temp.com'` to `'mcefee-temp.com'`
+  - [ ] Update `signInUrl`: change to `'https://www.event-site-manager.com/sign-in'`
+
+- [ ] **`src/app/(auth)/sign-in/[[...sign-in]]/page.tsx`**:
+  - [ ] Update redirect check: change `includes('mosc-temp.com')` to `includes('mcefee-temp.com')`
+  - [ ] Update redirect URL: change to `'https://www.event-site-manager.com/sign-in'`
+
+- [ ] **`src/app/(auth)/sign-up/[[...sign-up]]/page.tsx`**:
+  - [ ] Update redirect check: change `includes('mosc-temp.com')` to `includes('mcefee-temp.com')`
+  - [ ] Update redirect URL: change to `'https://www.event-site-manager.com/sign-up'`
+
+- [ ] **`src/app/__clerk/[...path]/route.ts`** (if exists):
+  - [ ] Update `CLERK_FRONTEND_API` to `'https://clerk.event-site-manager.com'`
+
+---
+
+### Important Domain Format Rules
+
+| Property | Format | Example | Notes |
+|----------|--------|---------|-------|
+| `domain` (ClerkProvider) | **Bare domain** | `mcefee-temp.com` | NO www prefix |
+| `signInUrl` / `signUpUrl` | **Full URL** | `https://www.event-site-manager.com/sign-in` | WITH www |
+| `allowedRedirectOrigins` | **Full URL** | `https://www.mcefee-temp.com` | WITH www |
+| `hostname.includes()` check | **Any part** | `hostname.includes('mcefee-temp.com')` | Works with or without www |
+| CORS headers | **Full URL** | `'https://www.mcefee-temp.com'` | WITH www |
 
 ---
 
 ### STEP 6: Configure Primary App to Allow Satellite (3 min)
 
-Update the **www.adwiise.com** app's layout.tsx to allow redirects from satellite.
+Update the **www.event-site-manager.com** app's layout.tsx to allow redirects from satellite.
 
-**In www.adwiise.com repo** (Amplify App #1), ensure `src/app/layout.tsx` has:
+**In www.event-site-manager.com repo** (Amplify App #1), ensure `src/app/layout.tsx` has:
 
 ```typescript
 // Primary domain configuration
@@ -757,6 +1168,96 @@ const clerkProps = {
 - https://clerk.adwiise.com/v1/oauth_callback ✅ (existing)
 - https://humble-monkey-3.clerk.accounts.dev/v1/oauth_callback ✅ (existing)
 - **https://www.mosc-temp.com/sso-callback** ← Added for mosc-temp.com
+
+---
+
+## Automated DNS Setup for Primary Clerk Domain
+
+### Quick Setup: Batch Create All 5 Clerk CNAME Records
+
+For setting up a **new primary domain** in Clerk (e.g., `event-site-manager.com`), you can use the automated PowerShell script to create all 5 required CNAME records in a single operation.
+
+#### Prerequisites
+
+- AWS CLI installed and configured (`aws configure`)
+- Route 53 hosted zone exists for your domain
+- Clerk Dashboard open to copy the mail instance ID
+
+#### Step 1: Get Your Route 53 Hosted Zone ID
+
+```powershell
+# Find hosted zone ID for your domain
+aws route53 list-hosted-zones --query "HostedZones[?Name=='event-site-manager.com.'].Id" --output text
+```
+
+Example output: `Z0123456789ABCDEFGHIJ`
+
+#### Step 2: Get Clerk Mail Instance ID
+
+1. Go to **Clerk Dashboard → Configure → Domains**
+2. Look at the **Email section** CNAME records
+3. Find the value like: `mail.ulg16gghuyou.clerk.services`
+4. Extract the instance ID: `ulg16gghuyou`
+
+#### Step 3: Run the Automated Script
+
+```powershell
+# Navigate to documentation folder
+cd documentation\clerk_authentication
+
+# Run the script with required parameters
+.\Add-ClerkDnsRecords.ps1 `
+  -Domain "event-site-manager.com" `
+  -HostedZoneId "Z0123456789ABCDEFGHIJ" `
+  -ClerkMailInstanceId "ulg16gghuyou"
+```
+
+#### What the Script Creates
+
+The script automatically creates all 5 CNAME records required by Clerk:
+
+1. **Frontend API**: `clerk.event-site-manager.com` → `frontend-api.clerk.services`
+2. **Account Portal**: `accounts.event-site-manager.com` → `accounts.clerk.services`
+3. **Email Service**: `clkmail.event-site-manager.com` → `mail.{instance-id}.clerk.services`
+4. **Email DKIM #1**: `clk._domainkey.event-site-manager.com` → `dkim1.{instance-id}.clerk.services`
+5. **Email DKIM #2**: `clk2._domainkey.event-site-manager.com` → `dkim2.{instance-id}.clerk.services`
+
+#### Example: Complete Command
+
+```powershell
+.\Add-ClerkDnsRecords.ps1 `
+  -Domain "event-site-manager.com" `
+  -HostedZoneId "Z0478253VJVESPY8V1ZT" `
+  -ClerkMailInstanceId "ulg16gghuyou" `
+  -TTL 3600
+```
+
+#### After Running the Script
+
+1. **Wait 5-60 minutes** for DNS propagation
+2. Go to **Clerk Dashboard → Configure → Domains**
+3. Click **"Verify"** for each domain section:
+   - Frontend API
+   - Account portal
+   - Email
+4. SSL certificates will be issued automatically after all 5 records are verified
+
+#### Manual Alternative (If Script Not Available)
+
+If you prefer to create records manually, see the reference example for `adwiise.com` in `aws-route53-list-resource-record-sets.txt`. You'll need to create each CNAME record individually in Route 53 Console or via AWS CLI.
+
+#### Script Options
+
+```powershell
+# Help menu
+.\Add-ClerkDnsRecords.ps1 -?
+
+# If hosted zone ID not provided, script will search for it
+.\Add-ClerkDnsRecords.ps1 -Domain "event-site-manager.com" -ClerkMailInstanceId "ulg16gghuyou"
+
+# Custom TTL (default is 3600 seconds = 1 hour)
+.\Add-ClerkDnsRecords.ps1 -Domain "event-site-manager.com" -HostedZoneId "Z..." -ClerkMailInstanceId "..." -TTL 7200
+```
 
 ---
 

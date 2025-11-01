@@ -21,8 +21,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   // Satellite domain configuration for multi-domain support
-  // Primary domain: www.adwiise.com
-  // Satellite domains: www.mosc-temp.com (and future tenant domains)
+  // Primary domain: www.event-site-manager.com
+  // Satellite domains: www.mcefee-temp.com (and future tenant domains)
   // IMPORTANT: Only apply satellite config in production, not in development (localhost)
 
   const headersList = await headers();
@@ -30,19 +30,19 @@ export default async function RootLayout({
   const isProd = process.env.NODE_ENV === 'production';
 
   // Detect if this is a satellite domain (only in production)
-  const isSatellite = isProd && hostname.includes('mosc-temp.com');
+  const isSatellite = isProd && hostname.includes('mcefee-temp.com');
 
   // Satellite domains must redirect to primary domain for authentication
   const clerkProps = isSatellite
     ? {
       isSatellite: true,
-      domain: 'mosc-temp.com', // Bare domain without www (required by Clerk)
-      signInUrl: 'https://www.adwiise.com/sign-in',
-      signUpUrl: 'https://www.adwiise.com/sign-up',
+      domain: 'mcefee-temp.com', // Bare domain without www (required by Clerk)
+      signInUrl: 'https://www.event-site-manager.com/sign-in',
+      signUpUrl: 'https://www.event-site-manager.com/sign-up',
     }
     : {
       // Primary domain allows redirects from satellites (or default config for localhost)
-      allowedRedirectOrigins: isProd ? ['https://www.mosc-temp.com'] : [],
+      allowedRedirectOrigins: isProd ? ['https://www.mcefee-temp.com'] : [],
     };
 
   // Determine tenant-scoped admin flag on the server

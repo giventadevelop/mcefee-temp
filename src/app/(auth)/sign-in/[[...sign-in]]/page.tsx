@@ -32,14 +32,14 @@ export default function SignInPage() {
       }
 
       // If on satellite domain, redirect to primary domain with return URL
-      if (hostname.includes('mosc-temp.com')) {
+      if (hostname.includes('mcefee-temp.com')) {
         setShouldRedirect(true);
         // Get the current URL to return to after authentication
         const currentUrl = window.location.origin;
 
         // Redirect to primary domain with redirect_url parameter
         // Clerk will redirect back to this URL after successful authentication
-        const redirectUrl = `https://www.adwiise.com/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`;
+        const redirectUrl = `https://www.event-site-manager.com/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`;
         window.location.href = redirectUrl;
       }
     }

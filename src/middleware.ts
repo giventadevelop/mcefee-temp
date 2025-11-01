@@ -14,11 +14,11 @@ import { NextResponse } from "next/server";
 const isProd = process.env.NODE_ENV === 'production';
 const isSatEnv = isProd && (
   process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true' ||
-  process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com') ||
+  process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com') ||
   false
 );
 const satDomain = isProd
-  ? (process.env.NEXT_PUBLIC_CLERK_DOMAIN || (process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com') ? 'mosc-temp.com' : undefined))
+  ? (process.env.NEXT_PUBLIC_CLERK_DOMAIN || (process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com') ? 'mcefee-temp.com' : undefined))
   : undefined;
 const satProxyUrl = isProd ? process.env.NEXT_PUBLIC_CLERK_PROXY_URL : undefined;
 const satConfig: any = {};
@@ -56,8 +56,8 @@ export default authMiddleware({
   ...satConfig,
 
   // For Amplify domains, point to primary domain for sign-in
-  signInUrl: process.env.NEXT_PUBLIC_APP_URL?.includes('amplifyapp.com') || process.env.NEXT_PUBLIC_APP_URL?.includes('mosc-temp.com')
-    ? 'https://www.adwiise.com/sign-in'
+  signInUrl: process.env.NEXT_PUBLIC_APP_URL?.includes('amplifyapp.com') || process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com')
+    ? 'https://www.event-site-manager.com/sign-in'
     : '/sign-in',
 
   // Ignore authentication on prefetch requests for public routes
