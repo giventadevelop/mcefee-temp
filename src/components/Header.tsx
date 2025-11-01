@@ -117,34 +117,59 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // ALWAYS log the URL to debug
+    const currentUrl = window.location.href;
+    console.log('[Header FLAG CHECK] ===== CHECKING FOR SIGN-OUT FLAG =====');
+    console.log('[Header FLAG CHECK] Current full URL:', currentUrl);
+    console.log('[Header FLAG CHECK] Search params:', window.location.search);
+
     const urlParams = new URLSearchParams(window.location.search);
     const clerkSignedOut = urlParams.get('clerk_signout');
+
+    console.log('[Header FLAG CHECK] clerk_signout flag value:', clerkSignedOut);
+    console.log('[Header FLAG CHECK] Flag is present:', clerkSignedOut === 'true' ? 'YES' : 'NO');
 
     if (clerkSignedOut === 'true') {
       sessionStorage.setItem('clerk_signout_detected', new Date().toISOString());
       console.log('[Header] ===== DETECTED clerk_signout=true FLAG! =====');
+      console.log('[Header] Starting cleanup and reload process...');
 
       // Clear any Clerk-related storage on satellite domain
       try {
-        Object.keys(localStorage).forEach(key => {
+        const localKeys = Object.keys(localStorage);
+        console.log('[Header] Total localStorage keys:', localKeys.length);
+        localKeys.forEach(key => {
           if (key.includes('clerk') || key.includes('__clerk')) {
+            console.log('[Header] Removing localStorage key:', key);
             localStorage.removeItem(key);
           }
         });
-        Object.keys(sessionStorage).forEach(key => {
+
+        const sessionKeys = Object.keys(sessionStorage);
+        sessionKeys.forEach(key => {
           if (key !== 'clerk_signout_detected' && (key.includes('clerk') || key.includes('__clerk'))) {
+            console.log('[Header] Removing sessionStorage key:', key);
             sessionStorage.removeItem(key);
           }
         });
-        console.log('[Header] Cleared Clerk-related storage');
+        console.log('[Header] ✅ Cleared Clerk-related storage');
       } catch (e) {
-        console.error('[Header] Error clearing storage:', e);
+        console.error('[Header] ❌ Error clearing storage:', e);
       }
 
       // Remove the flag from URL and force hard reload
       urlParams.delete('clerk_signout');
       const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-      window.location.replace(newUrl);
+      console.log('[Header] Removing flag from URL');
+      console.log('[Header] New URL will be:', newUrl);
+      console.log('[Header] Forcing hard reload in 100ms...');
+
+      setTimeout(() => {
+        console.log('[Header] ⚡ EXECUTING HARD RELOAD NOW');
+        window.location.replace(newUrl);
+      }, 100);
+    } else {
+      console.log('[Header FLAG CHECK] No sign-out flag detected, normal page load');
     }
   }, []);
 
