@@ -1,10 +1,10 @@
-import { auth } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
+import { safeAuth } from '@/lib/safe-auth';
 import { PollManagementClient } from './PollManagementClient';
 import { fetchEventPollsServer } from './ApiServerActions';
 
 export default async function PollsPage() {
-  const { userId } = await auth();
+  const { userId } = await safeAuth();
 
   if (!userId) {
     redirect('/sign-in');
@@ -15,7 +15,10 @@ export default async function PollsPage() {
   const polls = pollsResult.data;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+    <div
+      className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50"
+      style={{ paddingTop: '120px' }}
+    >
       <div className="max-w-5xl mx-auto px-8 py-8">
         {/* Header Section with Gradient */}
         <div className="text-center mb-12">

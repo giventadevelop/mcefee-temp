@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, BarChart3, Users, Clock, MessageSquare, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Users, Clock, MessageSquare } from 'lucide-react';
 import type { EventPollDTO, EventPollOptionDTO } from '@/types';
 import { fetchEventPollsServer, fetchEventPollOptionsServer } from '@/app/admin/polls/ApiServerActions';
 
@@ -24,7 +23,7 @@ export function PollList({ eventId, userId, onPollSelect }: PollListProps) {
   const [pollOptions, setPollOptions] = useState<EventPollOptionDTO[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 10;
+  const pageSize = 20;
 
   useEffect(() => {
     const loadPolls = async () => {
@@ -141,13 +140,10 @@ export function PollList({ eventId, userId, onPollSelect }: PollListProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Available Polls</h2>
-        </div>
+      <div className="space-y-6">
         <div className="grid gap-4">
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
+            <Card key={i} className="bg-white overflow-hidden shadow rounded-lg animate-pulse">
               <CardContent className="p-6">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
@@ -167,13 +163,21 @@ export function PollList({ eventId, userId, onPollSelect }: PollListProps) {
     return (
       <div className="space-y-4">
         <div className="flex items-center space-x-4">
-          <Button
+          <button
             onClick={() => setSelectedPoll(null)}
-            className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+            className="flex-shrink-0 h-14 rounded-xl bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+            title="Back to Polls"
+            aria-label="Back to Polls"
+            type="button"
           >
-            ← Back to Polls
-          </Button>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-200 flex items-center justify-center">
+              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </div>
+            <span className="font-semibold text-indigo-700 hidden sm:inline">Back to Polls</span>
+          </button>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
             {selectedPoll.title}
           </h2>
         </div>
@@ -192,35 +196,38 @@ export function PollList({ eventId, userId, onPollSelect }: PollListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Available Polls
-        </h2>
-        {totalCount > 0 && (
-          <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 px-4 py-2">
-            {totalCount} poll{totalCount !== 1 ? 's' : ''} available
-          </Badge>
-        )}
-      </div>
+      {polls.length > 0 && (
+        <>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-medium text-gray-900">
+              Available Polls
+            </h2>
+            {totalCount > 0 && (
+              <Badge className="bg-blue-100 text-blue-800 border border-blue-300 px-3 py-1">
+                {totalCount} poll{totalCount !== 1 ? 's' : ''} available
+              </Badge>
+            )}
+          </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
-        <Input
-          placeholder="Search polls..."
-          value={searchTerm}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-12 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-blue-500 transition-all"
-        />
-      </div>
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              placeholder="Search polls..."
+              value={searchTerm}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-12 py-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500 transition-all"
+            />
+          </div>
+        </>
+      )}
 
       {polls.length === 0 && !isLoading ? (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-500">
-              {searchTerm ? 'No polls found matching your search.' : 'No polls available at the moment.'}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="text-center py-12 text-gray-500">
+          <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p className="text-gray-500">No polls available at this time</p>
+        </div>
       ) : (
         <div className="grid gap-4">
           {polls.map((poll) => {
@@ -230,9 +237,9 @@ export function PollList({ eventId, userId, onPollSelect }: PollListProps) {
             return (
               <Card 
                 key={poll.id} 
-                className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-2 ${
+                className={`cursor-pointer transition-all duration-300 hover:shadow-md border border-gray-200 ${
                   active 
-                    ? 'hover:border-blue-400 bg-gradient-to-br from-white to-blue-50 hover:shadow-blue-100' 
+                    ? 'bg-white hover:shadow-lg' 
                     : 'opacity-75 bg-gray-50'
                 }`}
                 onClick={() => handlePollClick(poll)}
@@ -284,35 +291,47 @@ export function PollList({ eventId, userId, onPollSelect }: PollListProps) {
                     </div>
 
                     <div className="flex justify-end space-x-2">
-                      <Button
-                        className={`${
+                      <button
+                        className={`flex-shrink-0 h-14 rounded-xl flex items-center justify-center gap-0 sm:gap-3 transition-all duration-300 hover:scale-105 px-6 ${
                           active 
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300' 
-                            : 'bg-gray-100 text-gray-500 border-gray-200'
-                        }`}
-                        size="sm"
+                            ? 'bg-blue-100 hover:bg-blue-200' 
+                            : 'bg-gray-100 hover:bg-gray-200'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
                         disabled={!active}
                         onClick={(e) => {
                           e.stopPropagation();
                           handlePollClick(poll);
                         }}
+                        title={active ? 'Vote Now' : 'View Details'}
+                        aria-label={active ? 'Vote Now' : 'View Details'}
+                        type="button"
                       >
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        {active ? 'Vote Now' : 'View Details'}
-                      </Button>
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                          active ? 'bg-blue-200' : 'bg-gray-200'
+                        }`}>
+                          <svg className={`w-6 h-6 ${active ? 'text-blue-600' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                        </div>
+                        <span className={`font-semibold hidden sm:inline ${active ? 'text-blue-700' : 'text-gray-700'}`}>
+                          {active ? 'Vote Now' : 'View Details'}
+                        </span>
+                      </button>
                       
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                      <Link
+                        href={`/polls/${poll.id}`}
+                        className="flex-shrink-0 h-14 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center gap-0 sm:gap-3 transition-all duration-300 hover:scale-105 px-6"
+                        title="View Full Page"
+                        aria-label="View Full Page"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Link href={`/polls/${poll.id}`}>
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Full Page
-                        </Link>
-                      </Button>
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </div>
+                        <span className="font-semibold text-green-700 hidden sm:inline">Full Page</span>
+                      </Link>
                     </div>
                   </div>
                 </CardContent>
@@ -322,48 +341,68 @@ export function PollList({ eventId, userId, onPollSelect }: PollListProps) {
         </div>
       )}
 
-      {/* Pagination Controls - Always visible */}
+      {/* Pagination Controls - Only visible when there are polls */}
+      {polls.length > 0 && (
       <div className="mt-8">
         <div className="flex justify-between items-center">
+          {/* Previous Button */}
           <button
             onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
             disabled={currentPage === 0 || isLoading}
-            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            className="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+            title="Previous Page"
+            aria-label="Previous Page"
+            type="button"
           >
-            <ChevronLeft className="h-5 w-5" />
-            Previous
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Previous</span>
           </button>
-          <div className="text-sm font-semibold text-gray-700">
-            Page {currentPage + 1} of {Math.max(1, Math.ceil(totalCount / pageSize))}
+
+          {/* Page Info */}
+          <div className="px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
+            <span className="text-sm font-bold text-blue-700">
+              Page <span className="text-blue-600">{currentPage + 1}</span> of <span className="text-blue-600">{Math.max(1, Math.ceil(totalCount / pageSize))}</span>
+            </span>
           </div>
+
+          {/* Next Button */}
           <button
             onClick={() => setCurrentPage(prev => prev + 1)}
             disabled={currentPage >= Math.ceil(totalCount / pageSize) - 1 || isLoading}
-            className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            className="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+            title="Next Page"
+            aria-label="Next Page"
+            type="button"
           >
-            Next
-            <ChevronRight className="h-5 w-5" />
+            <span>Next</span>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
-        <div className="text-center text-sm text-gray-600 mt-2">
+
+        {/* Item Count Text */}
+        <div className="text-center mt-3">
           {totalCount > 0 ? (
-            <>
-              Showing <span className="font-medium">{currentPage * pageSize + 1}</span> to{' '}
-              <span className="font-medium">
-                {Math.min((currentPage + 1) * pageSize, totalCount)}
-              </span>{' '}
-              of <span className="font-medium">{totalCount}</span> items
-            </>
-          ) : (
-            <div className="flex items-center justify-center gap-2">
-              <span>No items found</span>
-              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm font-medium">
-                [No items match your criteria]
+            <div className="inline-flex items-center px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
+              <span className="text-sm text-gray-700">
+                Showing <span className="font-bold text-blue-600">{currentPage * pageSize + 1}</span> to <span className="font-bold text-blue-600">{Math.min((currentPage + 1) * pageSize, totalCount)}</span> of <span className="font-bold text-blue-600">{totalCount}</span> polls
               </span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 border-2 border-orange-300 rounded-lg shadow-sm">
+              <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-medium text-orange-700">No polls found</span>
+              <span className="text-sm text-orange-600">[No polls match your criteria]</span>
             </div>
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

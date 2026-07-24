@@ -1,32 +1,32 @@
 import React from 'react';
-import HeroSection from './components/HeroSection';
-import WelcomeSection from './components/WelcomeSection';
-import AboutOurChurchSection from './components/AboutOurChurchSection';
-import AnnouncementsSection from './components/AnnouncementsSection';
-import PrayerTimesSection from './components/PrayerTimesSection';
+import SyroHomeHeroSection from './components/SyroHomeHeroSection';
+import SyroBannerShortcuts from './components/SyroBannerShortcuts';
+import SyroCircularNotification from './components/SyroCircularNotification';
+import SyroAboutSection from './components/SyroAboutSection';
+import SyroCatholicosSection from './components/SyroCatholicosSection';
+import SyroLiturgySection from './components/SyroLiturgySection';
+import SyroLocationsSection from './components/SyroLocationsSection';
 
 export const metadata = {
   title: 'Home',
-  description: 'Welcome to the Malankara Orthodox Syrian Church - Saint Thomas Christian Community. Explore our rich heritage, spiritual resources, and community services.',
+  description:
+    'Malankara Orthodox Syrian Church - Saint Thomas Christian Community. Explore our heritage, spiritual resources, and community.',
 };
 
-export default function MOSCHomePage() {
+/**
+ * Syro landing: matches static index.html structure and styling.
+ * Sections: hero, shortcuts, circular notification, about, saints slider, cardinal, liturgy, locations.
+ */
+export default function SyroLandingPage() {
   return (
-    <div className="bg-background">
-      {/* Hero Section with Patriarch Info */}
-      <HeroSection />
-
-      {/* Welcome Section */}
-      <WelcomeSection />
-
-      {/* About Our Church Section */}
-      <AboutOurChurchSection />
-
-      {/* Recent Announcements Section */}
-      <AnnouncementsSection />
-
-      {/* Daily Prayer Schedule Section */}
-      <PrayerTimesSection />
+    <div className="flex flex-col flex-1 w-full">
+      <SyroHomeHeroSection />
+      <SyroBannerShortcuts />
+      <SyroCircularNotification />
+      <SyroAboutSection />
+      <SyroCatholicosSection />
+      <SyroLiturgySection />
+      <SyroLocationsSection />
     </div>
   );
 }

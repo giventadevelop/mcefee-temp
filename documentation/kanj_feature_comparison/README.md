@@ -2,148 +2,45 @@
 
 This folder contains comparative analysis between KANJ.org (Kerala Association of New Jersey) and our event management/polling platform.
 
-## 📁 Documents in This Folder
+## Documents in This Folder
 
-### 1. KANJ_vs_OurSite_Analysis.md
-**Comprehensive feature comparison and gap analysis**
+### 1. Event_Competitions_PRD.html
+**Product Requirements Document — Event Competitions (generic)**
 
-- Full KANJ website scraping results
-- Major functions and features breakdown
-- Side-by-side comparison with our platform
-- Identified gaps and issues
-- Design and UX differences
-- Technical implementation recommendations
-- Prioritized action plan
+- Multi-competition events on any `event_details` record: youth (parent/child), adult (self/team), or mixed
+- Catalog, registrations, fees, and **published winners** (placement, prizes, photos)
+- Additive design: `is_competition_event` on `event_details` without breaking ticket checkout
+- **KANJ KGT** is documented as a **YOUTH preset** reference, not the product name
 
-**Key Findings:**
-- KANJ has 12+ major functional areas
-- Our platform excels in technical sophistication (payments, polls, API integration)
-- KANJ excels in organizational structure and public-facing content
-- Critical gap: No public `/polls` page on our platform
-- Opportunity: Enhance organizational structure display
+**Open in browser:** [`Event_Competitions_PRD.html`](Event_Competitions_PRD.html)
 
-## 🎯 Purpose
+**Legacy URL:** [`KGT_Youth_Festival_Kids_Events_PRD.html`](KGT_Youth_Festival_Kids_Events_PRD.html) redirects to the master PRD.
 
-This analysis was conducted to:
+### 2. event_competitions/ — Layer-specific PRDs
 
-1. **Understand competitive landscape** - Learn from established community organization websites
-2. **Identify feature gaps** - Find areas where our platform could improve
-3. **Benchmark functionality** - Compare our technical capabilities against industry standards
-4. **Plan enhancements** - Create actionable roadmap for feature additions
+Implementation guides for database, backend, frontend, and batch jobs (May 2026, v2.0).
 
-## 🔍 Key Insights
+| Document | Layer |
+|----------|-------|
+| [`event_competitions/generic_prd.html`](event_competitions/generic_prd.html) | Index — phases P0–P4, audience modes, open questions |
+| [`event_competitions/database_schema_prd.html`](event_competitions/database_schema_prd.html) | PostgreSQL — `event_competition_*` DDL |
+| [`event_competitions/backend_prd.html`](event_competitions/backend_prd.html) | `malayalees-us-site-boot` — JHipster REST |
+| [`event_competitions/frontend_prd.html`](event_competitions/frontend_prd.html) | Next.js — proxy, `/competitions` routes, winners UI |
+| [`event_competitions/batch_job_prd.html`](event_competitions/batch_job_prd.html) | Optional P4 emails |
 
-### What KANJ Does Well
-- Clear organizational hierarchy (14-member executive committee + 5-member trustee board)
-- Multiple specialized focus groups (Career, Cultural, IT, NextGen)
-- Educational academy with courses (AWS Cloud, GenAI)
-- Multi-channel contact system (8+ specialized email addresses)
-- Comprehensive event management with calendar view
-- Strong membership and governance structure
+**Start here for coding:** [`event_competitions/generic_prd.html`](event_competitions/generic_prd.html) → database → backend → frontend.
 
-### What We Do Better
-- Interactive poll voting system with real-time status
-- Sophisticated Stripe payment integration (mobile wallets, QR codes)
-- Modern, gradient-based UI design
-- Advanced search/filter capabilities
-- Full admin panel for content management
-- Multi-tenant SaaS architecture
-- Backend API integration with authentication
+### 3. KANJ_vs_OurSite_Analysis.md
+Comprehensive feature comparison and gap analysis (KANJ website vs our platform).
 
-### Critical Gaps to Address
-1. ❌ No public-facing polls listing page (`/polls`)
-2. ❌ Limited organizational structure display
-3. ❌ No focus groups or specialized sections
-4. ❌ No full calendar view page
-5. ❌ Missing department-specific contact channels
+### 4. Related: Event Sports & Arts Results
+[`../event_sports_arts_competition/Event_Sports_Arts_Competition_Results_Feature_Requirements.html`](../event_sports_arts_competition/Event_Sports_Arts_Competition_Results_Feature_Requirements.html) — scorecards for `is_sports_event`; see Event Competitions PRD for multi-competition festivals.
 
-## 📊 Comparison Summary
+## Document History
 
-| Category | KANJ.org | Our Platform |
-|----------|----------|--------------|
-| **Organizational Structure** | ⭐⭐⭐⭐⭐ | ⭐⭐ |
-| **Event Management** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Payment Processing** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Poll/Voting System** | ❌ None | ⭐⭐⭐⭐⭐ |
-| **Educational Programs** | ⭐⭐⭐⭐ | ❌ None |
-| **Focus Groups** | ⭐⭐⭐⭐⭐ | ❌ None |
-| **Technical Sophistication** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Public Content** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **Admin Tools** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Mobile Experience** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-
-## 🚀 Recommended Actions
-
-### Immediate (Week 1-2)
-- [ ] Create public `/polls` page for community voting
-- [ ] Update navigation menu to match comprehensive structure
-- [ ] Add event search/filter on main event pages
-
-### Short-term (Weeks 3-6)
-- [ ] Implement full calendar view page
-- [ ] Enhance executive committee/team display with roles
-- [ ] Add focus groups section (if applicable)
-- [ ] Create department-specific contact routing
-
-### Medium-term (Weeks 7-12)
-- [ ] Develop academy/training section
-- [ ] Build membership portal with bylaws
-- [ ] Add specialized contact forms
-- [ ] Enhance social media integration
-
-### Long-term (3-6 months)
-- [ ] Implement member-only content system
-- [ ] Add sports club coordination features
-- [ ] Create charity affairs tracking
-- [ ] Build youth program management
-
-## 📈 Success Metrics
-
-After implementing recommendations, measure:
-
-1. **User Engagement**
-   - Public poll participation rate
-   - Event registration conversion rate
-   - Calendar page views
-
-2. **Organizational Clarity**
-   - Contact form submission by department
-   - Focus group membership/interest
-   - Member portal usage
-
-3. **Technical Performance**
-   - Page load times
-   - Mobile vs. desktop usage
-   - Payment success rates
-
-4. **Content Effectiveness**
-   - Time on site
-   - Pages per session
-   - Return visitor rate
-
-## 🔗 Related Documentation
-
-- Main project documentation: `../`
-- UI Style Guide: `../../.cursor/rules/ui_style_guide.mdc`
-- API Routes Documentation: `../../.cursor/rules/nextjs_api_routes.mdc`
-- Common Best Practices: `../../.cursor/rules/common_app_router_aws_amplify_type_safety_best_practices.mdc`
-
-## 📅 Document History
-
-| Date | Version | Author | Changes |
-|------|---------|--------|---------|
-| Oct 22, 2025 | 1.0 | Development Team | Initial analysis and comparison |
-
-## 💬 Feedback
-
-This analysis is a living document. As we implement features and gather user feedback, we should:
-
-1. Update the comparison regularly
-2. Track which KANJ features are most valuable to implement
-3. Monitor how our unique features (polls, payments) differentiate us
-4. Adjust priorities based on user needs
-
----
-
-**For questions or suggestions about this analysis, contact the development team.**
-
+| Date | Version | Changes |
+|------|---------|---------|
+| Oct 22, 2025 | 1.0 | Initial KANJ comparison |
+| May 21, 2026 | 1.1 | Kids Festival PRD (superseded) |
+| May 21, 2026 | 1.2 | `kids_festival/` layer PRDs |
+| May 21, 2026 | 2.0 | **Event Competitions** — renamed folder, generic model, winners/photos |

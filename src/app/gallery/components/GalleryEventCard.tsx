@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Calendar, Camera, Video, Eye } from 'lucide-react';
 import { EventMediaSlideshow } from './EventMediaSlideshow';
 import type { GalleryEventWithMedia } from '../ApiServerActions';
 
@@ -16,13 +15,8 @@ export function GalleryEventCard({ eventWithMedia }: GalleryEventCardProps) {
   const [showSlideshow, setShowSlideshow] = useState(false);
   const { event, media, totalMediaCount } = eventWithMedia;
 
-  // Get preview images (first 4 media items)
-  const previewMedia = media.slice(0, 4);
-  const remainingCount = Math.max(0, totalMediaCount - 4);
-
-  // Get hero image (prefer homepage hero, then regular hero, then first available)
-  const heroImage = media.find(m => m.isHomePageHeroImage) || 
-                   media.find(m => m.isHeroImage) || 
+  const heroImage = media.find(m => m.isHomePageHeroImage) ||
+                   media.find(m => m.isHeroImage) ||
                    media.find(m => m.fileUrl);
 
   const formatEventDate = (dateString: string) => {
@@ -33,155 +27,111 @@ export function GalleryEventCard({ eventWithMedia }: GalleryEventCardProps) {
     }
   };
 
-  const getMediaTypeIcon = (mediaType: string) => {
-    if (mediaType.startsWith('video/')) {
-      return <Video className="w-4 h-4" />;
-    }
-    return <Camera className="w-4 h-4" />;
-  };
-
-  const getMediaTypeColor = (mediaType: string) => {
-    if (mediaType.startsWith('video/')) {
-      return 'text-red-600 bg-red-100';
-    }
-    return 'text-blue-600 bg-blue-100';
-  };
-
-  // Generate a colorful background based on event ID for consistency
-  const getCardBackground = (eventId: number) => {
-    const colors = [
-      'bg-gradient-to-br from-blue-50 to-blue-100',
-      'bg-gradient-to-br from-green-50 to-green-100', 
-      'bg-gradient-to-br from-purple-50 to-purple-100',
-      'bg-gradient-to-br from-pink-50 to-pink-100',
-      'bg-gradient-to-br from-yellow-50 to-yellow-100',
-      'bg-gradient-to-br from-indigo-50 to-indigo-100',
-      'bg-gradient-to-br from-red-50 to-red-100',
-      'bg-gradient-to-br from-teal-50 to-teal-100'
-    ];
-    return colors[eventId % colors.length];
-  };
-
   return (
     <>
-      <div className={`${getCardBackground(event.id!)} rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 border border-white/50 flex flex-col`}>
-        {/* Hero Image */}
-        <div className="relative h-48 bg-gray-200">
+      <div
+        className="group homepage-glass-card services-glass-card-face rounded-2xl overflow-hidden flex flex-col h-full hover:-translate-y-1 transition-all duration-300"
+        style={{ padding: 0 }}
+      >
+        <div
+          className={`relative w-full h-48 overflow-hidden ${media.length > 0 ? 'cursor-pointer' : ''}`}
+          onClick={() => {
+            if (media.length > 0) {
+              setShowSlideshow(true);
+            }
+          }}
+          role={media.length > 0 ? 'button' : undefined}
+          tabIndex={media.length > 0 ? 0 : undefined}
+          onKeyDown={(e) => {
+            if (media.length > 0 && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              setShowSlideshow(true);
+            }
+          }}
+          aria-label={media.length > 0 ? 'View Gallery' : undefined}
+          title={media.length > 0 ? 'Click to view gallery' : undefined}
+        >
           {heroImage?.fileUrl ? (
             <Image
               src={heroImage.fileUrl}
               alt={heroImage.altText || event.title}
               fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+              className="object-contain group-hover:scale-105 transition-all duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
-            <div className="flex items-center justify-center h-full bg-gray-100">
-              <div className="text-center text-gray-400">
-                <Camera className="w-12 h-12 mx-auto mb-2" />
-                <p className="text-sm">No image available</p>
+            <div className="w-full h-full bg-gradient-to-br from-violet-100/80 via-purple-50/60 to-violet-100/80 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                <svg className="w-32 h-32 text-violet-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M10 2h4v7h7v4h-7v9h-4v-9H3v-4h7V2z" />
+                </svg>
               </div>
+              <svg className="w-16 h-16 text-violet-400 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </div>
           )}
-          
-          {/* Media count badge */}
+
           {totalMediaCount > 0 && (
-            <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded-full text-xs font-medium">
-              {totalMediaCount} {totalMediaCount === 1 ? 'item' : 'items'}
+            <div className="absolute top-3 right-3 bg-violet-600 px-3 py-1 rounded-full text-xs font-medium shadow-md text-white">
+              {totalMediaCount} {totalMediaCount === 1 ? 'photo' : 'photos'}
             </div>
           )}
         </div>
 
-        {/* Event Info */}
-        <div className="p-6 flex-grow flex flex-col">
-          <h3 className="font-semibold text-gray-900 text-lg mb-2 overflow-hidden" style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical'
-          }}>
+        <div className="p-6 sm:p-8 flex flex-col flex-1">
+          <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2 group-hover:text-violet-700 transition-all duration-300">
             {event.title}
           </h3>
-          
-          <div className="flex items-center text-sm text-gray-600 mb-2">
-            <Calendar className="w-4 h-4 mr-1" />
+
+          <p className="text-sm text-gray-600 mb-4">
             {formatEventDate(event.startDate)}
-          </div>
+          </p>
 
           {event.caption && (
-            <p className="text-sm text-gray-600 mb-3 overflow-hidden" style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 1,
-              WebkitBoxOrient: 'vertical'
-            }}>
+            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
               {event.caption}
             </p>
           )}
 
-          {/* Preview thumbnails */}
-          {previewMedia.length > 0 && (
-            <div className="mb-3">
-              <div className="grid grid-cols-4 gap-1 h-16">
-                {previewMedia.map((mediaItem, index) => (
-                  <div key={mediaItem.id} className="relative bg-gray-100 rounded overflow-hidden">
-                    {mediaItem.fileUrl ? (
-                      <Image
-                        src={mediaItem.fileUrl}
-                        alt={mediaItem.altText || mediaItem.title}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400">
-                        {getMediaTypeIcon(mediaItem.eventMediaType)}
-                      </div>
-                    )}
-                    
-                    {/* Media type indicator */}
-                    <div className={`absolute bottom-0 right-0 ${getMediaTypeColor(mediaItem.eventMediaType)} p-1 rounded-tl`}>
-                      {getMediaTypeIcon(mediaItem.eventMediaType)}
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Show remaining count */}
-                {remainingCount > 0 && (
-                  <div className="flex items-center justify-center bg-gray-100 rounded text-xs font-medium text-gray-600">
-                    +{remainingCount}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Spacer to push buttons down */}
-          <div className="flex-grow"></div>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex space-x-3 p-6 pt-0 mt-auto">
+          <div className="flex flex-wrap items-center gap-3 mt-auto">
             <button
-              onClick={() => {
-                console.log('View Gallery clicked for event:', event.title, 'Media count:', media.length);
-                setShowSlideshow(true);
-              }}
-              className="flex-1 flex items-center justify-center px-4 py-3 h-12 bg-gradient-to-b from-blue-500 to-blue-700 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl hover:shadow-blue-500/25 border border-blue-400/20 transform hover:-translate-y-0.5 transition-all duration-200"
+              onClick={() => setShowSlideshow(true)}
               disabled={media.length === 0}
+              className="flex-shrink-0 h-12 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 px-5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              title="View Gallery"
+              aria-label="View Gallery"
+              type="button"
             >
-              <Eye className="w-4 h-4 mr-1" />
-              View Gallery
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-200 flex items-center justify-center">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </div>
+              <span className="font-semibold text-blue-700">View Gallery</span>
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
-            
+
             <Link
               href={`/events/${event.id}`}
-              className="flex-1 flex items-center justify-center px-4 py-3 h-12 bg-gradient-to-b from-emerald-400 to-emerald-600 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl hover:shadow-emerald-500/25 border border-emerald-300/20 transform hover:-translate-y-0.5 transition-all duration-200"
+              className="flex-shrink-0 h-12 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 px-5"
+              title="Event Details"
+              aria-label="Event Details"
             >
-              Event Details
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-200 flex items-center justify-center">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </div>
+              <span className="font-semibold text-green-700">Event Details</span>
             </Link>
           </div>
+        </div>
       </div>
 
-      {/* Slideshow Modal */}
       {showSlideshow && (
         <EventMediaSlideshow
           event={event}

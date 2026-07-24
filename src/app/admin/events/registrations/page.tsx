@@ -1,19 +1,20 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { auth } from '@clerk/nextjs';
-import { getAppUrl } from '@/lib/env';
+import { safeAuth } from '@/lib/safe-auth';
 import type { EventAttendeeDTO, EventAttendeeGuestDTO, EventDetailsDTO } from '@/types';
 import RegistrationManagementClient from './RegistrationManagementClient';
 import { fetchRegistrationManagementData } from './ApiServerActions';
 
+type SearchParamsShape = {
+  eventId?: string;
+  search?: string;
+  searchType?: string;
+  status?: string;
+  page?: string;
+};
+
 interface RegistrationPageProps {
-  searchParams: {
-    eventId?: string;
-    search?: string;
-    searchType?: string;
-    status?: string;
-    page?: string;
-  };
+  searchParams: SearchParamsShape | Promise<SearchParamsShape>;
 }
 
 function LoadingSkeleton() {
@@ -35,17 +36,19 @@ function LoadingSkeleton() {
 }
 
 export default async function RegistrationManagementPage({ searchParams }: RegistrationPageProps) {
-  const { userId } = await auth();
+  const params = typeof searchParams?.then === 'function' ? await searchParams : searchParams;
+
+  const { userId } = await safeAuth();
 
   if (!userId) {
     notFound();
   }
 
-  const eventId = searchParams.eventId ? parseInt(searchParams.eventId) : null;
-  const search = searchParams.search || '';
-  const searchType = searchParams.searchType || 'name';
-  const status = searchParams.status || '';
-  const page = parseInt(searchParams.page || '1');
+  const eventId = params.eventId ? parseInt(params.eventId) : null;
+  const search = params.search || '';
+  const searchType = params.searchType || 'name';
+  const status = params.status || '';
+  const page = parseInt(params.page || '1');
 
   return (
     <Suspense fallback={<LoadingSkeleton />}>
@@ -73,10 +76,32 @@ async function RegistrationManagementContent({
   status: string;
   page: number;
 }) {
-  const data = await fetchRegistrationManagementData(eventId, search, searchType, status, page);
+  // Add timeout wrapper to prevent hanging
+  const data = await Promise.race([
+    fetchRegistrationManagementData(eventId, search, searchType, status, page),
+    new Promise<null>((resolve) =>
+      setTimeout(() => {
+        console.warn('[RegistrationManagement] Data fetch timeout after 25 seconds');
+        resolve(null);
+      }, 25000)
+    )
+  ]);
 
+  // If data fetch failed or timed out, show empty state instead of 404
   if (!data) {
-    notFound();
+    // Return empty data structure instead of calling notFound()
+    // This allows the page to render with empty state
+    return <RegistrationManagementClient data={{
+      attendees: [],
+      totalCount: 0,
+      currentPage: 1,
+      totalPages: 0,
+      events: [],
+      selectedEvent: null,
+      searchTerm: search,
+      searchType: searchType,
+      statusFilter: status,
+    }} />;
   }
 
   return <RegistrationManagementClient data={data} />;

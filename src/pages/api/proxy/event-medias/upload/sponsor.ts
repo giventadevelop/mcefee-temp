@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
+import { getApiBaseUrl } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 export const config = {
   api: {
@@ -48,7 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { eventId, entityId, imageType, title, description, isPublic, tenantId } = req.query;
 
-    if (!eventId || !entityId || !imageType || !title) {
+    // eventId can be 0 or "0" for main sponsors page (sponsors not yet associated with events)
+    // Check if eventId is missing (undefined or null), but allow 0
+    const eventIdValue = Array.isArray(eventId) ? eventId[0] : eventId;
+    if (eventIdValue === undefined || eventIdValue === null || eventIdValue === '' || !entityId || !imageType || !title) {
       return res.status(400).json({ error: 'Missing required parameters: eventId, entityId, imageType, title' });
     }
 
@@ -59,8 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid entityId: must be a valid integer' });
     }
 
-    // Get values from query parameters
-    const eventIdValue = Array.isArray(eventId) ? eventId[0] : eventId;
+    // Get values from query parameters (eventIdValue already extracted above)
     const imageTypeValue = Array.isArray(imageType) ? imageType[0] : imageType;
     const titleValue = Array.isArray(title) ? title[0] : title;
     const descriptionValue = Array.isArray(description) ? description[0] || 'Uploaded image' : description || 'Uploaded image';
@@ -68,14 +71,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isPublicValue = Array.isArray(isPublic) ? isPublic[0] : isPublic;
     const isPublicBoolean = String(isPublicValue) === 'true';
 
-    // Use the Swagger API specification endpoint
-    const apiUrl = `${API_BASE_URL}/api/event-medias/upload/sponsor`;
+    // Use the Swagger API specification endpoint (backend expects /upload/sponsor-image)
+    const apiUrl = `${API_BASE_URL}/api/event-medias/upload/sponsor-image`;
 
     // Build query string according to Swagger specification
     const queryParams = new URLSearchParams({
       eventId: eventIdValue,
       entityId: String(entityIdInt),
-      imageType: imageTypeValue,
+      imageType: imageTypeValue, // Now sends LOGO_IMAGE, HERO_IMAGE, BANNER_IMAGE
       title: titleValue,
       description: descriptionValue,
       tenantId: tenantIdValue,

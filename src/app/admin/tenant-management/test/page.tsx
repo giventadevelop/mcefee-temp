@@ -79,7 +79,7 @@ export default function TenantManagementTestPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ paddingTop: '160px' }}>
       {/* Breadcrumb Navigation */}
       <nav className="flex mb-8" aria-label="Breadcrumb">
         <ol className="inline-flex items-center space-x-1 md:space-x-3">
@@ -154,33 +154,56 @@ export default function TenantManagementTestPage() {
             <button
               onClick={runAllTests}
               disabled={isRunning}
-              className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              title="Run All Tests"
+              aria-label="Run All Tests"
+              type="button"
             >
-              <FaPlay />
-              Run All Tests
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                <FaPlay className="w-6 h-6 text-blue-600" />
+              </div>
+              <span className="font-semibold text-blue-700">Run All Tests</span>
             </button>
             <button
               onClick={runOrganizationTests}
               disabled={isRunning}
-              className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              className="flex-shrink-0 h-14 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              title="Test Organizations Only"
+              aria-label="Test Organizations Only"
+              type="button"
             >
-              <FaPlay />
-              Test Organizations Only
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center">
+                <FaPlay className="w-6 h-6 text-green-600" />
+              </div>
+              <span className="font-semibold text-green-700">Test Organizations Only</span>
             </button>
             <button
               onClick={runSettingsTests}
               disabled={isRunning}
-              className="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              className="flex-shrink-0 h-14 rounded-xl bg-purple-100 hover:bg-purple-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-purple-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              title="Test Settings Only"
+              aria-label="Test Settings Only"
+              type="button"
             >
-              <FaPlay />
-              Test Settings Only
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-200 flex items-center justify-center">
+                <FaPlay className="w-6 h-6 text-purple-600" />
+              </div>
+              <span className="font-semibold text-purple-700">Test Settings Only</span>
             </button>
             <button
               onClick={clearResults}
               disabled={isRunning}
-              className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              className="flex-shrink-0 h-14 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              title="Clear Results"
+              aria-label="Clear Results"
+              type="button"
             >
-              Clear Results
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <span className="font-semibold text-gray-700">Clear Results</span>
             </button>
           </div>
 

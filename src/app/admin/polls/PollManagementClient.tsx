@@ -140,10 +140,6 @@ export function PollManagementClient({ initialPolls }: PollManagementClientProps
   };
 
   const handleDeletePoll = async (pollId: number) => {
-    if (!confirm('Are you sure you want to delete this poll? This action cannot be undone.')) {
-      return;
-    }
-
     try {
       setIsLoading(true);
       

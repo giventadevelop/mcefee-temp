@@ -31,6 +31,83 @@ This guide provides standards for creating consistent and maintainable UI compon
   </div>
   ```
 
+### Centered Card Grid Layout
+
+- **Rule:** Use CSS modules with flexbox for centered card grids (Featured Guests, Contact Information, Program Directors, Gallery thumbnails, Team members).
+- **Purpose:** Ensures cards are perfectly centered regardless of the number of items, preventing left-aligned layouts when items don't fill the full width.
+- **Pattern:** Create a CSS module file (e.g., `CenteredCardGrid.module.css`) with:
+  - Flexbox container with `justify-content: center`
+  - Responsive `max-width` calculations based on number of columns
+  - Fixed or calculated widths for card items
+- **Example:**
+  ```css
+  /* Centered Card Grid */
+  .centeredCardGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
+    align-items: flex-start;
+    margin: 0 auto;
+  }
+
+  /* Desktop: 3 columns */
+  @media (min-width: 1024px) {
+    .centeredCardGrid {
+      max-width: calc(3 * 350px + 2 * 1rem);
+    }
+    .cardItem {
+      width: 350px;
+      max-width: 350px;
+    }
+  }
+
+  /* Tablet: 2 columns */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .centeredCardGrid {
+      max-width: calc(2 * 350px + 1 * 1rem);
+    }
+    .cardItem {
+      width: calc((100% - 1rem) / 2);
+      max-width: calc((100% - 1rem) / 2);
+    }
+  }
+
+  /* Mobile: 1 column */
+  @media (max-width: 767px) {
+    .centeredCardGrid {
+      max-width: 100%;
+    }
+    .cardItem {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+  ```
+- **Usage:**
+  ```tsx
+  // ✅ DO: Use CSS module for centered card grids
+  import cardGridStyles from './CenteredCardGrid.module.css';
+
+  <div className={cardGridStyles.centeredCardGrid}>
+    {items.map((item) => (
+      <div key={item.id} className={cardGridStyles.cardItem}>
+        {/* Card content */}
+      </div>
+    ))}
+  </div>
+
+  // ❌ DON'T: Use standard grid without centering
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {/* Cards will be left-aligned when not filling full width */}
+  </div>
+  ```
+- **References:**
+  - See `src/app/events/[id]/CenteredCardGrid.module.css` for implementation
+  - See `src/app/events/[id]/GalleryThumbnails.module.css` for gallery pattern
+  - See `src/components/TeamSection.module.css` for team member pattern
+
 ---
 
 ## 2. Forms
@@ -60,29 +137,35 @@ This guide provides standards for creating consistent and maintainable UI compon
 
 ### Checkboxes
 
-- **Rule:** Use the `custom-checkbox` implementation for a larger, more visible checkbox with a custom tick mark.
-- **Click Handling:** Always include `onClick={(e) => e.stopPropagation()}` on the `input` to prevent unintended event bubbling, especially inside clickable table rows or containers.
-- **Example:**
+- **Rule:** Use large **square** admin checkboxes (`custom-checkbox` + optional `custom-checkbox--yellow`) with a custom SVG tick overlay. Do **not** use `rounded-lg` or `rounded-full` — shape must stay a square with only slight rounding (`rounded` = 4px).
+- **Size:** Always `w-7 h-7` (28×28px). Width must equal height.
+- **Yellow variant (admin forms):** Add `custom-checkbox--yellow` for thick gray border unchecked / solid yellow-500 fill+border when checked (EventForm, Tenant Settings “Add site footer”, newsletter “Template is active”, etc.).
+- **Tick:** Overlay SVG (`w-6 h-6 text-gray-800`, `strokeWidth={4}`) inside `.custom-checkbox-tick`; render only when checked. Parent of input+tick must be `relative`.
+- **Label:** Prefer label **below** the box, centered (`flex flex-col items-center` + `mt-2 text-sm font-semibold`). Inline labels beside the box are OK for weekday pickers / dense rows.
+- **Click Handling:** Always include `onClick={(e) => e.stopPropagation()}` on the `input`.
+- **Example (grid / EventForm tile):**
   ```tsx
-  // ✅ DO: Use consistent checkbox styling with stopPropagation
+  // ✅ DO: Square yellow checkbox, label under box
   <label className="flex flex-col items-center">
     <span className="relative flex items-center justify-center">
       <input
         type="checkbox"
-        className="custom-checkbox"
+        className="custom-checkbox custom-checkbox--yellow"
         checked={isChecked}
         onChange={handleChange}
         onClick={(e) => e.stopPropagation()}
       />
       <span className="custom-checkbox-tick">
         {isChecked && (
-          <svg className="w-6 h-6 text-black" fill="none" stroke="currentColor" strokeWidth="4" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" strokeWidth="4" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l5 5L19 7" />
           </svg>
         )}
       </span>
     </span>
-    <span className="mt-2 text-xs text-center select-none break-words max-w-[6rem]">Checkbox Label</span>
+    <span className="mt-2 text-sm font-semibold text-center select-none break-words max-w-[8rem]">
+      Checkbox Label
+    </span>
   </label>
   ```
 
@@ -97,17 +180,26 @@ This guide provides standards for creating consistent and maintainable UI compon
 - **Required CSS (`globals.css`):**
   ```css
   .custom-checkbox {
-    @apply h-6 w-6 border-2 border-gray-400 rounded-lg cursor-pointer appearance-none relative bg-white;
+    @apply w-7 h-7 accent-yellow-400 appearance-none border-2 border-gray-400 rounded bg-white cursor-pointer relative flex-shrink-0 focus:ring-2 focus:ring-yellow-400 focus:outline-none checked:bg-yellow-400 checked:border-yellow-500;
   }
-  .custom-checkbox:checked {
-    @apply bg-blue-600 border-blue-600;
+  .custom-checkbox--yellow {
+    @apply border-4 border-gray-500;
+  }
+  .custom-checkbox--yellow:checked {
+    @apply bg-yellow-500 border-yellow-500 border-4;
   }
   .custom-checkbox-tick {
-    @apply absolute inset-0 flex items-center justify-center pointer-events-none;
+    @apply pointer-events-none absolute inset-0 flex items-center justify-center;
   }
   ```
 
----
+- **DON'T:**
+  - ❌ `rounded-lg` / `rounded-full` (too round or circular)
+  - ❌ `h-4 w-4` native checkboxes for admin forms
+  - ❌ Rely on `accent-color` alone without `appearance-none`
+  - ❌ Forget `relative` on the wrapper (tick won't overlay)
+
+- **Visual spec:** Unchecked = white + thick gray-500 border (yellow variant). Checked = yellow-500 fill/border + dark centered checkmark.
 
 ## 3. Buttons & Icons
 
@@ -266,8 +358,8 @@ const endItem = totalCount > 0 ? currentPage * pageSize + Math.min(pageSize, tot
 // Always render pagination - show in ALL states (loading, empty, with data)
 <div className="mt-8">
   <div className="flex justify-between items-center">
-    <button 
-      disabled={isPrevDisabled} 
+    <button
+      disabled={isPrevDisabled}
       onClick={handlePrevPage}
       className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
     >
@@ -277,8 +369,8 @@ const endItem = totalCount > 0 ? currentPage * pageSize + Math.min(pageSize, tot
     <div className="text-sm font-semibold text-gray-700">
       Page {currentPage + 1} of {totalPages}
     </div>
-    <button 
-      disabled={isNextDisabled} 
+    <button
+      disabled={isNextDisabled}
       onClick={handleNextPage}
       className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
     >
@@ -399,6 +491,88 @@ const endItem = totalCount > 0 ? currentPage * pageSize + Math.min(pageSize, tot
 #### References
 - See: `src/app/event/success/page.tsx` for a working implementation.
 - DTO: `EventDetailsDTO` in `src/types/index.ts` (must include a `timezone: string` field).
+
+---
+
+## 8. Currency & Numerical Formatting
+
+### Currency Display Standards
+
+- **Rule:** Always display currency values with exactly 2 decimal places using `Intl.NumberFormat`.
+- **Purpose:** Ensures consistent currency display (e.g., `$0.80` instead of `$0.8`) and prevents confusion.
+- **Implementation:**
+  - Use `Intl.NumberFormat` with `minimumFractionDigits: 2` and `maximumFractionDigits: 2`.
+  - For input fields, format the display value to show 2 decimal places while allowing user input.
+  - Use the `formatCurrency` helper from `src/lib/payments/localization.ts` when available.
+
+#### Currency Formatting Function
+
+```tsx
+// ✅ DO: Use Intl.NumberFormat with 2 decimal places
+const formatCurrency = (amount: number, currency: string = 'USD') => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,  // Always show 2 decimal places
+    maximumFractionDigits: 2,  // Never show more than 2
+  }).format(amount);
+};
+
+// Example usage:
+formatCurrency(0.8, 'USD');   // Returns: "$0.80"
+formatCurrency(10, 'USD');     // Returns: "$10.00"
+formatCurrency(99.9, 'USD');   // Returns: "$99.90"
+```
+
+#### Price Input Field Formatting
+
+- **Rule:** For price input fields, format the display value to show 2 decimal places.
+- **Implementation:**
+  ```tsx
+  // ✅ DO: Format price input display value
+  const [displayPrice, setDisplayPrice] = useState<string>('');
+
+  useEffect(() => {
+    if (formData.price !== undefined && formData.price !== null) {
+      setDisplayPrice(formData.price.toFixed(2));
+    }
+  }, [formData.price]);
+
+  <input
+    type="number"
+    name="price"
+    value={displayPrice}
+    onChange={(e) => {
+      const numValue = parseFloat(e.target.value) || 0;
+      handleChange({ target: { name: 'price', value: numValue } });
+    }}
+    step="0.01"
+    placeholder="0.00"
+  />
+  ```
+
+#### Display Price Values
+
+- **Rule:** Always format price values when displaying them in tables, cards, or text.
+- **Example:**
+  ```tsx
+  // ✅ DO: Format price for display
+  <td>
+    {new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: plan.currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(plan.price)}
+  </td>
+
+  // ❌ DON'T: Display raw price value
+  <td>${plan.price}</td>  // May show "$0.8" instead of "$0.80"
+  ```
+
+#### References
+- Currency formatting helper: [`src/lib/payments/localization.ts`](mdc:src/lib/payments/localization.ts)
+- Example usage: [`src/components/admin/membership/MembershipPlanList.tsx`](mdc:src/components/admin/membership/MembershipPlanList.tsx)
 
 ---
 

@@ -1,34 +1,68 @@
 "use server";
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
-import { getTenantId, getAppUrl } from '@/lib/env';
+import { getTenantId, getAppUrl, getApiBaseUrl } from '@/lib/env';
 import type { EventDetailsDTO, EventTypeDetailsDTO, UserProfileDTO, EventCalendarEntryDTO } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
-export async function fetchEventsServer(pageNum = 0, pageSize = 5): Promise<EventDetailsDTO[]> {
-  const url = `${API_BASE_URL}/api/event-details?page=${pageNum}&size=${pageSize}&sort=startDate,asc&tenantId.equals=${getTenantId()}`;
-  const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch events');
-  return await res.json();
+export async function fetchEventsServer(pageNum = 0, pageSize = 20): Promise<EventDetailsDTO[]> {
+  try {
+    const url = `${getApiBase()}/api/event-details?page=${pageNum}&size=${pageSize}&sort=startDate,asc&tenantId.equals=${getTenantId()}`;
+    const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error('[fetchEventsServer] Failed:', res.status);
+      return [];
+    }
+    return await res.json();
+  } catch (error) {
+    console.error('[fetchEventsServer] Error:', error);
+    return [];
+  }
 }
 
 export async function fetchEventTypesServer(): Promise<EventTypeDetailsDTO[]> {
-  const url = `${API_BASE_URL}/api/event-type-details?tenantId.equals=${getTenantId()}`;
-  const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch event types');
-  return await res.json();
+  try {
+    const url = `${getApiBase()}/api/event-type-details?tenantId.equals=${getTenantId()}`;
+    const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error('[fetchEventTypesServer] Failed:', res.status);
+      return [];
+    }
+    return await res.json();
+  } catch (error) {
+    console.error('[fetchEventTypesServer] Error:', error);
+    return [];
+  }
 }
 
-export async function fetchCalendarEventsServer(): Promise<EventCalendarEntryDTO[]> {
-  const url = `${API_BASE_URL}/api/event-calendar-entries?size=1000&tenantId.equals=${getTenantId()}`;
-  const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch calendar events');
-  const data = await res.json();
-  return Array.isArray(data) ? data : [];
+export async function fetchCalendarEventsServer(eventIds: number[] = []): Promise<EventCalendarEntryDTO[]> {
+  try {
+    const ids = eventIds.filter((id) => id != null);
+    if (ids.length === 0) return [];
+    // Scope the fetch to the events actually being enriched (repeated eventId.in params)
+    const params = new URLSearchParams();
+    ids.forEach((id) => params.append('eventId.in', String(id)));
+    params.append('size', String(ids.length));
+    params.append('tenantId.equals', getTenantId());
+    const url = `${getApiBase()}/api/event-calendar-entries?${params.toString()}`;
+    const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error('[fetchCalendarEventsServer] Failed:', res.status);
+      return [];
+    }
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('[fetchCalendarEventsServer] Error:', error);
+    return [];
+  }
 }
 
 export async function createEventServer(event: any): Promise<any> {
-  const url = `${API_BASE_URL}/api/event-details`;
+  const url = `${getApiBase()}/api/event-details`;
   const res = await fetchWithJwtRetry(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -40,7 +74,7 @@ export async function createEventServer(event: any): Promise<any> {
 
 export async function updateEventServer(event: any): Promise<any> {
   if (!event.id) throw new Error('Event ID required for update');
-  const url = `${API_BASE_URL}/api/event-details/${event.id}`;
+  const url = `${getApiBase()}/api/event-details/${event.id}`;
   const res = await fetchWithJwtRetry(url, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -52,7 +86,7 @@ export async function updateEventServer(event: any): Promise<any> {
 
 export async function cancelEventServer(event: EventDetailsDTO): Promise<EventDetailsDTO> {
   if (!event.id) throw new Error('Event ID required for cancel');
-  const url = `${API_BASE_URL}/api/event-details/${event.id}`;
+  const url = `${getApiBase()}/api/event-details/${event.id}`;
   const res = await fetchWithJwtRetry(url, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -92,7 +126,7 @@ export async function createCalendarEventServer(event: EventDetailsDTO, userProf
     event,
     createdBy: userProfile,
   };
-  const url = `${API_BASE_URL}/api/event-calendar-entries`;
+  const url = `${getApiBase()}/api/event-calendar-entries`;
   const res = await fetchWithJwtRetry(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -106,12 +140,12 @@ export async function createCalendarEventServer(event: EventDetailsDTO, userProf
 }
 
 export async function findCalendarEventByEventIdServer(eventId: number): Promise<EventCalendarEntryDTO | null> {
-  const url = `${API_BASE_URL}/api/event-calendar-entries?size=1000&tenantId.equals=${getTenantId()}`;
+  const url = `${getApiBase()}/api/event-calendar-entries?eventId.equals=${eventId}&size=1&tenantId.equals=${getTenantId()}`;
   const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
   if (!res.ok) return null;
   const data = await res.json();
-  if (!Array.isArray(data)) return null;
-  return data.find((ce: EventCalendarEntryDTO) => ce.event && ce.event.id === eventId) || null;
+  if (!Array.isArray(data) || data.length === 0) return null;
+  return data[0];
 }
 
 export async function updateCalendarEventForEventServer(event: EventDetailsDTO, userProfile: UserProfileDTO) {
@@ -132,7 +166,7 @@ export async function updateCalendarEventForEventServer(event: EventDetailsDTO, 
     event,
     createdBy: userProfile,
   };
-  const url = `${API_BASE_URL}/api/event-calendar-entries/${calendarEvent.id}`;
+  const url = `${getApiBase()}/api/event-calendar-entries/${calendarEvent.id}`;
   const res = await fetchWithJwtRetry(url, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -149,7 +183,7 @@ export async function deleteCalendarEventForEventServer(event: EventDetailsDTO) 
   if (!event.id) return;
   const calendarEvent = await findCalendarEventByEventIdServer(event.id);
   if (!calendarEvent || !calendarEvent.id) return;
-  const url = `${API_BASE_URL}/api/event-calendar-entries/${calendarEvent.id}`;
+  const url = `${getApiBase()}/api/event-calendar-entries/${calendarEvent.id}`;
   const res = await fetchWithJwtRetry(url, { method: 'DELETE' });
   if (!res.ok) {
     const err = await res.text();
@@ -168,40 +202,116 @@ export async function fetchEventsFilteredServer(params: {
   pageNum?: number,
   pageSize?: number
 }): Promise<{ events: EventDetailsDTO[], totalCount: number }> {
+  try {
+    const tenantId = getTenantId();
+    const queryParams = new URLSearchParams({
+      'tenantId.equals': tenantId,
+      page: String(params.pageNum || 0),
+      size: String(params.pageSize || 20),
+      sort: params.sort || 'startDate,asc'
+    });
+
+    if (params.title) queryParams.append('title.contains', params.title);
+    if (params.id) queryParams.append('id.equals', params.id);
+    if (params.caption) queryParams.append('caption.contains', params.caption);
+    if (params.startDate) queryParams.append('startDate.greaterThanOrEqual', params.startDate);
+    if (params.endDate) queryParams.append('endDate.lessThanOrEqual', params.endDate);
+    if (params.admissionType) queryParams.append('admissionType.equals', params.admissionType);
+
+    const url = `${getApiBase()}/api/event-details?${queryParams.toString()}`;
+
+    const res = await fetchWithJwtRetry(url, {});
+
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error('[fetchEventsFilteredServer] Failed:', res.status, errorBody);
+      return { events: [], totalCount: 0 };
+    }
+
+    const totalCount = Number(res.headers.get('X-Total-Count')) || 0;
+    const events = await res.json();
+
+    return { events, totalCount };
+  } catch (error) {
+    console.error('[fetchEventsFilteredServer] Error:', error);
+    return { events: [], totalCount: 0 };
+  }
+}
+
+const EVENT_TYPEAHEAD_LIMIT = 20;
+
+function normalizeEventList(data: unknown): EventDetailsDTO[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && Array.isArray((data as { content?: unknown }).content)) {
+    return (data as { content: EventDetailsDTO[] }).content;
+  }
+  return [];
+}
+
+function mergeEventsById(...lists: EventDetailsDTO[][]): EventDetailsDTO[] {
+  const byKey = new Map<string, EventDetailsDTO>();
+  for (const list of lists) {
+    for (const event of list) {
+      const key =
+        event.id != null
+          ? `id:${event.id}`
+          : event.title
+            ? `title:${event.title}`
+            : null;
+      if (!key || byKey.has(key)) continue;
+      byKey.set(key, event);
+    }
+  }
+  return Array.from(byKey.values());
+}
+
+/**
+ * Multi-field typeahead for Manage Events:
+ * matches title, caption, and numeric id (parallel criteria queries).
+ */
+export async function searchEventsForTypeaheadServer(
+  query: string,
+): Promise<EventDetailsDTO[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
   const tenantId = getTenantId();
-  const queryParams = new URLSearchParams({
-    'tenantId.equals': tenantId,
-    page: String(params.pageNum || 0),
-    size: String(params.pageSize || 5),
-    sort: params.sort || 'startDate,asc'
-  });
+  const baseParams = () => {
+    const params = new URLSearchParams();
+    params.append('tenantId.equals', tenantId);
+    params.append('page', '0');
+    params.append('size', String(EVENT_TYPEAHEAD_LIMIT));
+    params.append('sort', 'startDate,asc');
+    return params;
+  };
 
-  if (params.title) queryParams.append('title.contains', params.title);
-  if (params.id) queryParams.append('id.equals', params.id);
-  if (params.caption) queryParams.append('caption.contains', params.caption);
-  if (params.startDate) queryParams.append('startDate.greaterThanOrEqual', params.startDate);
-  if (params.endDate) queryParams.append('endDate.lessThanOrEqual', params.endDate);
-  if (params.admissionType) queryParams.append('admissionType.equals', params.admissionType);
+  const fetchBy = async (apply: (params: URLSearchParams) => void) => {
+    const params = baseParams();
+    apply(params);
+    const res = await fetchWithJwtRetry(
+      `${getApiBase()}/api/event-details?${params.toString()}`,
+      { cache: 'no-store' },
+    );
+    if (!res.ok) return [] as EventDetailsDTO[];
+    return normalizeEventList(await res.json());
+  };
 
-  const url = `${API_BASE_URL}/api/event-details?${queryParams.toString()}`;
+  const jobs: Promise<EventDetailsDTO[]>[] = [
+    fetchBy((p) => p.append('title.contains', trimmed)),
+    fetchBy((p) => p.append('caption.contains', trimmed)),
+  ];
 
-  const res = await fetchWithJwtRetry(url, {});
-
-  if (!res.ok) {
-    const errorBody = await res.text();
-    console.error('Error fetching filtered events:', res.status, errorBody);
-    throw new Error(`Failed to fetch events: ${res.statusText}`);
+  if (!Number.isNaN(Number(trimmed))) {
+    jobs.push(fetchBy((p) => p.append('id.equals', String(Number(trimmed)))));
   }
 
-  const totalCount = Number(res.headers.get('X-Total-Count')) || 0;
-  const events = await res.json();
-
-  return { events, totalCount };
+  const results = await Promise.all(jobs);
+  return mergeEventsById(...results).slice(0, EVENT_TYPEAHEAD_LIMIT);
 }
 
 export async function fetchEventDetailsServer(eventId: number): Promise<EventDetailsDTO | null> {
   const tenantId = getTenantId();
-  const url = `${API_BASE_URL}/api/event-details/${eventId}?tenantId.equals=${tenantId}`;
+  const url = `${getApiBase()}/api/event-details/${eventId}?tenantId.equals=${tenantId}`;
   const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
   if (!res.ok) {
     console.error(`Failed to fetch event details for eventId ${eventId}:`, res.status, await res.text());
@@ -215,7 +325,7 @@ export async function fetchUserProfileServer(userId: string): Promise<UserProfil
         return null;
     }
     const tenantId = getTenantId();
-    const url = `${API_BASE_URL}/api/user-profiles/by-user/${userId}?tenantId.equals=${tenantId}`;
+    const url = `${getApiBase()}/api/user-profiles/by-user/${userId}?tenantId.equals=${tenantId}`;
     try {
         const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
         if (!res.ok) {
@@ -234,7 +344,7 @@ export async function fetchUserProfileByEmailServer(email: string): Promise<User
       return null;
     }
     const tenantId = getTenantId();
-    const url = `${API_BASE_URL}/api/user-profiles?email.equals=${encodeURIComponent(email)}&tenantId.equals=${tenantId}`;
+    const url = `${getApiBase()}/api/user-profiles?email.equals=${encodeURIComponent(email)}&tenantId.equals=${tenantId}`;
     try {
         const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
         if (!res.ok) {
@@ -246,5 +356,286 @@ export async function fetchUserProfileByEmailServer(email: string): Promise<User
   } catch (error) {
         console.error(`Error fetching user profile for email ${email}:`, error);
     return null;
+  }
+}
+
+/**
+ * Fetch all child events in a recurrence series
+ * Uses recurrenceSeriesId to find all events in the series (parent + children)
+ */
+export async function fetchChildEventsBySeriesIdServer(recurrenceSeriesId: number): Promise<EventDetailsDTO[]> {
+  if (!recurrenceSeriesId) return [];
+  const tenantId = getTenantId();
+  const url = `${getApiBase()}/api/event-details?recurrenceSeriesId.equals=${recurrenceSeriesId}&tenantId.equals=${tenantId}&size=1000`;
+  try {
+    const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error(`Failed to fetch child events for series ${recurrenceSeriesId}: ${res.status}`);
+      return [];
+    }
+    const events = await res.json();
+    const eventArray = Array.isArray(events) ? events : [];
+    console.log(`[fetchChildEventsBySeriesIdServer] Fetched ${eventArray.length} events for series ${recurrenceSeriesId}:`,
+      eventArray.map(e => ({ id: e.id, parentEventId: e.parentEventId, isActive: e.isActive, title: e.title })));
+    return eventArray;
+  } catch (error) {
+    console.error(`Error fetching child events for series ${recurrenceSeriesId}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Soft delete (deactivate) an event
+ * - If it's a parent event: deactivates parent + all child events
+ * - If it's a child event: deactivates only that child event
+ */
+export async function softDeleteEventWithChildrenServer(event: EventDetailsDTO): Promise<void> {
+  if (!event.id) throw new Error('Event ID required for soft delete');
+
+  // Check if this is a parent event (parentEventId is null/undefined)
+  const isParentEvent = event.parentEventId == null || event.parentEventId === undefined;
+
+  if (isParentEvent) {
+    // Parent event: Only update the parent - backend will automatically sync children via syncChildEventsActiveStatus
+    console.log(`[softDeleteEventWithChildrenServer] Deactivating parent event ${event.id} - backend will sync children automatically`);
+
+    try {
+      // Fetch full event details to ensure we have all required fields
+      const fullEvent = await fetchEventDetailsServer(event.id);
+      if (!fullEvent) {
+        throw new Error(`Event ${event.id} not found`);
+      }
+
+      const url = `${getApiBase()}/api/event-details/${event.id}`;
+      console.log(`[softDeleteEventWithChildrenServer] Calling PUT ${url} to deactivate parent event ${event.id}`);
+
+      // Explicitly set isRecurring to false to prevent backend from trying to generate recurring events
+      // This is a workaround for backend bug where it calls generateRecurringEvents() even when isRecurring=false
+      const updatePayload = {
+        ...fullEvent,
+        isActive: false,
+        isRecurring: false, // Explicitly set to false to prevent recurrence generation
+      };
+
+      const res = await fetchWithJwtRetry(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`[softDeleteEventWithChildrenServer] Failed to deactivate parent event ${event.id}: ${res.status} ${errorText}`);
+        throw new Error(`Failed to deactivate parent event: ${res.status} ${errorText}`);
+      }
+
+      console.log(`[softDeleteEventWithChildrenServer] Successfully deactivated parent event ${event.id} - backend should sync children automatically`);
+
+      // Delete calendar events for parent and all children (non-blocking)
+      // Fetch all events in series to delete their calendar events
+      const seriesId = event.recurrenceSeriesId || event.id;
+      const allEventsInSeries = await fetchChildEventsBySeriesIdServer(seriesId);
+
+      const calendarDeletionPromises = allEventsInSeries.map(async (e) => {
+        if (!e.id) return;
+        try {
+          await deleteCalendarEventForEventServer(e);
+        } catch (calendarErr) {
+          console.warn(`[softDeleteEventWithChildrenServer] Failed to delete calendar event for event ${e.id}:`, calendarErr);
+        }
+      });
+
+      // Don't await calendar deletions - they're non-blocking
+      Promise.all(calendarDeletionPromises).catch(err => {
+        console.warn(`[softDeleteEventWithChildrenServer] Some calendar event deletions failed:`, err);
+      });
+    } catch (err) {
+      console.error(`[softDeleteEventWithChildrenServer] Failed to deactivate parent event ${event.id}:`, err);
+      throw err;
+    }
+  } else {
+    // Child event: deactivate only this child
+    console.log(`[softDeleteEventWithChildrenServer] Deactivating child event ${event.id}, parentEventId: ${event.parentEventId}`);
+    try {
+      // First, fetch the full event details to ensure we have all required fields
+      const fullEvent = await fetchEventDetailsServer(event.id);
+      if (!fullEvent) {
+        throw new Error(`Event ${event.id} not found`);
+      }
+
+      const url = `${getApiBase()}/api/event-details/${event.id}`;
+      console.log(`[softDeleteEventWithChildrenServer] Calling PUT ${url} with isActive=false`);
+
+      // Explicitly set isRecurring to false to prevent backend from trying to generate recurring events
+      // This is a workaround for backend bug where it calls generateRecurringEvents() even when isRecurring=false
+      const updatePayload = {
+        ...fullEvent,
+        isActive: false,
+        isRecurring: false, // Explicitly set to false to prevent recurrence generation
+      };
+
+      const res = await fetchWithJwtRetry(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`[softDeleteEventWithChildrenServer] Failed to deactivate child event ${event.id}: ${res.status} ${errorText}`);
+        throw new Error(`Failed to deactivate event: ${res.status} ${errorText}`);
+      }
+
+      const updatedEvent = await res.json();
+      console.log(`[softDeleteEventWithChildrenServer] Successfully deactivated child event ${event.id}`, updatedEvent);
+
+      // Also delete calendar event if it exists (non-blocking)
+      try {
+        await deleteCalendarEventForEventServer(fullEvent);
+      } catch (calendarErr) {
+        console.warn(`[softDeleteEventWithChildrenServer] Failed to delete calendar event for event ${event.id}:`, calendarErr);
+        // Don't throw - calendar deletion is optional
+      }
+    } catch (err) {
+      console.error(`[softDeleteEventWithChildrenServer] Error deactivating child event ${event.id}:`, err);
+      throw err;
+    }
+  }
+}
+
+/**
+ * Activate an event
+ * - If it's a parent event: activates parent + all child events
+ * - If it's a child event: activates only that child event
+ */
+export async function activateEventWithChildrenServer(event: EventDetailsDTO): Promise<void> {
+  if (!event.id) throw new Error('Event ID required for activation');
+
+  // Check if this is a parent event (parentEventId is null/undefined)
+  const isParentEvent = event.parentEventId == null || event.parentEventId === undefined;
+
+  if (isParentEvent) {
+    // Parent event: Only update the parent - backend will automatically sync children via syncChildEventsActiveStatus
+    console.log(`[activateEventWithChildrenServer] Activating parent event ${event.id} - backend will sync children automatically`);
+
+    try {
+      // Fetch full event details to ensure we have all required fields
+      const fullEvent = await fetchEventDetailsServer(event.id);
+      if (!fullEvent) {
+        throw new Error(`Event ${event.id} not found`);
+      }
+
+      const url = `${getApiBase()}/api/event-details/${event.id}`;
+      console.log(`[activateEventWithChildrenServer] Calling PUT ${url} to activate parent event ${event.id}`);
+
+      const updatePayload = {
+        ...fullEvent,
+        isActive: true,
+      };
+
+      const res = await fetchWithJwtRetry(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`[activateEventWithChildrenServer] Failed to activate parent event ${event.id}: ${res.status} ${errorText}`);
+        throw new Error(`Failed to activate parent event: ${res.status} ${errorText}`);
+      }
+
+      console.log(`[activateEventWithChildrenServer] Successfully activated parent event ${event.id} - backend should sync children automatically`);
+    } catch (err) {
+      console.error(`[activateEventWithChildrenServer] Failed to activate parent event ${event.id}:`, err);
+      throw err;
+    }
+  } else {
+    // Child event: activate only this child
+    try {
+      const url = `${getApiBase()}/api/event-details/${event.id}`;
+      await fetchWithJwtRetry(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...event, isActive: true }),
+      });
+    } catch (err) {
+      console.error(`Failed to activate child event ${event.id}:`, err);
+      throw err;
+    }
+  }
+}
+
+/**
+ * Hard delete (permanently delete) an event
+ * - If it's a parent event: deletes parent + all child events
+ * - If it's a child event: deletes only that child event
+ */
+export async function hardDeleteEventWithChildrenServer(event: EventDetailsDTO): Promise<void> {
+  if (!event.id) throw new Error('Event ID required for hard delete');
+
+  // Check if this is a parent event (parentEventId is null/undefined)
+  const isParentEvent = event.parentEventId == null || event.parentEventId === undefined;
+
+  if (isParentEvent) {
+    // Parent event: delete parent + all children
+    const seriesId = event.recurrenceSeriesId || event.id;
+    const allEventsInSeries = await fetchChildEventsBySeriesIdServer(seriesId);
+
+    // Delete all events in the series (delete children first, then parent)
+    // Sort so children (with parentEventId) are deleted before parent (without parentEventId)
+    const sortedEvents = allEventsInSeries.sort((a, b) => {
+      const aIsChild = a.parentEventId != null;
+      const bIsChild = b.parentEventId != null;
+      if (aIsChild && !bIsChild) return -1;
+      if (!aIsChild && bIsChild) return 1;
+      return 0;
+    });
+
+    const deletionPromises = sortedEvents.map(async (e) => {
+      if (!e.id) return;
+      try {
+        // Delete calendar events first
+        try {
+          await deleteCalendarEventForEventServer(e);
+        } catch (calendarErr) {
+          console.warn(`Failed to delete calendar event for event ${e.id}:`, calendarErr);
+        }
+
+        // Then delete the event
+        const url = `${getApiBase()}/api/event-details/${e.id}`;
+        const res = await fetchWithJwtRetry(url, { method: 'DELETE' });
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(`Failed to delete event ${e.id}: ${err}`);
+        }
+      } catch (err) {
+        console.error(`Failed to delete event ${e.id}:`, err);
+        throw err;
+      }
+    });
+
+    await Promise.all(deletionPromises);
+  } else {
+    // Child event: delete only this child
+    try {
+      // Delete calendar event first
+      try {
+        await deleteCalendarEventForEventServer(event);
+      } catch (calendarErr) {
+        console.warn(`Failed to delete calendar event for event ${event.id}:`, calendarErr);
+      }
+
+      // Then delete the event
+      const url = `${getApiBase()}/api/event-details/${event.id}`;
+      const res = await fetchWithJwtRetry(url, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Failed to delete child event ${event.id}: ${err}`);
+      }
+    } catch (err) {
+      console.error(`Failed to delete child event ${event.id}:`, err);
+      throw err;
+    }
   }
 }

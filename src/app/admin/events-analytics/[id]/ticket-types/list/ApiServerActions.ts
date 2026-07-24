@@ -1,19 +1,22 @@
 "use server";
 
 import { revalidatePath } from 'next/cache';
-import { getTenantId, getAppUrl } from '@/lib/env';
+import { getTenantId, getAppUrl, getApiBaseUrl } from '@/lib/env';
 import { withTenantId } from '@/lib/withTenantId';
 import type { EventTicketTypeDTO, EventTicketTypeFormDTO, EventDetailsDTO } from '@/types';
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 const APP_URL = getAppUrl();
 
 
 export async function fetchTicketTypesServer(eventId: number) {
   const tenantId = getTenantId();
   const res = await fetch(
-    `${API_BASE_URL}/api/proxy/event-ticket-types?eventId.equals=${eventId}&tenantId.equals=${tenantId}&sort=createdAt,desc`,
+    `${getApiBase()}/api/proxy/event-ticket-types?eventId.equals=${eventId}&tenantId.equals=${tenantId}&sort=createdAt,desc`,
     { cache: 'no-store' }
   );
   if (!res.ok) {
@@ -34,7 +37,7 @@ export async function createTicketTypeServer(eventId: string, formData: EventTic
       updatedAt: new Date().toISOString(),
     });
 
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-ticket-types`, {
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-ticket-types`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -70,7 +73,7 @@ export async function updateTicketTypeServer(ticketTypeId: number, eventId: stri
       updatedAt: new Date().toISOString(),
     });
 
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-ticket-types/${ticketTypeId}`, {
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-ticket-types/${ticketTypeId}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
@@ -88,7 +91,7 @@ export async function updateTicketTypeServer(ticketTypeId: number, eventId: stri
 
 export async function deleteTicketTypeServer(ticketTypeId: number, eventId: string) {
   try {
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-ticket-types/${ticketTypeId}`, {
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-ticket-types/${ticketTypeId}`, {
       method: 'DELETE',
     });
     if (!response.ok) {

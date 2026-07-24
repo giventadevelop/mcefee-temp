@@ -47,31 +47,33 @@ This document provides comprehensive guidelines for optimizing images used in th
 
 ---
 
-### **2. Hero Image (Cell 2)**
-**Purpose**: Dynamic event flyer rotation and visual impact
+### **2. Hero Image (Main Home Page – Rotating Hero / Split Layout)**
+**Purpose**: Dynamic event flyer rotation and visual impact in the **main home page** hero (split layout, right-panel slideshow).
+
+The hero display area uses **object-contain** in a wide container (~65% viewport width) with **min-height 280–480px**. The component uses **1200×800** (3:2) intrinsic dimensions. **Portrait images (e.g. 800×1200) make the section excessively tall** and are not recommended.
 
 #### **Optimal Dimensions**
-- **Desktop**: 800×1200px (2:3 aspect ratio)
-- **Mobile**: 600×900px (2:3 aspect ratio)
-- **Aspect Ratio**: 2:3 (portrait)
+- **Desktop**: **1200×800px (3:2 aspect ratio, landscape)**
+- **Mobile**: **900×600px (3:2 ratio)** or same 1200×800 scales down
+- **Aspect Ratio**: **3:2 (landscape)** — use landscape so the hero block height stays proportional
 
 #### **Technical Requirements**
 - **Format**: WebP (preferred) or JPG
 - **Quality**: 80-85%
 - **File Size**: Under 300KB
-- **Resolution**: 2x for retina displays (1600×2400px source)
+- **Resolution**: 2x for retina: 2400×1600px source optional
 
 #### **Content Guidelines**
 - **Subject**: Event flyers, promotional posters, or hero imagery
 - **Composition**:
-  - Main subject in upper 60% of frame
+  - Main subject in center or upper 60% of frame
   - Text should be readable at 50% scale
   - High contrast for text overlay visibility
 - **Style**: Professional, engaging, culturally relevant
 - **Colors**: Vibrant but not overwhelming
 
 #### **Dynamic Behavior**
-- **Rotation**: Changes every 15 seconds
+- **Rotation**: Changes per image display duration (default 8s)
 - **Fallback**: Default image for first 2 seconds
 - **Event Integration**: Automatically loads from event media API
 - **Click Action**: Routes to specific event or events page

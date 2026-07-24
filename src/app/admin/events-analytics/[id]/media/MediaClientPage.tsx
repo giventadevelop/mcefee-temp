@@ -88,7 +88,7 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   const [message, setMessage] = useState<string | null>(null);
   const [mediaList, setMediaList] = useState<EventMediaDTO[]>(initialMediaList);
   const [mediaPage, setMediaPage] = useState(0);
-  const mediaPageSize = 10;
+  const mediaPageSize = 20;
   const [showOnlyEventFlyers, setShowOnlyEventFlyers] = useState(false);
   const filteredMediaList = showOnlyEventFlyers ? mediaList.filter(m => m.eventFlyer) : mediaList;
   const pagedMedia = filteredMediaList.slice(mediaPage * mediaPageSize, (mediaPage + 1) * mediaPageSize);
@@ -97,7 +97,7 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   const [isEventManagementOfficialDocument, setIsEventManagementOfficialDocument] = useState(false);
   const [officialDocsList, setOfficialDocsList] = useState<EventMediaDTO[]>(initialOfficialDocsList);
   const [officialDocsPage, setOfficialDocsPage] = useState(0);
-  const officialDocsPageSize = 10;
+  const officialDocsPageSize = 20;
   const pagedOfficialDocs = officialDocsList.slice(officialDocsPage * officialDocsPageSize, (officialDocsPage + 1) * officialDocsPageSize);
   const hasNextOfficialDocsPage = (officialDocsPage + 1) * officialDocsPageSize < officialDocsList.length;
   const [hoveredOfficialDocId, setHoveredOfficialDocId] = useState<string | number | null>(null);
@@ -117,6 +117,9 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   const [altText, setAltText] = useState("");
   const [displayOrder, setDisplayOrder] = useState<number | undefined>(undefined);
   const [startDisplayingFromDate, setStartDisplayingFromDate] = useState("");
+  // Home page hero display duration (minutes and seconds)
+  const [heroDisplayDurationMinutes, setHeroDisplayDurationMinutes] = useState<number | ''>('');
+  const [heroDisplayDurationSeconds, setHeroDisplayDurationSeconds] = useState<number | ''>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadFormDivRef = useRef<HTMLDivElement>(null);
   const tooltipTimer = useRef<NodeJS.Timeout | null>(null);
@@ -225,8 +228,6 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
       }
 
       // Get app URL from environment variable (available on client)
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
       // Append other parameters as form data
       formData.append('eventId', eventId);
       formData.append('eventFlyer', String(eventFlyer));
@@ -262,10 +263,19 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
         formData.append('startDisplayingFromDate', startDisplayingFromDate);
       }
 
-      // Use the proxy endpoint directly from client
-      const url = `${appUrl}/api/proxy/event-medias/upload-multiple`;
+      // Home page hero display duration (convert minutes + seconds to total seconds)
+      if (isHomePageHeroImage) {
+        const minutes = typeof heroDisplayDurationMinutes === 'number' ? heroDisplayDurationMinutes : 0;
+        const seconds = typeof heroDisplayDurationSeconds === 'number' ? heroDisplayDurationSeconds : 0;
+        const totalSeconds = minutes * 60 + seconds;
+        // Only append if value is provided and valid (1-600 seconds)
+        if (totalSeconds > 0 && totalSeconds <= 600) {
+          formData.append('homePageHeroDisplayDurationSeconds', String(totalSeconds));
+        }
+      }
 
-      const res = await fetch(url, {
+      // Use the proxy endpoint directly from client
+      const res = await fetch('/api/proxy/event-medias/upload-multiple', {
         method: 'POST',
         body: formData,
       });
@@ -286,6 +296,8 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
       setIsLiveEventImage(false);
       setIsHomePageHeroImage(false);
       setStartDisplayingFromDate("");
+      setHeroDisplayDurationMinutes('');
+      setHeroDisplayDurationSeconds('');
       if (fileInputRef.current) fileInputRef.current.value = "";
       // Refresh the page after upload
       setTimeout(() => window.location.reload(), 1200);
@@ -382,6 +394,18 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
     onClose: () => void,
     onSave: (updated: Partial<EventMediaDTO>) => void,
   }) {
+    // Helper to convert total seconds to minutes and seconds
+    const secondsToMinutesAndSeconds = (totalSeconds: number | null | undefined): { minutes: number | ''; seconds: number | '' } => {
+      if (!totalSeconds || totalSeconds <= 0) return { minutes: '', seconds: '' };
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return { minutes, seconds };
+    };
+
+    const initialDuration = secondsToMinutesAndSeconds(media.homePageHeroDisplayDurationSeconds);
+    const [heroDisplayDurationMinutes, setHeroDisplayDurationMinutes] = useState<number | ''>(initialDuration.minutes);
+    const [heroDisplayDurationSeconds, setHeroDisplayDurationSeconds] = useState<number | ''>(initialDuration.seconds);
+
     const [formData, setFormData] = useState<Partial<EventMediaDTO>>({
       title: media.title || '',
       description: media.description || '',
@@ -397,10 +421,14 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
       isFeaturedVideo: media.isFeaturedVideo || false,
       featuredVideoUrl: media.featuredVideoUrl || '',
       startDisplayingFromDate: media.startDisplayingFromDate || '',
+      homePageHeroDisplayDurationSeconds: media.homePageHeroDisplayDurationSeconds || undefined,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
+      const duration = secondsToMinutesAndSeconds(media.homePageHeroDisplayDurationSeconds);
+      setHeroDisplayDurationMinutes(duration.minutes);
+      setHeroDisplayDurationSeconds(duration.seconds);
       setFormData({
         title: media.title || '',
         description: media.description || '',
@@ -416,6 +444,7 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
         isFeaturedVideo: media.isFeaturedVideo || false,
         featuredVideoUrl: media.featuredVideoUrl || '',
         startDisplayingFromDate: media.startDisplayingFromDate || '',
+        homePageHeroDisplayDurationSeconds: media.homePageHeroDisplayDurationSeconds || undefined,
         // Include required fields for backend validation
         eventMediaType: media.eventMediaType || 'gallery',
         storageType: media.storageType || 's3',
@@ -434,7 +463,17 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
     const handleSaveClick = async () => {
       setIsSubmitting(true);
       try {
-        await onSave(formData);
+        // Convert minutes + seconds to total seconds for homePageHeroDisplayDurationSeconds
+        const minutes = typeof heroDisplayDurationMinutes === 'number' ? heroDisplayDurationMinutes : 0;
+        const seconds = typeof heroDisplayDurationSeconds === 'number' ? heroDisplayDurationSeconds : 0;
+        const totalSeconds = minutes * 60 + seconds;
+        
+        const payload = {
+          ...formData,
+          homePageHeroDisplayDurationSeconds: totalSeconds > 0 && totalSeconds <= 600 ? totalSeconds : (formData.isHomePageHeroImage ? null : undefined),
+        };
+        
+        await onSave(payload);
       } catch (error) {
         // Handle error if onSave throws
         console.error("Failed to save media:", error);
@@ -543,6 +582,73 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
               <p className="text-sm text-gray-500 mt-1">When should this media start being displayed?</p>
             </div>
 
+            {/* Home Page Hero Display Duration (shown only when isHomePageHeroImage is checked) */}
+            {formData.isHomePageHeroImage && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Home Page Hero Display Duration</label>
+                <p className="text-xs text-gray-600 mb-3">
+                  How long should this image be displayed in the homepage hero slider? Leave empty to use default (8 seconds).
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label htmlFor="editHeroDisplayDurationMinutes" className="block text-xs font-medium text-gray-600 mb-1">
+                      Minutes
+                    </label>
+                    <input
+                      type="number"
+                      id="editHeroDisplayDurationMinutes"
+                      name="editHeroDisplayDurationMinutes"
+                      min="0"
+                      max="10"
+                      value={heroDisplayDurationMinutes}
+                      onChange={e => {
+                        const val = e.target.value === '' ? '' : Math.max(0, Math.min(10, parseInt(e.target.value, 10) || 0));
+                        setHeroDisplayDurationMinutes(val);
+                      }}
+                      className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label htmlFor="editHeroDisplayDurationSeconds" className="block text-xs font-medium text-gray-600 mb-1">
+                      Seconds
+                    </label>
+                    <input
+                      type="number"
+                      id="editHeroDisplayDurationSeconds"
+                      name="editHeroDisplayDurationSeconds"
+                      min="0"
+                      max="59"
+                      value={heroDisplayDurationSeconds}
+                      onChange={e => {
+                        const val = e.target.value === '' ? '' : Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                        setHeroDisplayDurationSeconds(val);
+                      }}
+                      className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Valid range: 1 second to 10 minutes (600 seconds). Example: 1 min 20 secs = 80 seconds total.
+                </p>
+                {(typeof heroDisplayDurationMinutes === 'number' && heroDisplayDurationMinutes > 0) || (typeof heroDisplayDurationSeconds === 'number' && heroDisplayDurationSeconds > 0) ? (
+                  <div className="mt-2 text-sm text-blue-700 font-medium">
+                    Total: {(() => {
+                      const min = typeof heroDisplayDurationMinutes === 'number' ? heroDisplayDurationMinutes : 0;
+                      const sec = typeof heroDisplayDurationSeconds === 'number' ? heroDisplayDurationSeconds : 0;
+                      const total = min * 60 + sec;
+                      if (total === 0) return '0 seconds (will use default)';
+                      if (total < 60) return `${total} secs`;
+                      const m = Math.floor(total / 60);
+                      const s = total % 60;
+                      return s === 0 ? `${m} min` : `${m} min ${s} secs`;
+                    })()}
+                  </div>
+                ) : null}
+              </div>
+            )}
+
             {/* Checkboxes - Using proper UI style guide implementation */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-4">Media Options</label>
@@ -643,7 +749,7 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
         >
           <FaPhotoVideo className="w-5 h-5 mr-1" />
           <span className="text-left">
-            Go to / View<br />Uploaded Media Files
+            Go to / View<br />Uploaded Media Files<br />Full Files List
           </span>
         </button>
       </div>
@@ -1000,6 +1106,76 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
               </label>
             </div>
           </div>
+
+          {/* Home Page Hero Display Duration (shown only when isHomePageHeroImage is checked) */}
+          {isHomePageHeroImage && (
+            <div className="mt-4 mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Home Page Hero Display Duration
+              </label>
+              <p className="text-xs text-gray-600 mb-3">
+                How long should this image be displayed in the homepage hero slider? Leave empty to use default (8 seconds).
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label htmlFor="heroDisplayDurationMinutes" className="block text-xs font-medium text-gray-600 mb-1">
+                    Minutes
+                  </label>
+                  <input
+                    type="number"
+                    id="heroDisplayDurationMinutes"
+                    name="heroDisplayDurationMinutes"
+                    min="0"
+                    max="10"
+                    value={heroDisplayDurationMinutes}
+                    onChange={e => {
+                      const val = e.target.value === '' ? '' : Math.max(0, Math.min(10, parseInt(e.target.value, 10) || 0));
+                      setHeroDisplayDurationMinutes(val);
+                    }}
+                    className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="heroDisplayDurationSeconds" className="block text-xs font-medium text-gray-600 mb-1">
+                    Seconds
+                  </label>
+                  <input
+                    type="number"
+                    id="heroDisplayDurationSeconds"
+                    name="heroDisplayDurationSeconds"
+                    min="0"
+                    max="59"
+                    value={heroDisplayDurationSeconds}
+                    onChange={e => {
+                      const val = e.target.value === '' ? '' : Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                      setHeroDisplayDurationSeconds(val);
+                    }}
+                    className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Valid range: 1 second to 10 minutes (600 seconds). Example: 1 min 20 secs = 80 seconds total.
+              </p>
+              {(typeof heroDisplayDurationMinutes === 'number' && heroDisplayDurationMinutes > 0) || (typeof heroDisplayDurationSeconds === 'number' && heroDisplayDurationSeconds > 0) ? (
+                <div className="mt-2 text-sm text-blue-700 font-medium">
+                  Total: {(() => {
+                    const min = typeof heroDisplayDurationMinutes === 'number' ? heroDisplayDurationMinutes : 0;
+                    const sec = typeof heroDisplayDurationSeconds === 'number' ? heroDisplayDurationSeconds : 0;
+                    const total = min * 60 + sec;
+                    if (total === 0) return '0 seconds (will use default)';
+                    if (total < 60) return `${total} secs`;
+                    const m = Math.floor(total / 60);
+                    const s = total % 60;
+                    return s === 0 ? `${m} min` : `${m} min ${s} secs`;
+                  })()}
+                </div>
+              ) : null}
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-4 items-center mt-2">
             <input
               type="text"

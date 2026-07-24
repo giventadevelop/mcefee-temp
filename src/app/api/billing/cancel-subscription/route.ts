@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Stripe from "stripe";
-import { getAppUrl } from '@/lib/env';
+import { getAppUrl, getApiBaseUrl } from '@/lib/env';
 
 // Force Node.js runtime - Edge runtime is not compatible with Prisma
 export const runtime = 'nodejs';
@@ -19,7 +19,7 @@ const getStripe = () => {
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     const stripe = getStripe(); // Initialize Stripe only when needed
 
     if (!userId) {
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       if (!baseUrl.startsWith('http')) {
         baseUrl = `https://${baseUrl}`;
       }
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const apiBaseUrl = getApiBaseUrl();
       if (!apiBaseUrl) {
         throw new Error('API base URL not configured');
       }

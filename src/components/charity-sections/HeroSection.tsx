@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { EventDetailsDTO } from '@/types';
-import { getAppUrl } from '@/lib/env';
+import { proxyApiPath } from '@/lib/proxyApiPath';
+import { isTicketedFundraiserEvent } from '@/lib/donation/utils';
+import { isTicketedEventCube } from '@/lib/eventcube/utils';
 
 // Add EventWithMedia type for local use
 interface EventWithMedia extends EventDetailsDTO {
@@ -21,18 +24,17 @@ const DynamicHeroImage: React.FC = () => {
   const [hasTicketedEvents, setHasTicketedEvents] = useState(false);
 
   // Default image path
-  const defaultImage = "/images/hero_section/default_hero_section_second_column_poster.webp";
+  const defaultImage = "/images/hero_section/default_hero_section_second_column_poster.jpeg";
 
   // Fetch events with media function
   const fetchEventsWithMedia = async (): Promise<EventWithMedia[]> => {
-    const baseUrl = getAppUrl();
-    console.log('Fetching events from:', `${baseUrl}/api/proxy/event-details`);
+    console.log('Fetching events from:', proxyApiPath('/api/proxy/event-details'));
 
     let eventsData: EventDetailsDTO[] = [];
 
     try {
       let eventsResponse = await fetch(
-        `${baseUrl}/api/proxy/event-details?sort=startDate,asc`,
+        proxyApiPath('/api/proxy/event-details?sort=startDate,asc'),
         { cache: 'no-store' }
       );
 
@@ -51,7 +53,7 @@ const DynamicHeroImage: React.FC = () => {
         // Try fallback
         try {
           eventsResponse = await fetch(
-            `${baseUrl}/api/proxy/event-details?sort=startDate,desc`,
+            proxyApiPath('/api/proxy/event-details?sort=startDate,desc'),
             { cache: 'no-store' }
           );
           if (eventsResponse.ok) {
@@ -86,7 +88,7 @@ const DynamicHeroImage: React.FC = () => {
 
           try {
             const flyerRes = await fetch(
-              `${baseUrl}/api/proxy/event-medias?eventId.equals=${event.id}&eventFlyer.equals=true`,
+              proxyApiPath(`/api/proxy/event-medias?eventId.equals=${event.id}&eventFlyer.equals=true`),
               {
                 cache: 'no-store',
                 signal: controller.signal
@@ -115,7 +117,7 @@ const DynamicHeroImage: React.FC = () => {
 
               try {
                 const featuredRes = await fetch(
-                  `${baseUrl}/api/proxy/event-medias?eventId.equals=${event.id}&isFeaturedImage.equals=true`,
+                  proxyApiPath(`/api/proxy/event-medias?eventId.equals=${event.id}&isFeaturedImage.equals=true`),
                   {
                     cache: 'no-store',
                     signal: featuredController.signal
@@ -187,10 +189,9 @@ const DynamicHeroImage: React.FC = () => {
 
   // Fetch hero image for specific event function
   const fetchHeroImageForEvent = async (eventId: number): Promise<string | null> => {
-    const baseUrl = getAppUrl();
     try {
       const mediaRes = await fetch(
-        `${baseUrl}/api/proxy/event-medias?eventId.equals=${eventId}&isFeaturedImage.equals=true`,
+        proxyApiPath(`/api/proxy/event-medias?eventId.equals=${eventId}&isFeaturedImage.equals=true`),
         { cache: 'no-store' }
       );
       if (mediaRes.ok) {
@@ -382,45 +383,44 @@ const DynamicHeroImage: React.FC = () => {
 
     return (
       <div className="relative w-full h-full">
-        <Image
-          src={dynamicImages[currentImageIndex]}
-          alt="Dynamic Hero Image"
-          fill
-          className="object-fill w-full h-full cursor-pointer"
-          style={{
-            filter: 'contrast(1.1) saturate(0.9)'
-          }}
-          sizes="(max-width: 1024px) 100vw, 50vw"
-          onClick={() => {
-            // If showing event flyer and we have current event, route to specific event
-            if (isShowingEventFlyer && currentEvent && currentEvent.id) {
-              window.location.href = `/events/${currentEvent.id}`;
-            } else {
-              // Otherwise route to events page
-              window.location.href = '/events';
-            }
-          }}
-        />
+        <Link
+          href={isShowingEventFlyer && currentEvent && currentEvent.id ? `/events/${currentEvent.id}` : '/events'}
+          className="block w-full h-full"
+        >
+          <Image
+            src={dynamicImages[currentImageIndex]}
+            alt="Dynamic Hero Image"
+            fill
+            className="object-fill w-full h-full cursor-pointer"
+            style={{
+              filter: 'contrast(1.1) saturate(0.9)'
+            }}
+            sizes="(max-width: 1024px) 100vw, 50vw"
+          />
+        </Link>
 
         {/* Buy Tickets Overlay - Show only for event flyers, not fallback image */}
-        {hasTicketedEvents && currentEvent && isShowingEventFlyer && (
+        {hasTicketedEvents && currentEvent && isShowingEventFlyer && currentEvent.id && (
           <div className="absolute bottom-4 right-4 z-10">
-            <Image
-              src="/images/buy_tickets_click_here_red.webp"
-              alt="Buy Tickets Click Here"
-              width={180}
-              height={90}
-              className="cursor-pointer hover:scale-105 transition-transform duration-300"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent parent click handler
-                // Route to specific event if available, otherwise events page
-                if (currentEvent && currentEvent.id) {
-                  window.location.href = `/events/${currentEvent.id}`;
-                } else {
-                  window.location.href = '/events';
-                }
-              }}
-            />
+            <Link
+              href={
+                isTicketedEventCube(currentEvent)
+                  ? `/events/${currentEvent.id}/eventcube-checkout`
+                  : isTicketedFundraiserEvent(currentEvent)
+                    ? `/events/${currentEvent.id}/givebutter-checkout`
+                    : `/events/${currentEvent.id}/checkout`
+              }
+              className="block cursor-pointer hover:scale-105 transition-transform duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Image
+                src="/images/buy_tickets_click_here_red.webp"
+                alt="Buy Tickets Click Here"
+                width={180}
+                height={90}
+                className="cursor-pointer hover:scale-105 transition-transform duration-300"
+              />
+            </Link>
           </div>
         )}
       </div>
@@ -430,20 +430,18 @@ const DynamicHeroImage: React.FC = () => {
   // Fallback to default image
   return (
     <div className="relative w-full h-full">
-      <Image
-        src={defaultImage}
-        alt="Default Hero Image"
-        fill
-        className="object-fill w-full h-full cursor-pointer"
-        style={{
-          filter: 'contrast(1.1) saturate(0.9)'
-        }}
-        sizes="(max-width: 1024px) 100vw, 50vw"
-        onClick={() => {
-          // Route to events page for default image
-          window.location.href = '/events';
-        }}
-      />
+      <Link href="/events" className="block w-full h-full">
+        <Image
+          src={defaultImage}
+          alt="Default Hero Image"
+          fill
+          className="object-fill w-full h-full cursor-pointer"
+          style={{
+            filter: 'contrast(1.1) saturate(0.9)'
+          }}
+          sizes="(max-width: 1024px) 100vw, 50vw"
+        />
+      </Link>
       {/* No Buy Tickets overlay for fallback image */}
     </div>
   );

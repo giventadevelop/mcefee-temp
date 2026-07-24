@@ -1,10 +1,4 @@
 import Stripe from 'stripe';
-import getConfig from 'next/config';
-
-const { serverRuntimeConfig, publicRuntimeConfig } = getConfig() || {
-  serverRuntimeConfig: {},
-  publicRuntimeConfig: {}
-};
 
 const requiredStripeEnvVars = [
   'STRIPE_SECRET_KEY',
@@ -12,33 +6,19 @@ const requiredStripeEnvVars = [
   'NEXT_PUBLIC_APP_URL'
 ] as const;
 
-// Helper to get environment variables with fallbacks
+// Helper to get environment variables (process.env only; next/config deprecated in Next 16)
 const getStripeEnvVar = (key: string, isPublic = false): string | undefined => {
   try {
-    // Use Next.js config first
-    if (isPublic) {
-      if (publicRuntimeConfig[key]) {
-        return publicRuntimeConfig[key];
-      }
-    } else {
-      if (serverRuntimeConfig[key]) {
-        return serverRuntimeConfig[key];
-      }
-    }
-
-    // Fallback to process.env with various prefixes in AWS Lambda
-    if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
-      const prefixes = ['AMPLIFY_', 'AWS_AMPLIFY_', ''];
-      for (const prefix of prefixes) {
-        const value = process.env[`${prefix}${key}`];
-        if (value) {
+    const prefixes = ['AMPLIFY_', 'AWS_AMPLIFY_', ''];
+    for (const prefix of prefixes) {
+      const value = process.env[`${prefix}${key}`];
+      if (value) {
+        if (process.env.AWS_LAMBDA_FUNCTION_NAME && prefix) {
           console.log(`[STRIPE-ENV] Found ${key} with prefix: ${prefix}`);
-          return value;
         }
+        return value;
       }
     }
-
-    // Last resort: direct process.env access
     return process.env[key];
   } catch (error) {
     console.error(`[STRIPE-ENV] Error getting environment variable ${key}:`, error);
@@ -78,19 +58,12 @@ export const initStripeConfig = () => {
       hasWebhookSecret: !!webhookSecret,
       hasAppUrl: !!appUrl,
       runtime: typeof window === 'undefined' ? 'server' : 'client',
-      config: {
-        hasServerConfig: Object.keys(serverRuntimeConfig).length > 0,
-        hasPublicConfig: Object.keys(publicRuntimeConfig).length > 0
-      }
     });
 
     // Validate required environment variables
     if (!secretKey) {
       throw new Error(
-        'STRIPE_SECRET_KEY is not configured. Please check:\n' +
-        '1. AWS Amplify environment variables\n' +
-        '2. Next.js serverRuntimeConfig\n' +
-        '3. Process environment variables'
+        'STRIPE_SECRET_KEY is not configured. Please check AWS Amplify env vars (AMPLIFY_STRIPE_SECRET_KEY) or process.env.'
       );
     }
 

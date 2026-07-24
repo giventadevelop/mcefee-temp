@@ -1,101 +1,73 @@
 import { getAppUrl } from '@/lib/env';
-import { FaEdit, FaCalendarAlt, FaUsers } from 'react-icons/fa';
+import AdminNavigation from '@/components/AdminNavigation';
+import FocusGroupsListWithSearch from './FocusGroupsListWithSearch';
 
-function toInt(v: string | undefined, d: number) {
-  const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : d;
-}
+export default async function AdminFocusGroupsPage({ searchParams }: { searchParams?: { [k: string]: string | string[] | undefined } | Promise<{ [k: string]: string | string[] | undefined }> }) {
+  const resolvedSearchParams = typeof searchParams?.then === 'function' ? await searchParams : searchParams;
 
-export default async function AdminFocusGroupsPage({ searchParams }: { searchParams?: { [k: string]: string | string[] | undefined } }) {
   const baseUrl = getAppUrl();
-  const page = toInt(typeof searchParams?.page === 'string' ? searchParams?.page : undefined, 0);
-  const size = toInt(typeof searchParams?.size === 'string' ? searchParams?.size : undefined, 10);
-  const sort = typeof searchParams?.sort === 'string' ? searchParams?.sort : 'createdAt,desc';
+  const sort = typeof resolvedSearchParams?.sort === 'string' ? resolvedSearchParams?.sort : 'createdAt,desc';
+  // Fetch a larger set for client-side search (same pattern as executive-committee)
+  const size = 1000;
+  const page = 0;
 
   let groups: any[] = [];
   let total = 0;
   try {
-    const res = await fetch(`${baseUrl}/api/proxy/focus-groups?page=${page}&size=${size}&sort=${encodeURIComponent(sort)}`, { cache: 'no-store' });
+    const url = `${baseUrl}/api/proxy/focus-groups?page=${page}&size=${size}&sort=${encodeURIComponent(sort)}`;
+
+    const res = await fetch(url, { cache: 'no-store' });
+
     if (res.ok) {
       const data = await res.json();
-      groups = Array.isArray(data) ? data : [];
-      total = Number(res.headers.get('X-Total-Count') || groups.length || 0);
+
+      if (Array.isArray(data)) {
+        groups = data;
+      } else if (data && typeof data === 'object' && Array.isArray(data.content)) {
+        groups = data.content;
+      } else if (data && typeof data === 'object' && data.id) {
+        groups = [data];
+      } else {
+        groups = [];
+      }
+
+      const totalCountHeader = res.headers.get('x-total-count') || res.headers.get('X-Total-Count');
+      if (totalCountHeader) {
+        total = Number(totalCountHeader);
+      } else if (data && typeof data === 'object' && typeof data.totalElements === 'number') {
+        total = data.totalElements;
+      } else {
+        total = groups.length;
+      }
+    } else {
+      await res.text();
     }
-  } catch { }
+  } catch (err) {
+    console.error('[FocusGroups] Error fetching focus groups:', err);
+  }
 
   return (
-    <div className="px-8 pt-24 pb-8 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Manage Focus Groups</h1>
-        <a href="/admin/focus-groups/new" className="px-3 py-2 bg-blue-600 text-white rounded">New Group</a>
+    <div className="w-full overflow-x-hidden box-border" style={{ paddingTop: '120px' }}>
+      {/* Navigation Section - Full Width, Separate Responsive Container */}
+      <div className="w-full px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 mb-6 sm:mb-8">
+        <AdminNavigation />
       </div>
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</th>
-              <th className="px-6 py-3" />
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {groups.map(g => (
-              <tr key={g.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{g.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{g.slug}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">{g.isActive ? 'YES' : 'NO'}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <div className="flex items-center justify-end gap-4">
-                    <a className="text-blue-600 hover:text-blue-800 flex items-center gap-1" href={`/admin/focus-groups/${g.id}/edit`}>
-                      <FaEdit className="text-base" />
-                      <span>Edit</span>
-                    </a>
-                    <a className="text-blue-600 hover:text-blue-800 flex items-center gap-1" href={`/admin/focus-groups/${g.id}/events`}>
-                      <FaCalendarAlt className="text-base" />
-                      <span>Events</span>
-                    </a>
-                    <a className="text-blue-600 hover:text-blue-800 flex items-center gap-1" href={`/admin/focus-groups/${g.id}/members`}>
-                      <FaUsers className="text-base" />
-                      <span>Members</span>
-                    </a>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {groups.length === 0 && (
-              <tr><td className="px-6 py-4 text-sm text-gray-500" colSpan={4}>No focus groups found.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {(
-        () => {
-          const totalPages = Math.max(1, Math.ceil((total || 0) / size));
-          const isPrevDisabled = page <= 0;
-          const isNextDisabled = page + 1 >= totalPages;
-          const qs = (p: number) => `?page=${p}&size=${size}&sort=${encodeURIComponent(sort)}`;
-          return (
-            <div className="mt-8">
-              <div className="flex justify-between items-center">
-                <a aria-disabled={isPrevDisabled} className={`px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 ${isPrevDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`} href={isPrevDisabled ? '#' : `/admin/focus-groups${qs(page - 1)}`}>Previous</a>
-                <div className="text-sm font-semibold text-gray-700">Page {totalPages === 0 ? 0 : page + 1} of {totalPages}</div>
-                <a aria-disabled={isNextDisabled} className={`px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 ${isNextDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`} href={isNextDisabled ? '#' : `/admin/focus-groups${qs(page + 1)}`}>Next</a>
-              </div>
-              <div className="text-center text-sm text-gray-600 mt-2">
-                {total > 0 ? (
-                  <>Showing <span className="font-medium">{page * size + 1}</span> to <span className="font-medium">{page * size + Math.min(size, total - page * size)}</span> of <span className="font-medium">{total}</span> items</>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <span>No items found</span>
-                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-sm font-medium">[No items match your criteria]</span>
-                  </div>
-                )}
-              </div>
+      {/* Main Content Section - Constrained Width */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white text-center sm:text-left">Manage Focus Groups</h1>
+          <a href="/admin/focus-groups/new" className="flex-shrink-0 h-12 sm:h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 hover:scale-105 px-3 sm:px-6">
+            <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
             </div>
-          );
-        }
-      )()}
+            <span className="font-semibold text-blue-700 text-xs sm:text-sm lg:text-base whitespace-nowrap">New Group</span>
+          </a>
+        </div>
+
+        <FocusGroupsListWithSearch groups={groups} total={total} />
+      </div>
     </div>
   );
 }

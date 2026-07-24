@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { safeAuth } from '@/lib/safe-auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { FaCheckCircle, FaArrowLeft, FaHome } from 'react-icons/fa';
@@ -8,7 +8,7 @@ export default async function TestStripeSuccessPage({
 }: {
   searchParams: { session_id?: string };
 }) {
-  const { userId } = await auth();
+  const { userId } = await safeAuth();
 
   if (!userId) {
     redirect('/sign-in');

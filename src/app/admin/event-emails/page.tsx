@@ -5,12 +5,12 @@ import { FaPlus, FaSearch } from 'react-icons/fa';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import DataTable, { Column } from '@/components/ui/DataTable';
-import Modal from '@/components/ui/Modal';
-import ConfirmModal from '@/components/ui/Modal';
+import AdminListSearchCombobox from '@/components/admin/AdminListSearchCombobox';
+import Modal, { ConfirmModal } from '@/components/ui/Modal';
 import AdminNavigation from '@/components/AdminNavigation';
 import type { EventEmailsDTO } from '@/types';
 import {
-  fetchEventEmailsServer,
+  fetchEventEmailsPageServer,
   createEventEmailServer,
   updateEventEmailServer,
   deleteEventEmailServer,
@@ -23,6 +23,11 @@ export default function GlobalEventEmailsPage() {
   const [emails, setEmails] = useState<EventEmailsDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination state (server-driven)
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(20);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -46,13 +51,19 @@ export default function GlobalEventEmailsPage() {
     if (userId) {
       loadEmails();
     }
-  }, [userId]);
+  }, [userId, page, searchTerm, sortKey, sortDirection]);
 
   const loadEmails = async () => {
     try {
       setLoading(true);
-      const emailsData = await fetchEventEmailsServer();
-      setEmails(emailsData);
+      const result = await fetchEventEmailsPageServer({
+        page,
+        size: pageSize,
+        search: searchTerm,
+        sort: sortKey ? `${sortKey},${sortDirection}` : undefined,
+      });
+      setEmails(result.data);
+      setTotalCount(result.totalCount);
     } catch (err: any) {
       setError(err.message || 'Failed to load emails');
     } finally {
@@ -80,8 +91,8 @@ export default function GlobalEventEmailsPage() {
       console.log('📝 Form data:', formData);
       console.log('📤 Email data being sent:', emailData);
 
-      const newEmail = await createEventEmailServer(emailData);
-      setEmails(prev => [...prev, newEmail]);
+      await createEventEmailServer(emailData);
+      await loadEmails();
       setIsCreateModalOpen(false);
       resetForm();
       setToastMessage({ type: 'success', message: 'Email created successfully' });
@@ -116,7 +127,7 @@ export default function GlobalEventEmailsPage() {
     try {
       setLoading(true);
       await deleteEventEmailServer(selectedEmail.id!);
-      setEmails(prev => prev.filter(e => e.id !== selectedEmail.id));
+      await loadEmails();
       setIsDeleteModalOpen(false);
       setSelectedEmail(null);
       setToastMessage({ type: 'success', message: 'Email deleted successfully' });
@@ -146,21 +157,15 @@ export default function GlobalEventEmailsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  // Filter and sort emails
-  const filteredEmails = emails.filter(email =>
-    email.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Server-side pagination totals (X-Total-Count); search/sort are query params
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const startItem = totalCount > 0 ? page * pageSize + 1 : 0;
+  const endItem = totalCount > 0 ? Math.min(page * pageSize + emails.length, totalCount) : 0;
 
-  const sortedEmails = [...filteredEmails].sort((a, b) => {
-    if (!sortKey) return 0;
-
-    const aValue = a[sortKey as keyof EventEmailsDTO];
-    const bValue = b[sortKey as keyof EventEmailsDTO];
-
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm]);
 
   const columns: Column<EventEmailsDTO>[] = [
     { key: 'email', label: 'Email', sortable: true },
@@ -169,7 +174,10 @@ export default function GlobalEventEmailsPage() {
   if (loading && emails.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+          style={{ paddingTop: '180px' }}
+        >
           <AdminNavigation currentPage="event-emails" />
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
@@ -184,22 +192,30 @@ export default function GlobalEventEmailsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+        style={{ paddingTop: '180px' }}
+      >
         <AdminNavigation currentPage="event-emails" />
 
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Global Event Emails</h1>
-                <p className="text-gray-600 mt-1">Manage email addresses across all events</p>
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Global Emails</h1>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">(You can add or disassociate these items with any events. Please go to the corresponding event page to manage these associated entities.)</p>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition"
+                className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-3 sm:px-6"
+                title="Add Email"
+                aria-label="Add Email"
+                type="button"
               >
-                <FaPlus className="text-sm" />
-                <span>Add Email</span>
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                  <FaPlus className="w-6 h-6 text-blue-600" />
+                </div>
+                <span className="font-semibold text-blue-700 hidden sm:inline">Add Email</span>
               </button>
             </div>
           </div>
@@ -208,20 +224,25 @@ export default function GlobalEventEmailsPage() {
             {/* Search */}
             <div className="mb-6">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10 pointer-events-none" />
+                <AdminListSearchCombobox<EventEmailsDTO & Record<string, unknown>>
+                  items={emails as (EventEmailsDTO & Record<string, unknown>)[]}
+                  committedValue={searchTerm}
+                  onCommit={setSearchTerm}
                   placeholder="Search emails..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="relative w-full"
+                  inputClassName="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  getSearchFields={(e) => [e.email, e.id]}
+                  getCommitValue={(e) => e.email || ''}
+                  formatPrimary={(e) => e.email || 'No email'}
+                  formatSecondary={(e) => (e.id != null ? `ID ${e.id}` : '')}
                 />
               </div>
             </div>
 
             {/* Data Table */}
             <DataTable
-              data={sortedEmails}
+              data={emails}
               columns={columns}
               onEdit={openEditModal}
               onDelete={openDeleteModal}
@@ -232,6 +253,67 @@ export default function GlobalEventEmailsPage() {
                 setSortDirection(direction);
               }}
             />
+
+            {/* Pagination Controls - Always visible, matching admin page style */}
+            <div className="mt-6 sm:mt-8">
+              <div className="flex justify-between items-center gap-2">
+                {/* Previous Button */}
+                <button
+                  onClick={() => setPage(prev => Math.max(0, prev - 1))}
+                  disabled={page === 0 || loading}
+                  className="px-3 sm:px-5 py-2.5 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 font-semibold rounded-lg shadow-sm border-2 border-blue-400 dark:border-blue-600 hover:border-blue-500 dark:hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+                  title="Previous Page"
+                  aria-label="Previous Page"
+                  type="button"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="hidden sm:inline">Previous</span>
+                </button>
+
+                {/* Page Info */}
+                <div className="px-2 sm:px-4 py-2 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-600 rounded-lg shadow-sm">
+                  <span className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300">
+                    Page <span className="text-blue-600 dark:text-blue-400">{page + 1}</span> of <span className="text-blue-600 dark:text-blue-400">{totalPages}</span>
+                  </span>
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => setPage(prev => prev + 1)}
+                  disabled={page >= totalPages - 1 || loading}
+                  className="px-3 sm:px-5 py-2.5 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 font-semibold rounded-lg shadow-sm border-2 border-blue-400 dark:border-blue-600 hover:border-blue-500 dark:hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+                  title="Next Page"
+                  aria-label="Next Page"
+                  type="button"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Item Count Text */}
+              <div className="text-center mt-3">
+                {totalCount > 0 ? (
+                  <div className="inline-flex items-center px-2 sm:px-4 py-2 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-600 rounded-lg shadow-sm">
+                    <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                      Showing <span className="font-bold text-blue-600 dark:text-blue-400">{startItem}</span> to <span className="font-bold text-blue-600 dark:text-blue-400">{endItem}</span> of <span className="font-bold text-blue-600 dark:text-blue-400">{totalCount}</span> emails
+                    </span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-2 sm:px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-300 dark:border-orange-600 rounded-lg shadow-sm">
+                    <svg className="w-5 h-5 text-orange-500 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-xs sm:text-sm font-medium text-orange-700 dark:text-orange-300">No emails found</span>
+                    <span className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 hidden sm:inline">[No emails match your criteria]</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -264,6 +346,10 @@ export default function GlobalEventEmailsPage() {
           formData={formData}
           setFormData={setFormData}
           onSubmit={handleCreate}
+          onCancel={() => {
+            setIsCreateModalOpen(false);
+            resetForm();
+          }}
           loading={loading}
           submitText="Create Email"
         />
@@ -284,6 +370,11 @@ export default function GlobalEventEmailsPage() {
           formData={formData}
           setFormData={setFormData}
           onSubmit={handleEdit}
+          onCancel={() => {
+            setIsEditModalOpen(false);
+            setSelectedEmail(null);
+            resetForm();
+          }}
           loading={loading}
           submitText="Update Email"
         />
@@ -311,11 +402,12 @@ interface EmailFormProps {
   formData: Partial<EventEmailsDTO>;
   setFormData: React.Dispatch<React.SetStateAction<Partial<EventEmailsDTO>>>;
   onSubmit: () => void;
+  onCancel: () => void;
   loading: boolean;
   submitText: string;
 }
 
-function EmailForm({ formData, setFormData, onSubmit, loading, submitText }: EmailFormProps) {
+function EmailForm({ formData, setFormData, onSubmit, onCancel, loading, submitText }: EmailFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -345,18 +437,38 @@ function EmailForm({ formData, setFormData, onSubmit, loading, submitText }: Ema
       <div className="flex justify-end space-x-3 pt-4">
         <button
           type="button"
-          onClick={() => {/* Close modal logic handled by parent */ }}
-          className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+          onClick={onCancel}
+          className="flex-shrink-0 h-14 rounded-xl bg-red-100 hover:bg-red-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           disabled={loading}
+          title="Cancel"
+          aria-label="Cancel"
         >
-          Cancel
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-200 flex items-center justify-center">
+            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <span className="font-semibold text-red-700">Cancel</span>
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+          className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           disabled={loading}
+          title={loading ? 'Processing...' : submitText}
+          aria-label={loading ? 'Processing...' : submitText}
         >
-          {loading ? 'Processing...' : submitText}
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+            {loading ? (
+              <svg className="w-6 h-6 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="font-semibold text-blue-700">{loading ? 'Processing...' : submitText}</span>
         </button>
       </div>
     </form>

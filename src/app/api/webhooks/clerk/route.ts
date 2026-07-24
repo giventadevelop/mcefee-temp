@@ -1,37 +1,10 @@
-import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
 import { Webhook } from 'svix';
-import { getTenantId } from '@/lib/env';
+import { getTenantId, getApiBaseUrl } from '@/lib/env';
 import type { UserProfileDTO } from '@/types';
 import { withTenantId } from '@/lib/withTenantId';
 
-// --- fetchWithJwtRetry helper (copied from user-profiles proxy) ---
-import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
-
-async function fetchWithJwtRetry(apiUrl: string, options: any = {}, debugLabel = '') {
-  let token = await getCachedApiJwt();
-  let response = await fetch(apiUrl, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  console.log(`[${debugLabel}] First attempt:`, apiUrl, response.status);
-  if (response.status === 401) {
-    console.warn(`[${debugLabel}] JWT expired/invalid, regenerating and retrying...`);
-    token = await generateApiJwt();
-    response = await fetch(apiUrl, {
-      ...options,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log(`[${debugLabel}] Second attempt:`, apiUrl, response.status);
-  }
-  return response;
-}
+import { fetchWithJwtRetry } from '@/lib/proxyHandler';
 
 // Profile Reconciliation Logic
 // Handles cases where existing profiles need to be updated with current Clerk user data
@@ -149,11 +122,10 @@ async function validateRequest(request: Request) {
     throw new Error('Please add CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env');
   }
 
-  // Get the headers (await required in Next.js 15)
-  const headersList = await headers();
-  const svix_id = headersList.get("svix-id");
-  const svix_timestamp = headersList.get("svix-timestamp");
-  const svix_signature = headersList.get("svix-signature");
+  // IMPORTANT: Use Request headers directly. Svix requires the raw body bytes + headers.
+  const svix_id = request.headers.get('svix-id');
+  const svix_timestamp = request.headers.get('svix-timestamp');
+  const svix_signature = request.headers.get('svix-signature');
 
   // If there are no headers, error out
   if (!svix_id || !svix_timestamp || !svix_signature) {
@@ -162,9 +134,8 @@ async function validateRequest(request: Request) {
     });
   }
 
-  // Get the body
-  const payload = await request.json();
-  const body = JSON.stringify(payload);
+  // Get raw body. DO NOT use request.json() before verification (it changes canonicalization).
+  const body = await request.text();
 
   // Create a new Svix instance with your secret.
   const wh = new Webhook(WEBHOOK_SECRET);
@@ -188,6 +159,13 @@ async function validateRequest(request: Request) {
   return evt;
 }
 
+function getBestEmailFromClerkEvent(data: any): string | undefined {
+  const list = Array.isArray(data?.email_addresses) ? data.email_addresses : [];
+  const primaryId = data?.primary_email_address_id;
+  const primary = primaryId ? list.find((e: any) => e?.id === primaryId) : undefined;
+  return primary?.email_address || list?.[0]?.email_address || undefined;
+}
+
 export async function POST(request: Request) {
   console.log('[CLERK-WEBHOOK] 🚀 Webhook endpoint called at:', new Date().toISOString());
   console.log('[CLERK-WEBHOOK] 📍 Request URL:', request.url);
@@ -205,28 +183,56 @@ export async function POST(request: Request) {
     console.log(`[CLERK-WEBHOOK] 📨 Processing Clerk webhook event: ${eventType}`);
     console.log(`[CLERK-WEBHOOK] 📊 Event data structure:`, JSON.stringify(evt.data, null, 2));
 
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const apiBaseUrl = getApiBaseUrl();
     if (!apiBaseUrl) {
       throw new Error('API base URL not configured');
     }
 
     switch (eventType) {
       case 'user.created': {
-        const { id, email_addresses, first_name, last_name, image_url, ...attributes } = evt.data;
-        const email = email_addresses[0]?.email_address;
-        console.log('User created:', { id, email });
+        const { id, first_name, last_name, image_url } = evt.data as any;
+        const email = getBestEmailFromClerkEvent(evt.data);
+        console.log('[CLERK-WEBHOOK] [USER-CREATED] User created:', { id, email });
 
-        // 1. Lookup by email
-        const profileRes = await fetchWithJwtRetry(
-          `${apiBaseUrl}/api/user-profiles?email.equals=${encodeURIComponent(email)}&tenantId.equals=${encodeURIComponent(getTenantId())}`,
-          { method: 'GET' },
-          'webhook-user-created-lookup'
-        );
+        if (!id) {
+          console.warn('[CLERK-WEBHOOK] [USER-CREATED] Missing Clerk user id; skipping');
+          break;
+        }
+        if (!email) {
+          console.warn('[CLERK-WEBHOOK] [USER-CREATED] Missing email; skipping profile create');
+          break;
+        }
+
+        const tenantId = getTenantId();
+
+        // 1) Fast path: check if tenant-scoped profile already exists for this Clerk userId
         let userProfile: UserProfileDTO | null = null;
-        if (profileRes.ok) {
-          const profiles = await profileRes.json();
-          if (Array.isArray(profiles) && profiles.length > 0) {
-            userProfile = profiles[0];
+        try {
+          const byUserRes = await fetchWithJwtRetry(
+            `${apiBaseUrl}/api/user-profiles?userId.equals=${encodeURIComponent(id)}&tenantId.equals=${encodeURIComponent(tenantId)}&size=1`,
+            { method: 'GET' },
+            'webhook-user-created-exists-by-user-tenant'
+          );
+          if (byUserRes.ok) {
+            const list = await byUserRes.json();
+            if (Array.isArray(list) && list.length > 0) userProfile = list[0];
+          }
+        } catch (e) {
+          console.warn('[CLERK-WEBHOOK] [USER-CREATED] Exists-by-user check failed (non-fatal):', e);
+        }
+
+        // 2) Fallback: lookup by email (tenant-scoped) to reconcile userId
+        if (!userProfile) {
+          const profileRes = await fetchWithJwtRetry(
+            `${apiBaseUrl}/api/user-profiles?email.equals=${encodeURIComponent(email)}&tenantId.equals=${encodeURIComponent(tenantId)}&size=1`,
+            { method: 'GET' },
+            'webhook-user-created-lookup-by-email'
+          );
+          if (profileRes.ok) {
+            const profiles = await profileRes.json();
+            if (Array.isArray(profiles) && profiles.length > 0) {
+              userProfile = profiles[0];
+            }
           }
         }
 
@@ -254,7 +260,7 @@ export async function POST(request: Request) {
             profileImageUrl: image_url,
             userRole: 'MEMBER',
             userStatus: 'PENDING_APPROVAL',
-            tenantId: getTenantId(),
+            tenantId,
             updatedAt: new Date().toISOString(),
           };
           await fetchWithJwtRetry(`${apiBaseUrl}/api/user-profiles/${userProfile.id}`, {
@@ -266,6 +272,8 @@ export async function POST(request: Request) {
         } else {
           // 4. Create new profile
           const now = new Date().toISOString();
+          // NOTE: Backend schema requires createdAt/updatedAt (NOT NULL) and tenantId.
+          // We intentionally persist minimal fields.
           const dtoFields: Partial<UserProfileDTO> = {
             userId: id,
             email,
@@ -274,7 +282,7 @@ export async function POST(request: Request) {
             profileImageUrl: image_url,
             userRole: 'MEMBER',
             userStatus: 'PENDING_APPROVAL',
-            tenantId: getTenantId(),
+            tenantId,
             createdAt: now,
             updatedAt: now,
           };
@@ -287,7 +295,7 @@ export async function POST(request: Request) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(withTenantId(newProfile)),
           }, 'webhook-user-created-CREATE');
-          console.log('Created new user profile record');
+          console.log('[CLERK-WEBHOOK] [USER-CREATED] ✅ Created new user profile record');
         }
         break;
       }

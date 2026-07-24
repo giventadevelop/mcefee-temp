@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaSearch, FaArrowLeft } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaArrowLeft, FaHome, FaUsers, FaCalendarAlt, FaPhotoVideo, FaTags, FaTicketAlt, FaPercent } from 'react-icons/fa';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import AdminListSearchCombobox from '@/components/admin/AdminListSearchCombobox';
 import DataTable, { Column } from '@/components/ui/DataTable';
 import Modal, { ConfirmModal } from '@/components/ui/Modal';
 import ImageUpload from '@/components/ui/ImageUpload';
@@ -305,18 +306,105 @@ export default function EventPerformersPage() {
         </div>
       )}
 
+      {/* Responsive Button Group */}
+      <div className="w-full mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <Link
+            href="/admin"
+            className="flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Admin Home"
+            aria-label="Admin Home"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaHome className="w-10 h-10 text-gray-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Admin Home</span>
+          </Link>
+          <Link
+            href="/admin/manage-usage"
+            className="flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Usage"
+            aria-label="Manage Usage"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaUsers className="w-10 h-10 text-blue-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Usage</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/media/list`}
+            className="flex flex-col items-center justify-center bg-yellow-50 hover:bg-yellow-100 text-yellow-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Media Files"
+            aria-label="Manage Media Files"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-yellow-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaPhotoVideo className="w-10 h-10 text-yellow-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Media Files</span>
+          </Link>
+          <Link
+            href="/admin/manage-events"
+            className="flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 text-green-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Events"
+            aria-label="Manage Events"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaCalendarAlt className="w-10 h-10 text-green-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Events</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/ticket-types/list`}
+            className="flex flex-col items-center justify-center bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Ticket Types"
+            aria-label="Manage Ticket Types"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaTags className="w-10 h-10 text-purple-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Ticket Types</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/tickets/list`}
+            className="flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Tickets"
+            aria-label="Manage Tickets"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-teal-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaTicketAlt className="w-10 h-10 text-teal-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Tickets</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/discount-codes/list`}
+            className="flex flex-col items-center justify-center bg-pink-50 hover:bg-pink-100 text-pink-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Discount Codes"
+            aria-label="Manage Discount Codes"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-pink-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaPercent className="w-10 h-10 text-pink-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Discount Codes</span>
+          </Link>
+        </div>
+      </div>
+
       {/* Search and Filter Bar */}
       <div className="mb-6 bg-white rounded-xl shadow-lg border border-gray-200 p-6">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex-1 min-w-64">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
+              <AdminListSearchCombobox
+                items={performers}
+                committedValue={searchTerm}
+                onCommit={setSearchTerm}
+                getSearchFields={(p) => [p.name, p.stageName, p.role, p.email, p.id]}
+                getCommitValue={(p) => p.name || p.stageName || String(p.id ?? '')}
+                formatPrimary={(p) => p.name || p.stageName || 'Unknown'}
+                formatSecondary={(p) => [p.role, p.email].filter(Boolean).join(' · ')}
                 placeholder="Search performers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                inputClassName="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>

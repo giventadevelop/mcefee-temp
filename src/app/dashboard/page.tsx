@@ -1,9 +1,10 @@
-import { auth } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from 'next/server';
 import { redirect } from "next/navigation";
 import { DashboardContent } from "@/components/DashboardContent";
 import { Suspense } from "react";
 import { UserTaskDTO, UserProfileDTO, UserSubscriptionDTO } from "@/types";
+import { getAppUrlFromRequestHeaders } from "@/lib/env";
 
 interface PageProps {
   searchParams: {
@@ -18,7 +19,7 @@ async function checkSubscriptionStatus(userProfile: UserProfileDTO, isReturnFrom
   // If returning from Stripe, try up to 3 times with a 1-second delay
   const maxAttempts = isReturnFromStripe ? 3 : 1;
   const delayMs = 1000; // 1 second
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = await getAppUrlFromRequestHeaders();
 
   // Check subscription status with more retries if returning from Stripe
   const maxRetries = isReturnFromStripe ? 5 : 1;
@@ -76,7 +77,7 @@ async function checkSubscriptionStatus(userProfile: UserProfileDTO, isReturnFrom
 
 async function getUserProfile(userId: string): Promise<UserProfileDTO | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = await getAppUrlFromRequestHeaders();
     const response = await fetch(`${baseUrl}/api/proxy/user-profiles/by-user/${userId}`, {
       method: 'GET',
       headers: {
@@ -152,7 +153,7 @@ export default async function DashboardPage(props: PageProps) {
     let tasksError = false;
     if (userProfile && !userProfileError) {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const baseUrl = await getAppUrlFromRequestHeaders();
         const response = await fetch(
           `${baseUrl}/api/proxy/user-tasks?userId.equals=${userProfile.id}&page=${page}&size=${size}`,
           {

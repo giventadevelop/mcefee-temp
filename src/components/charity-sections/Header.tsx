@@ -7,6 +7,7 @@ import { Search, ChevronDown, X, Menu } from 'lucide-react';
 import { useAuth } from "@clerk/nextjs";
 import { UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
+import { useTenantSettings } from '@/components/TenantSettingsProvider';
 
 const navItems = [
   {
@@ -17,7 +18,8 @@ const navItems = [
   {
     name: 'About',
     href: '/#about-us',
-    active: false
+    active: false,
+    dropdown: [] // Will be populated dynamically based on tenant settings
   },
   {
     name: 'Events',
@@ -45,11 +47,6 @@ const navItems = [
     active: false
   },
   {
-    name: 'Team',
-    href: '/#team-section',
-    active: false
-  },
-  {
     name: 'Contact',
     href: '/#contact',
     active: false
@@ -66,7 +63,8 @@ const adminSubmenuItems = [
   { name: 'Promotion Emails', href: '/admin/promotion-emails' },
   { name: 'Test Stripe', href: '/admin/test-stripe' },
   { name: 'Media Management', href: '/admin/media' },
-  { name: 'Executive Committee', href: '/admin/executive-committee' }
+  { name: 'Executive Committee', href: '/admin/executive-committee' },
+  { name: 'Event Sponsors', href: '/admin/event-sponsors' }
 ];
 
 const ORG_NAME = "Adwiise";
@@ -100,8 +98,10 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
   const pathname = usePathname();
   const { userId } = useAuth();
   const { user, isLoaded: userLoaded } = useUser();
+  const { showTeamSection, loading: settingsLoading, settings } = useTenantSettings();
   const [isAdmin, setIsAdmin] = useState(!!isTenantAdmin);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openMobileDropdowns, setOpenMobileDropdowns] = useState<Record<string, boolean>>({});
 
   // Check admin status
   useEffect(() => {
@@ -163,8 +163,33 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     return () => window.removeEventListener('hashchange', onHashChange);
   }, [pathname]);
 
+  // Build About dropdown dynamically based on tenant settings
+  // Only show Team when settings are loaded AND showTeamSection is explicitly true
+  const aboutDropdown = [
+    { name: 'About us', href: '/#about-us' }
+  ];
+  // Only add Team if:
+  // 1. Settings are loaded (not loading)
+  // 2. Settings exist (not null)
+  // 3. showTeamSection is explicitly true
+  if (!settingsLoading && settings && showTeamSection) {
+    aboutDropdown.push({ name: 'Team', href: '/#team-section' });
+  }
+
+  // Update nav items with dynamic About dropdown
+  // About always has a dropdown now (at minimum "About us")
+  const navItemsWithDropdown = navItems.map(item => {
+    if (item.name === 'About') {
+      return {
+        ...item,
+        dropdown: aboutDropdown
+      };
+    }
+    return item;
+  });
+
   // Update active state based on current route
-  const updatedNavItems = navItems.map(item => ({
+  const updatedNavItems = navItemsWithDropdown.map(item => ({
     ...item,
     active: item.href === pathname || (item.href === '/' && pathname === '/charity-theme')
   }));
@@ -193,29 +218,95 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
               {/* Navigation Menu Items */}
               {!hideMenuItems && (
                 <nav className="flex items-center space-x-1" role="navigation" aria-label="Main navigation">
-                  {updatedNavItems.map((item) => (
-                    <div key={item.name} className="relative group">
-                      <Link
-                        href={item.href}
-                        className={`
-                          relative flex items-center space-x-1 font-inter
-                          text-base lg:text-base font-medium tracking-wide
-                          px-3 py-2 mx-1
-                          transition-all duration-300 ease-in-out
-                          focus:outline-none
-                          ${item.active
-                            ? 'text-blue-400 font-semibold border-b-2 border-blue-400'
-                            : 'text-blue-400 font-medium hover:text-blue-500 hover:font-semibold border-b-2 border-transparent hover:border-blue-400'
-                          }
-                        `}
-                        onClick={(e) => handleSmoothScroll(e, item.href)}
-                        aria-label={`Navigate to ${item.name}`}
-                        aria-current={item.active ? 'page' : undefined}
-                      >
-                        <span className="tracking-[0.025em]">{item.name}</span>
-                      </Link>
-                    </div>
-                  ))}
+                  {updatedNavItems.map((item) => {
+                    const hasDropdown = item.dropdown && Array.isArray(item.dropdown) && item.dropdown.length > 0;
+                    const isAboutActive = hasDropdown && item.name === 'About' && item.dropdown.some(
+                      (subItem: any) => subItem.href === pathname || 
+                        (subItem.href === '/#about-us' && typeof window !== 'undefined' && window.location.hash === '#about-us') ||
+                        (subItem.href === '/#team-section' && typeof window !== 'undefined' && window.location.hash === '#team-section')
+                    );
+
+                    return (
+                      <div key={item.name} className="relative group">
+                        {hasDropdown ? (
+                          <>
+                            <div
+                              className={`
+                                relative flex items-center space-x-1 font-inter
+                                text-base lg:text-base font-medium tracking-wide
+                                px-3 py-2 mx-1
+                                transition-all duration-300 ease-in-out
+                                focus:outline-none cursor-pointer
+                                ${isAboutActive
+                                  ? 'text-blue-400 font-semibold border-b-2 border-blue-400'
+                                  : 'text-blue-400 font-medium hover:text-blue-500 hover:font-semibold border-b-2 border-transparent hover:border-blue-400'
+                                }
+                              `}
+                            >
+                              <span className="tracking-[0.025em]">{item.name}</span>
+                              <ChevronDown
+                                size={16}
+                                className="text-blue-400 transition-transform duration-300 group-hover:rotate-180"
+                                aria-hidden="true"
+                              />
+                            </div>
+                            {/* Dropdown Menu */}
+                            <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-50">
+                              <div className="py-3">
+                                {item.dropdown.map((subItem: any) => {
+                                  const isSubItemActive = subItem.href === pathname ||
+                                    (subItem.href === '/#about-us' && typeof window !== 'undefined' && window.location.hash === '#about-us') ||
+                                    (subItem.href === '/#team-section' && typeof window !== 'undefined' && window.location.hash === '#team-section');
+
+                                  return (
+                                    <Link
+                                      key={subItem.name}
+                                      href={subItem.href}
+                                      onClick={(e) => handleSmoothScroll(e, subItem.href)}
+                                      className={`
+                                        block px-4 py-2 mx-1 rounded-lg
+                                        text-sm font-medium tracking-[0.025em]
+                                        focus:outline-none
+                                        transition-all duration-300 ease-in-out
+                                        ${isSubItemActive
+                                          ? 'text-blue-500 font-semibold bg-blue-50'
+                                          : 'text-blue-400 hover:text-blue-500 hover:font-semibold hover:bg-blue-50'
+                                        }
+                                      `}
+                                      role="menuitem"
+                                      aria-label={`Navigate to ${subItem.name}`}
+                                    >
+                                      {subItem.name}
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <Link
+                            href={item.href}
+                            className={`
+                              relative flex items-center space-x-1 font-inter
+                              text-base lg:text-base font-medium tracking-wide
+                              px-3 py-2 mx-1
+                              transition-all duration-300 ease-in-out
+                              focus:outline-none
+                              ${item.active
+                                ? 'text-blue-400 font-semibold border-b-2 border-blue-400'
+                                : 'text-blue-400 font-medium hover:text-blue-500 hover:font-semibold border-b-2 border-transparent hover:border-blue-400'
+                              }
+                            `}
+                            onClick={(e) => handleSmoothScroll(e, item.href)}
+                            aria-label={`Navigate to ${item.name}`}
+                            aria-current={item.active ? 'page' : undefined}
+                          >
+                            <span className="tracking-[0.025em]">{item.name}</span>
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
                 </nav>
               )}
 
@@ -319,7 +410,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                       </div>
                     )}
 
-                    <UserButton afterSignOutUrl="/charity-theme" />
+                    <UserButton />
                   </>
                 )}
               </div>
@@ -446,31 +537,96 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
           {/* Mobile Menu Navigation */}
           <nav className="flex-1 overflow-y-auto py-6" role="navigation" aria-label="Mobile navigation">
             <ul className="space-y-1 px-6">
-              {!hideMenuItems && updatedNavItems.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`
-                      block py-4 px-4 min-h-[44px] rounded-xl
-                      font-inter text-base font-medium tracking-[0.025em]
-                      focus:outline-none
-                      transition-all duration-300 ease-in-out
-                      ${item.active
-                        ? 'text-blue-400 font-semibold border-l-4 border-blue-400'
-                        : 'text-blue-400 font-medium hover:text-blue-500 hover:font-semibold border-l-4 border-transparent hover:border-blue-400'
-                      }
-                    `}
-                    onClick={(e) => {
-                      closeMobileMenu();
-                      handleSmoothScroll(e, item.href);
-                    }}
-                    aria-label={`Navigate to ${item.name}`}
-                    aria-current={item.active ? 'page' : undefined}
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
+              {!hideMenuItems && updatedNavItems.map((item) => {
+                const hasDropdown = item.dropdown && Array.isArray(item.dropdown) && item.dropdown.length > 0;
+                const isDropdownOpen = openMobileDropdowns[item.name] || false;
+
+                if (hasDropdown) {
+                  return (
+                    <li key={item.name}>
+                      <button
+                        onClick={() => setOpenMobileDropdowns(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
+                        className={`
+                          w-full flex items-center justify-between py-4 px-4 min-h-[44px] rounded-xl
+                          font-inter text-base font-medium tracking-[0.025em]
+                          focus:outline-none
+                          transition-all duration-300 ease-in-out
+                          text-blue-400 font-medium hover:text-blue-500 hover:font-semibold border-l-4 border-transparent hover:border-blue-400
+                        `}
+                        aria-label={`Toggle ${item.name} submenu`}
+                        aria-expanded={isDropdownOpen}
+                      >
+                        <span>{item.name}</span>
+                        <ChevronDown
+                          size={16}
+                          className={`text-blue-400 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                          aria-hidden="true"
+                        />
+                      </button>
+                      {isDropdownOpen && (
+                        <ul className="pl-4 mt-1 space-y-1">
+                          {item.dropdown.map((subItem: any) => {
+                            const isSubItemActive = subItem.href === pathname ||
+                              (subItem.href === '/#about-us' && typeof window !== 'undefined' && window.location.hash === '#about-us') ||
+                              (subItem.href === '/#team-section' && typeof window !== 'undefined' && window.location.hash === '#team-section');
+
+                            return (
+                              <li key={subItem.name}>
+                                <Link
+                                  href={subItem.href}
+                                  className={`
+                                    block py-3 px-4 min-h-[44px] rounded-xl
+                                    font-inter text-sm font-medium tracking-[0.025em]
+                                    focus:outline-none
+                                    transition-all duration-300 ease-in-out
+                                    ${isSubItemActive
+                                      ? 'text-blue-500 font-semibold border-l-4 border-blue-400 bg-blue-50'
+                                      : 'text-blue-400 font-medium hover:text-blue-500 hover:font-semibold border-l-4 border-transparent hover:border-blue-400'
+                                    }
+                                  `}
+                                  onClick={(e) => {
+                                    closeMobileMenu();
+                                    handleSmoothScroll(e, subItem.href);
+                                  }}
+                                  aria-label={`Navigate to ${subItem.name}`}
+                                >
+                                  {subItem.name}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                }
+
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={`
+                        block py-4 px-4 min-h-[44px] rounded-xl
+                        font-inter text-base font-medium tracking-[0.025em]
+                        focus:outline-none
+                        transition-all duration-300 ease-in-out
+                        ${item.active
+                          ? 'text-blue-400 font-semibold border-l-4 border-blue-400'
+                          : 'text-blue-400 font-medium hover:text-blue-500 hover:font-semibold border-l-4 border-transparent hover:border-blue-400'
+                        }
+                      `}
+                      onClick={(e) => {
+                        closeMobileMenu();
+                        handleSmoothScroll(e, item.href);
+                      }}
+                      aria-label={`Navigate to ${item.name}`}
+                      aria-current={item.active ? 'page' : undefined}
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
 
             {/* Mobile Menu Auth Section */}
@@ -556,7 +712,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                   )}
 
                   <div className="flex justify-center pt-4">
-                    <UserButton afterSignOutUrl="/charity-theme" />
+                    <UserButton />
                   </div>
                 </>
               )}

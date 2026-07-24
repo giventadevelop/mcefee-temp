@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaSearch, FaFilter } from 'react-icons/fa';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import DataTable, { Column } from '@/components/ui/DataTable';
-import Modal from '@/components/ui/Modal';
-import ConfirmModal from '@/components/ui/Modal';
+import AdminListSearchCombobox from '@/components/admin/AdminListSearchCombobox';
+import Modal, { ConfirmModal } from '@/components/ui/Modal';
 import AdminNavigation from '@/components/AdminNavigation';
-import type { EventProgramDirectorsDTO } from '@/types';
+import EventTypeaheadSelect from '@/components/admin/EventTypeaheadSelect';
+import type { EventProgramDirectorsDTO, EventDetailsDTO } from '@/types';
 import {
   fetchEventProgramDirectorsServer,
   createEventProgramDirectorServer,
@@ -23,6 +24,12 @@ export default function GlobalEventProgramDirectorsPage() {
   const [directors, setDirectors] = useState<EventProgramDirectorsDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [eventFilter, setEventFilter] = useState<EventDetailsDTO | null>(null);
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(20);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -35,6 +42,7 @@ export default function GlobalEventProgramDirectorsPage() {
     name: '',
     photoUrl: '',
     bio: '',
+    event: undefined,
   });
 
   // Search and filter state
@@ -48,13 +56,14 @@ export default function GlobalEventProgramDirectorsPage() {
     if (userId) {
       loadDirectors();
     }
-  }, [userId]);
+  }, [userId, page]);
 
   const loadDirectors = async () => {
     try {
       setLoading(true);
-      const directorsData = await fetchEventProgramDirectorsServer();
-      setDirectors(directorsData);
+      const result = await fetchEventProgramDirectorsServer(undefined, page, pageSize);
+      setDirectors(result.data);
+      setTotalCount(result.totalCount);
     } catch (err: any) {
       setError(err.message || 'Failed to load program directors');
     } finally {
@@ -77,6 +86,7 @@ export default function GlobalEventProgramDirectorsPage() {
         name: formData.name.trim(),
         photoUrl: formData.photoUrl?.trim() || undefined,
         bio: formData.bio?.trim() || undefined,
+        event: formData.event?.id ? { id: formData.event.id } as EventDetailsDTO : undefined
       };
 
       // Debug logging
@@ -84,11 +94,12 @@ export default function GlobalEventProgramDirectorsPage() {
       console.log('📝 Form data:', formData);
       console.log('📤 Director data being sent:', directorData);
 
-      const newDirector = await createEventProgramDirectorServer(directorData);
-      setDirectors(prev => [...prev, newDirector]);
+      await createEventProgramDirectorServer(directorData);
       setIsCreateModalOpen(false);
       resetForm();
       setToastMessage({ type: 'success', message: 'Program director created successfully' });
+      // Reload current page to refresh the list
+      await loadDirectors();
     } catch (err: any) {
       setToastMessage({ type: 'error', message: err.message || 'Failed to create program director' });
     } finally {
@@ -101,12 +112,18 @@ export default function GlobalEventProgramDirectorsPage() {
 
     try {
       setLoading(true);
-      const updatedDirector = await updateEventProgramDirectorServer(selectedDirector.id!, formData);
-      setDirectors(prev => prev.map(d => d.id === selectedDirector.id ? updatedDirector : d));
+      // Include event association if selected
+      const directorData = {
+        ...formData,
+        event: formData.event?.id ? { id: formData.event.id } as EventDetailsDTO : undefined
+      };
+      await updateEventProgramDirectorServer(selectedDirector.id!, directorData);
       setIsEditModalOpen(false);
       setSelectedDirector(null);
       resetForm();
       setToastMessage({ type: 'success', message: 'Program director updated successfully' });
+      // Reload current page to refresh the list
+      await loadDirectors();
     } catch (err: any) {
       setToastMessage({ type: 'error', message: err.message || 'Failed to update program director' });
     } finally {
@@ -120,10 +137,11 @@ export default function GlobalEventProgramDirectorsPage() {
     try {
       setLoading(true);
       await deleteEventProgramDirectorServer(selectedDirector.id!);
-      setDirectors(prev => prev.filter(d => d.id !== selectedDirector.id));
       setIsDeleteModalOpen(false);
       setSelectedDirector(null);
       setToastMessage({ type: 'success', message: 'Program director deleted successfully' });
+      // Reload current page to refresh the list
+      await loadDirectors();
     } catch (err: any) {
       setToastMessage({ type: 'error', message: err.message || 'Failed to delete program director' });
     } finally {
@@ -136,17 +154,13 @@ export default function GlobalEventProgramDirectorsPage() {
       name: '',
       photoUrl: '',
       bio: '',
+      event: undefined,
     });
   };
 
   const openEditModal = (director: EventProgramDirectorsDTO) => {
-    setSelectedDirector(director);
-    setFormData({
-      name: director.name || '',
-      photoUrl: director.photoUrl || '',
-      bio: director.bio || '',
-    });
-    setIsEditModalOpen(true);
+    // Navigate to detail/edit page instead of opening modal
+    router.push(`/admin/event-program-directors/${director.id}`);
   };
 
   const openDeleteModal = (director: EventProgramDirectorsDTO) => {
@@ -155,10 +169,13 @@ export default function GlobalEventProgramDirectorsPage() {
   };
 
   // Filter and sort directors
-  const filteredDirectors = directors.filter(director =>
-    director.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    director.bio?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDirectors = directors.filter(director => {
+    const q = searchTerm.toLowerCase();
+    return !searchTerm ||
+      director.name?.toLowerCase().includes(q) ||
+      director.bio?.toLowerCase().includes(q) ||
+      String(director.id ?? '').toLowerCase().includes(q);
+  });
 
   const sortedDirectors = [...filteredDirectors].sort((a, b) => {
     if (!sortKey) return 0;
@@ -173,7 +190,47 @@ export default function GlobalEventProgramDirectorsPage() {
 
   const columns: Column<EventProgramDirectorsDTO>[] = [
     { key: 'name', label: 'Name', sortable: true },
-    { key: 'bio', label: 'Bio', sortable: true },
+    {
+      key: 'bio',
+      label: 'Bio',
+      sortable: true,
+      width: '200px',
+      className: 'max-w-xs whitespace-normal',
+      render: (value) => {
+        if (!value) return <span className="text-gray-400">-</span>;
+        const bioText = String(value);
+        return (
+          <div
+            className="line-clamp-2 text-sm text-gray-900"
+            title={bioText}
+            style={{ maxWidth: '200px' }}
+          >
+            {bioText}
+          </div>
+        );
+      }
+    },
+    {
+      key: 'event',
+      label: 'Event',
+      sortable: false,
+      render: (value, row) => {
+        if (row.event?.id && row.event?.title) {
+          return (
+            <a
+              href={`/admin/events/${row.event.id}`}
+              className="text-blue-600 hover:text-blue-800 underline"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              {row.event.title}
+            </a>
+          );
+        }
+        return <span className="text-gray-400">-</span>;
+      }
+    },
   ];
 
   if (loading && directors.length === 0) {
@@ -193,39 +250,64 @@ export default function GlobalEventProgramDirectorsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8" style={{ paddingTop: '180px' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <AdminNavigation currentPage="event-program-directors" />
 
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow mt-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Global Event Program Directors</h1>
-                <p className="text-gray-600 mt-1">Manage program directors across all events</p>
+                <h1 className="text-2xl font-bold text-gray-900">Global Program Directors</h1>
+                <p className="text-gray-600 mt-1">(You can add or disassociate these items with any events. Please go to the corresponding event page to manage these associated entities.)</p>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition"
+                className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                title="Add Director"
+                aria-label="Add Director"
+                type="button"
               >
-                <FaPlus className="text-sm" />
-                <span>Add Director</span>
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                  <FaPlus className="w-6 h-6 text-blue-600" />
+                </div>
+                <span className="font-semibold text-blue-700">Add Director</span>
               </button>
             </div>
           </div>
 
           <div className="p-6">
-            {/* Search */}
-            <div className="mb-6">
-              <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search directors..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+            {/* Search and Filter */}
+            <div className="mb-6 flex flex-wrap gap-4">
+              <div className="flex-1 min-w-64">
+                <div className="relative">
+                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10 pointer-events-none" />
+                  <AdminListSearchCombobox<EventProgramDirectorsDTO & Record<string, unknown>>
+                    items={directors as (EventProgramDirectorsDTO & Record<string, unknown>)[]}
+                    committedValue={searchTerm}
+                    onCommit={setSearchTerm}
+                    placeholder="Search directors..."
+                    className="relative w-full"
+                    inputClassName="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    getSearchFields={(d) => [d.name, d.bio, d.id]}
+                    getCommitValue={(d) => d.name || ''}
+                    formatPrimary={(d) => d.name || 'Unnamed director'}
+                    formatSecondary={(d) => (d.bio ? d.bio.slice(0, 80) : '')}
+                  />
+                </div>
+              </div>
+              <div className="min-w-48">
+                <div className="relative">
+                  <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10 pointer-events-none" />
+                  <EventTypeaheadSelect
+                    selectedEvent={eventFilter}
+                    onSelect={setEventFilter}
+                    clearLabel="All Events"
+                    placeholder="All Events"
+                    className="relative w-full"
+                    inputClassName="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  />
+                </div>
               </div>
             </div>
 
@@ -242,6 +324,67 @@ export default function GlobalEventProgramDirectorsPage() {
                 setSortDirection(direction);
               }}
             />
+
+            {/* Pagination Controls - Always visible, matching admin page style */}
+            <div className="mt-8">
+              <div className="flex justify-between items-center gap-2">
+                {/* Previous Button */}
+                <button
+                  onClick={() => setPage(prev => Math.max(0, prev - 1))}
+                  disabled={page === 0 || loading}
+                  className="px-3 sm:px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+                  title="Previous Page"
+                  aria-label="Previous Page"
+                  type="button"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="hidden sm:inline">Previous</span>
+                </button>
+
+                {/* Page Info */}
+                <div className="px-2 sm:px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm flex-shrink-0">
+                  <span className="text-xs sm:text-sm font-bold text-blue-700">
+                    Page <span className="text-blue-600">{page + 1}</span> of <span className="text-blue-600">{Math.max(1, Math.ceil(totalCount / pageSize))}</span>
+                  </span>
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => setPage(prev => prev + 1)}
+                  disabled={page >= Math.ceil(totalCount / pageSize) - 1 || loading}
+                  className="px-3 sm:px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+                  title="Next Page"
+                  aria-label="Next Page"
+                  type="button"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Item Count Text */}
+              <div className="text-center mt-3">
+                {totalCount > 0 ? (
+                  <div className="inline-flex items-center px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
+                    <span className="text-sm text-gray-700">
+                      Showing <span className="font-bold text-blue-600">{totalCount > 0 ? page * pageSize + 1 : 0}</span> to <span className="font-bold text-blue-600">{Math.min((page + 1) * pageSize, totalCount)}</span> of <span className="font-bold text-blue-600">{totalCount}</span> directors
+                    </span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 border-2 border-orange-300 rounded-lg shadow-sm">
+                    <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm font-medium text-orange-700">No directors found</span>
+                    <span className="text-sm text-orange-600">[No directors match your criteria]</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -274,6 +417,10 @@ export default function GlobalEventProgramDirectorsPage() {
           formData={formData}
           setFormData={setFormData}
           onSubmit={handleCreate}
+          onCancel={() => {
+            setIsCreateModalOpen(false);
+            resetForm();
+          }}
           loading={loading}
           submitText="Create Director"
         />
@@ -294,6 +441,11 @@ export default function GlobalEventProgramDirectorsPage() {
           formData={formData}
           setFormData={setFormData}
           onSubmit={handleEdit}
+          onCancel={() => {
+            setIsEditModalOpen(false);
+            setSelectedDirector(null);
+            resetForm();
+          }}
           loading={loading}
           submitText="Update Director"
         />
@@ -321,12 +473,13 @@ interface DirectorFormProps {
   formData: Partial<EventProgramDirectorsDTO>;
   setFormData: React.Dispatch<React.SetStateAction<Partial<EventProgramDirectorsDTO>>>;
   onSubmit: () => void;
+  onCancel: () => void;
   loading: boolean;
   submitText: string;
 }
 
-function DirectorForm({ formData, setFormData, onSubmit, loading, submitText }: DirectorFormProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+function DirectorForm({ formData, setFormData, onSubmit, onCancel, loading, submitText }: DirectorFormProps) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -339,6 +492,18 @@ function DirectorForm({ formData, setFormData, onSubmit, loading, submitText }: 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Event (Optional)
+          </label>
+          <EventTypeaheadSelect
+            selectedEvent={formData.event ?? null}
+            onSelect={(event) => setFormData(prev => ({ ...prev, event: event ?? undefined }))}
+            clearLabel="No Event (Global)"
+            placeholder="No Event (Global)"
+          />
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Name *
@@ -355,7 +520,7 @@ function DirectorForm({ formData, setFormData, onSubmit, loading, submitText }: 
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Photo URL
+            Photo URL (Optional)
           </label>
           <input
             type="url"
@@ -363,7 +528,7 @@ function DirectorForm({ formData, setFormData, onSubmit, loading, submitText }: 
             value={formData.photoUrl || ''}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter photo URL"
+            placeholder="Enter photo URL (optional)"
           />
         </div>
         <div className="md:col-span-2">
@@ -383,18 +548,32 @@ function DirectorForm({ formData, setFormData, onSubmit, loading, submitText }: 
       <div className="flex justify-end space-x-3 pt-4">
         <button
           type="button"
-          onClick={() => {/* Close modal logic handled by parent */ }}
-          className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+          onClick={onCancel}
+          className="flex-shrink-0 h-14 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-gray-100 disabled:border-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:scale-100"
           disabled={loading}
+          title="Cancel"
+          aria-label="Cancel"
         >
-          Cancel
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <span className="font-semibold text-gray-700">Cancel</span>
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+          className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed disabled:hover:scale-100"
           disabled={loading}
+          title={submitText}
+          aria-label={submitText}
         >
-          {loading ? 'Processing...' : submitText}
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span className="font-semibold text-blue-700">{loading ? 'Processing...' : submitText}</span>
         </button>
       </div>
     </form>

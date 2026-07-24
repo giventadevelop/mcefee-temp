@@ -1,9 +1,12 @@
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
-import { getAppUrl } from '@/lib/env';
+import { getAppUrl, getApiBaseUrl } from '@/lib/env';
 import { withTenantId } from '@/lib/withTenantId';
 import type { EventEmailsDTO } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 const baseUrl = getAppUrl();
 
 export async function fetchEventEmailsServer(eventId?: number) {
@@ -12,7 +15,7 @@ export async function fetchEventEmailsServer(eventId?: number) {
     params.append('eventId.equals', eventId.toString());
   }
 
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-emails${params.toString() ? `?${params.toString()}` : ''}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-emails${params.toString() ? `?${params.toString()}` : ''}`, {
     cache: 'no-store',
   });
 
@@ -23,8 +26,42 @@ export async function fetchEventEmailsServer(eventId?: number) {
   return await response.json();
 }
 
+/**
+ * Paginated criteria fetch driven by backend page/size/sort + X-Total-Count.
+ * `search` maps to `email.contains` (or `id.equals` when numeric).
+ */
+export async function fetchEventEmailsPageServer(options: {
+  page: number;
+  size: number;
+  search?: string;
+  sort?: string;
+}): Promise<{ data: EventEmailsDTO[]; totalCount: number }> {
+  const params = new URLSearchParams({
+    page: String(Math.max(0, options.page)),
+    size: String(Math.max(1, options.size)),
+    sort: options.sort || 'id,asc',
+  });
+  const term = options.search?.trim();
+  if (term) {
+    if (/^\d+$/.test(term)) params.append('id.equals', term);
+    else params.append('email.contains', term);
+  }
+
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-emails?${params.toString()}`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch event emails: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const totalCount = parseInt(response.headers.get('x-total-count') || '0', 10);
+  return { data: Array.isArray(data) ? data : [], totalCount };
+}
+
 export async function fetchEventEmailServer(id: number) {
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-emails/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-emails/${id}`, {
     cache: 'no-store',
   });
 
@@ -36,9 +73,14 @@ export async function fetchEventEmailServer(id: number) {
 }
 
 export async function createEventEmailServer(email: Omit<EventEmailsDTO, 'id' | 'createdAt' | 'updatedAt'>) {
-  const payload = withTenantId(email);
+  const now = new Date().toISOString();
+  const payload = withTenantId({
+    ...email,
+    createdAt: now,
+    updatedAt: now,
+  });
 
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-emails`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-emails`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -55,7 +97,7 @@ export async function createEventEmailServer(email: Omit<EventEmailsDTO, 'id' | 
 export async function updateEventEmailServer(id: number, email: Partial<EventEmailsDTO>) {
   const payload = withTenantId({ ...email, id });
 
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-emails/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-emails/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/merge-patch+json' },
     body: JSON.stringify(payload),
@@ -70,7 +112,7 @@ export async function updateEventEmailServer(id: number, email: Partial<EventEma
 }
 
 export async function deleteEventEmailServer(id: number) {
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-emails/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-emails/${id}`, {
     method: 'DELETE',
   });
 

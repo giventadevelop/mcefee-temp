@@ -1,8 +1,7 @@
-import { authMiddleware } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 
-export const runtime = 'edge';
-
+// Clerk auth catch-all route
+// Note: runtime must NOT be 'edge' — Amplify doesn't support Edge API Routes
 export async function GET() {
   return new NextResponse(null, { status: 200 });
 }

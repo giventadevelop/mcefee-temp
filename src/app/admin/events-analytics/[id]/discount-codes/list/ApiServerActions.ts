@@ -1,14 +1,17 @@
 "use server";
-import { getTenantId, getAppUrl } from "@/lib/env";
+import { getTenantId, getAppUrl, getApiBaseUrl } from "@/lib/env";
 import { fetchWithJwtRetry } from "@/lib/proxyHandler";
 import { withTenantId } from "@/lib/withTenantId";
 import { DiscountCodeDTO } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
 export async function fetchDiscountCodesForEvent(eventId: string): Promise<DiscountCodeDTO[]> {
   const tenantId = getTenantId();
-  const url = `${API_BASE_URL}/api/discount-codes?eventId.equals=${eventId}&tenantId.equals=${tenantId}`;
+  const url = `${getApiBase()}/api/discount-codes?eventId.equals=${eventId}&tenantId.equals=${tenantId}`;
 
   const response = await fetchWithJwtRetry(url, {
       next: { revalidate: 0 },
@@ -58,7 +61,7 @@ export async function createDiscountCodeServer(
 }
 
 export async function deleteDiscountCodeServer(discountCodeId: number): Promise<{ success: boolean }> {
-  const url = `${API_BASE_URL}/api/discount-codes/${discountCodeId}`;
+  const url = `${getApiBase()}/api/discount-codes/${discountCodeId}`;
 
   const response = await fetchWithJwtRetry(url, {
     method: 'DELETE',

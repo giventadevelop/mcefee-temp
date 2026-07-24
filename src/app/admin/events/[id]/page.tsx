@@ -16,7 +16,9 @@ import {
   FaCalendarAlt,
   FaClock,
   FaMapMarkerAlt,
-  FaTicketAlt
+  FaTicketAlt,
+  FaObjectGroup,
+  FaTrophy
 } from 'react-icons/fa';
 import type { EventDetailsDTO } from '@/types';
 
@@ -93,10 +95,14 @@ export default function EventOverviewPage() {
         <div className="flex items-center">
           <Link
             href="/admin/manage-events"
-            className="flex items-center text-blue-600 hover:text-blue-800 mr-4"
+            className="flex-shrink-0 h-14 rounded-xl bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-5 mr-4"
+            title="Back to Manage Events"
+            aria-label="Back to Manage Events"
           >
-            <FaArrowLeft className="mr-2" />
-            Back to Manage Events
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-200 flex items-center justify-center">
+              <FaArrowLeft className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="font-semibold text-indigo-700">Back to Manage Events</span>
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -109,10 +115,14 @@ export default function EventOverviewPage() {
         {event && (
           <Link
             href={`/admin/events/${eventId}/edit`}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow font-bold flex items-center gap-2 hover:bg-blue-700 transition"
+            className="ml-auto w-auto flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+            title="Edit Event"
+            aria-label="Edit Event"
           >
-            <FaEdit />
-            Edit Event
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+              <FaEdit className="w-6 h-6 text-blue-600" />
+            </div>
+            <span className="font-semibold text-blue-700">Edit Event</span>
           </Link>
         )}
       </div>
@@ -196,36 +206,117 @@ export default function EventOverviewPage() {
           </div>
 
           {/* Management Options */}
-          <div className="w-full overflow-x-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-6 justify-items-center mx-auto">
-              <Link href={`/admin/events/${eventId}/edit`} className="w-48 max-w-xs mx-auto flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-md shadow p-1 sm:p-2 text-xs sm:text-xs transition-all">
-                <FaEdit className="text-base sm:text-lg mb-1 mx-auto" />
-                <span className="font-semibold text-center leading-tight">Edit Event<br />Details</span>
+          <div className="bg-white shadow rounded-lg p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Management Options</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <Link
+                href={`/admin/events/${eventId}/edit`}
+                className="flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Edit Event Details"
+                aria-label="Edit Event Details"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaEdit className="w-10 h-10 text-blue-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Edit Event Details</span>
               </Link>
 
-              <Link href={`/admin/events/${eventId}/media`} className="w-48 max-w-xs mx-auto flex flex-col items-center justify-center bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-md shadow p-1 sm:p-2 text-xs sm:text-xs transition-all">
-                <FaImage className="text-base sm:text-lg mb-1 mx-auto" />
-                <span className="font-semibold text-center leading-tight">Event Media<br />[Images/Videos]</span>
+              <Link
+                href={`/admin/events/${eventId}/media`}
+                className="flex flex-col items-center justify-center bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Event Media"
+                aria-label="Event Media"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaImage className="w-10 h-10 text-purple-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Event Media</span>
               </Link>
 
-              <Link href={`/admin/events/${eventId}/ticket-types/list`} className="w-48 max-w-xs mx-auto flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 text-green-800 rounded-md shadow p-1 sm:p-2 text-xs sm:text-xs transition-all">
-                <FaDollarSign className="text-base sm:text-lg mb-1 mx-auto" />
-                <span className="font-semibold text-center leading-tight">Ticket Types<br />[Pricing]</span>
+              <Link
+                href={`/admin/events/${eventId}/focus-groups`}
+                className="flex flex-col items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Focus Groups"
+                aria-label="Focus Groups"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaObjectGroup className="w-10 h-10 text-amber-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Focus Groups</span>
               </Link>
 
-              <Link href={`/admin/events/${eventId}/sponsors`} className="w-48 max-w-xs mx-auto flex flex-col items-center justify-center bg-yellow-50 hover:bg-yellow-100 text-yellow-800 rounded-md shadow p-1 sm:p-2 text-xs sm:text-xs transition-all">
-                <FaHandshake className="text-base sm:text-lg mb-1 mx-auto" />
-                <span className="font-semibold text-center leading-tight">Event Sponsors<br />[Partnerships]</span>
+              {event.isCompetitionEvent && (
+                <Link
+                  href={`/admin/events/${eventId}/competitions/settings`}
+                  className="flex flex-col items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                  title="Competitions"
+                  aria-label="Competitions"
+                >
+                  <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-rose-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                    <FaTrophy className="w-10 h-10 text-rose-500" />
+                  </div>
+                  <span className="font-semibold text-center leading-tight">Competitions</span>
+                </Link>
+              )}
+
+              <Link
+                href={`/admin/events/${eventId}/ticket-types/list`}
+                className="flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 text-green-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Ticket Types"
+                aria-label="Ticket Types"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaDollarSign className="w-10 h-10 text-green-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Ticket Types</span>
               </Link>
 
-              <Link href={`/admin/events/${eventId}/performers`} className="w-48 max-w-xs mx-auto flex flex-col items-center justify-center bg-pink-50 hover:bg-pink-100 text-pink-800 rounded-md shadow p-1 sm:p-2 text-xs sm:text-xs transition-all">
-                <FaMicrophone className="text-base sm:text-lg mb-1 mx-auto" />
-                <span className="font-semibold text-center leading-tight">Performers<br />[Artists]</span>
+              <Link
+                href={`/admin/events/${eventId}/sponsors`}
+                className="flex flex-col items-center justify-center bg-yellow-50 hover:bg-yellow-100 text-yellow-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Event Sponsors"
+                aria-label="Event Sponsors"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-yellow-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaHandshake className="w-10 h-10 text-yellow-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Event Sponsors</span>
               </Link>
 
-              <Link href={`/admin/events/${eventId}/program-directors`} className="w-48 max-w-xs mx-auto flex flex-col items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-md shadow p-1 sm:p-2 text-xs sm:text-xs transition-all">
-                <FaUserTie className="text-base sm:text-lg mb-1 mx-auto" />
-                <span className="font-semibold text-center leading-tight">Program Directors<br />[Leadership]</span>
+              <Link
+                href={`/admin/events/${eventId}/performers`}
+                className="flex flex-col items-center justify-center bg-pink-50 hover:bg-pink-100 text-pink-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Performers"
+                aria-label="Performers"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-pink-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaMicrophone className="w-10 h-10 text-pink-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Performers</span>
+              </Link>
+
+              <Link
+                href={`/admin/events/${eventId}/program-directors`}
+                className="flex flex-col items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Program Directors"
+                aria-label="Program Directors"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-indigo-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaUserTie className="w-10 h-10 text-indigo-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Program Directors</span>
+              </Link>
+
+              <Link
+                href={`/admin/manual-payments?eventId=${eventId}`}
+                className="flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Manual Payments"
+                aria-label="Manual Payments"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-teal-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaDollarSign className="w-10 h-10 text-teal-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Manual Payments</span>
               </Link>
             </div>
           </div>

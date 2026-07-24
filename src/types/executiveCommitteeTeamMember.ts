@@ -3,6 +3,7 @@
  */
 export interface ExecutiveCommitteeTeamMemberDTO {
   id: number | null;
+  tenantId?: string;
   firstName: string;
   lastName: string;
   title: string;

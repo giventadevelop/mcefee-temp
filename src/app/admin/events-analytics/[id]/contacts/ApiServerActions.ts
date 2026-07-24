@@ -1,16 +1,19 @@
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
-import { getAppUrl } from '@/lib/env';
+import { getAppUrl, getApiBaseUrl } from '@/lib/env';
 import { withTenantId } from '@/lib/withTenantId';
 import type { EventContactsDTO } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 const baseUrl = getAppUrl();
 
 export async function fetchEventContactsServer(eventId: number) {
   const params = new URLSearchParams();
   params.append('eventId.equals', eventId.toString());
   
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts?${params.toString()}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts?${params.toString()}`, {
     cache: 'no-store',
   });
   
@@ -22,7 +25,7 @@ export async function fetchEventContactsServer(eventId: number) {
 }
 
 export async function fetchEventContactServer(id: number) {
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts/${id}`, {
     cache: 'no-store',
   });
   
@@ -48,7 +51,7 @@ export async function createEventContactServer(contact: Omit<EventContactsDTO, '
   console.log('📤 Final payload:', payload);
   console.log('⏰ Timestamps:', { createdAt: currentTime, updatedAt: currentTime });
   
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -66,7 +69,7 @@ export async function createEventContactServer(contact: Omit<EventContactsDTO, '
 export async function updateEventContactServer(id: number, contact: Partial<EventContactsDTO>) {
   const payload = withTenantId({ ...contact, id });
   
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/merge-patch+json' },
     body: JSON.stringify(payload),
@@ -81,7 +84,7 @@ export async function updateEventContactServer(id: number, contact: Partial<Even
 }
 
 export async function deleteEventContactServer(id: number) {
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts/${id}`, {
     method: 'DELETE',
   });
   

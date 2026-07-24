@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,33 +50,53 @@ export function PollAnalyticsDashboard({ poll, options, onExport }: PollAnalytic
   const [isLoading, setIsLoading] = useState(true);
   const [showRawData, setShowRawData] = useState(false);
   const [responses, setResponses] = useState<EventPollResponseDTO[]>([]);
+  
+  // Use refs to prevent infinite loops
+  const optionsRef = useRef(options);
+  const isFetchingRef = useRef(false);
+
+  // Update ref when options change (without triggering re-renders)
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   useEffect(() => {
+    // Prevent duplicate simultaneous fetches
+    if (isFetchingRef.current) {
+      return;
+    }
+
     const loadAnalytics = async () => {
+      isFetchingRef.current = true;
       try {
         const pollResponses = await fetchEventPollResponsesServer({
           'pollId.equals': poll.id
         });
         
         setResponses(pollResponses);
-        const analyticsData = calculateAnalytics(pollResponses);
+        // Use ref to get latest options without including in dependencies
+        const analyticsData = calculateAnalytics(pollResponses, optionsRef.current);
         setAnalytics(analyticsData);
       } catch (error) {
         console.error('Error loading poll analytics:', error);
       } finally {
         setIsLoading(false);
+        // Reset fetch guard after a short delay
+        setTimeout(() => {
+          isFetchingRef.current = false;
+        }, 100);
       }
     };
 
     loadAnalytics();
-  }, [poll.id, options]);
+  }, [poll.id]); // Removed options from dependencies to prevent infinite loops
 
-  const calculateAnalytics = (responses: EventPollResponseDTO[]): AnalyticsData => {
+  const calculateAnalytics = (responses: EventPollResponseDTO[], currentOptions: EventPollOptionDTO[]): AnalyticsData => {
     const uniqueVoters = new Set(responses.map(r => r.userId).filter(Boolean)).size;
     const totalResponses = responses.length;
     
     // Calculate option statistics
-    const optionStats = options.map(option => {
+    const optionStats = currentOptions.map(option => {
       const optionResponses = responses.filter(r => r.pollOptionId === option.id);
       const uniqueVotersForOption = new Set(optionResponses.map(r => r.userId).filter(Boolean)).size;
       

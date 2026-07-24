@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
-import { getTenantId } from '@/lib/env';
+import { fetchWithJwtRetry } from '@/lib/proxyHandler';
+import { getTenantId, getApiBaseUrl } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -25,10 +25,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Build the backend path
     let path = '/api/user-profiles';
+    let userIdFromPath: string | null = null;
+
     if (slug) {
       if (Array.isArray(slug)) {
-        path += '/' + slug.map(encodeURIComponent).join('/');
+        // Check if this is a /by-user/{userId} path
+        if (slug.length === 2 && slug[0] === 'by-user') {
+          userIdFromPath = slug[1];
+          // Convert /by-user/{userId} to query parameter format (backend doesn't support path format)
+          path = '/api/user-profiles'; // Remove /by-user/{userId} from path
+        } else {
+          path += '/' + slug.map(encodeURIComponent).join('/');
+        }
       } else if (typeof slug === 'string') {
+        // Single slug - check if it's a numeric ID or something else
         path += '/' + encodeURIComponent(slug);
       }
     }
@@ -37,16 +47,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { slug: _omit, ...restQuery } = query;
     const qs = new URLSearchParams(restQuery as Record<string, string>);
 
+    // If we extracted userId from /by-user/{userId} path, add it as query parameter
+    if (userIdFromPath) {
+      if (!Array.from(qs.keys()).includes('userId.equals')) {
+        qs.append('userId.equals', userIdFromPath);
+        console.log('[UserProfile Proxy] Converted /by-user/ path to query parameter:', userIdFromPath);
+      }
+    }
+
+    // Special handling for /by-user/{userId} endpoint - always needs tenantId.equals
+    const isByUserEndpoint = userIdFromPath !== null;
+
     // Only append tenantId.equals for GET/POST list endpoints, not for PATCH/PUT/DELETE by ID
+    // Also add for /by-user/ endpoints which require tenant scoping
     const isListEndpoint = (method === 'GET' || method === 'POST') && !/\/\d+(\/|$)/.test(path);
-    if (isListEndpoint && !Array.from(qs.keys()).includes('tenantId.equals')) {
+    if ((isListEndpoint || isByUserEndpoint) && !Array.from(qs.keys()).includes('tenantId.equals')) {
       qs.append('tenantId.equals', tenantId);
+      if (isByUserEndpoint) {
+        console.log('[UserProfile Proxy] Detected /by-user/ endpoint - adding tenantId.equals:', tenantId);
+      }
     }
 
     const queryString = qs.toString();
     const apiUrl = `${API_BASE_URL}${path}${queryString ? `?${queryString}` : ''}`;
 
     console.log('[UserProfile Proxy] Forwarding to backend URL:', apiUrl);
+    console.log('[UserProfile Proxy] Path:', path, '| Method:', method, '| IsByUserEndpoint:', isByUserEndpoint, '| IsListEndpoint:', isListEndpoint);
 
     // Make the initial request
     let apiRes = await fetchWithJwtRetry(apiUrl, {
@@ -76,33 +102,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('[UserProfile Proxy ERROR]', err);
     res.status(500).json({ error: 'Internal server error', details: String(err) });
   }
-}
-
-async function fetchWithJwtRetry(apiUrl: string, options: any = {}, debugLabel = '') {
-  console.log('[fetchWithJwtRetry] Called with URL:', apiUrl);
-  let token = await getCachedApiJwt();
-  console.log('[fetchWithJwtRetry] Using JWT:', token);
-  let response = await fetch(apiUrl, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  console.log('[fetchWithJwtRetry] Response status:', response.status);
-  if (response.status === 401) {
-    token = await generateApiJwt();
-    console.log('[fetchWithJwtRetry] Retrying with new JWT:', token);
-    response = await fetch(apiUrl, {
-      ...options,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log('[fetchWithJwtRetry] Response status (after retry):', response.status);
-  }
-  return response;
 }
 
 export const config = {

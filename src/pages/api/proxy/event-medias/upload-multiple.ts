@@ -1,7 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
+import { getApiBaseUrl, getTenantId } from '@/lib/env';
+import { getRawBody } from '@/lib/getRawBody';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 export const config = {
   api: {
@@ -9,34 +11,32 @@ export const config = {
   },
 };
 
-async function fetchWithJwtRetry(apiUrl: string, options: any = {}, debugLabel = '') {
-  let token = await getCachedApiJwt();
-  let response = await fetch(apiUrl, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (response.status === 401) {
-    token = await generateApiJwt();
-    response = await fetch(apiUrl, {
-      ...options,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-      },
-    });
+async function forwardUpload(
+  apiUrl: string,
+  rawBody: Buffer,
+  contentType: string | undefined,
+  token: string,
+  tenantId: string
+) {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    'X-Tenant-ID': tenantId,
+    'content-length': String(rawBody.length),
+  };
+  if (contentType) {
+    headers['content-type'] = contentType;
   }
-
-  return response;
+  return fetch(apiUrl, {
+    method: 'POST',
+    headers,
+    body: rawBody,
+  });
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!API_BASE_URL) {
-      res.status(500).json({ error: "API base URL not configured" });
+      res.status(500).json({ error: 'API base URL not configured' });
       return;
     }
 
@@ -46,78 +46,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    // Get JWT token
     let token = await getCachedApiJwt();
     if (!token) {
       token = await generateApiJwt();
     }
 
-    // Construct the backend API URL
     const apiUrl = `${API_BASE_URL}/api/event-medias/upload-multiple`;
+    const tenantId = getTenantId();
+    const rawBody = await getRawBody(req);
+    const contentType = Array.isArray(req.headers['content-type'])
+      ? req.headers['content-type'][0]
+      : req.headers['content-type'];
 
-    // Use node-fetch for proper multipart form handling
-    const fetch = (await import("node-fetch")).default;
+    let apiRes = await forwardUpload(apiUrl, rawBody, contentType, token, tenantId);
 
-    // Copy headers from request, but sanitize them
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${token}`,
-    };
-
-    // Only copy content-type and content-length if they exist
-    if (req.headers['content-type']) {
-      headers['content-type'] = req.headers['content-type'];
-    }
-    if (req.headers['content-length']) {
-      headers['content-length'] = req.headers['content-length'];
+    if (apiRes.status === 401) {
+      token = await generateApiJwt();
+      apiRes = await forwardUpload(apiUrl, rawBody, contentType, token, tenantId);
     }
 
-    // Forward the request to the backend
-    const apiRes = await fetch(apiUrl, {
-      method: 'POST',
-      headers: headers,
-      body: req, // Forward the raw request stream
-      duplex: 'half', // Required for streaming body in Node.js fetch
-    });
+    const bodyText = await apiRes.text();
 
-    // Check response status and handle accordingly
     if (apiRes.status >= 200 && apiRes.status < 300) {
-      // Success - pipe the response
-      console.log('✅ Proxy: Backend upload successful - HTTP status:', apiRes.status);
+      console.log('✅ Proxy: Backend upload-multiple successful - HTTP status:', apiRes.status);
       res.status(apiRes.status);
-
-      // Copy response headers
-      for (const [key, value] of Object.entries(apiRes.headers.raw())) {
-        if (key.toLowerCase() !== 'content-encoding' && key.toLowerCase() !== 'transfer-encoding') {
-          res.setHeader(key, value);
-        }
+      const responseContentType = apiRes.headers.get('content-type');
+      if (responseContentType) {
+        res.setHeader('Content-Type', responseContentType);
+      } else if (bodyText.trim().startsWith('[') || bodyText.trim().startsWith('{')) {
+        res.setHeader('Content-Type', 'application/json');
       }
-
-      apiRes.body.pipe(res);
-    } else {
-      // Error - return structured error response
-      console.error('❌ Proxy: Backend upload failed - HTTP status:', apiRes.status);
-
-      // Drain the error response to prevent processing
-      try {
-        // For node-fetch, we need to consume the body differently
-        if (apiRes.body && typeof apiRes.body.destroy === 'function') {
-          apiRes.body.destroy();
-        } else if (apiRes.body && typeof apiRes.body.cancel === 'function') {
-          apiRes.body.cancel();
-        }
-      } catch (drainError) {
-        console.warn('Warning: Could not drain error response body:', drainError);
-      }
-
-      res.status(apiRes.status >= 400 ? apiRes.status : 500);
-      res.setHeader('Content-Type', 'application/json');
-      res.json({
-        error: 'Upload failed',
-        status: apiRes.status,
-        message: `Upload operation failed with HTTP status ${apiRes.status}`,
-        success: false
-      });
+      // Buffer response — do not pipe (pipe can hang browser fetch in Next.js API routes).
+      res.send(bodyText);
+      return;
     }
+
+    console.error('❌ Proxy: Backend upload-multiple failed - HTTP status:', apiRes.status);
+    res.status(apiRes.status >= 400 ? apiRes.status : 500);
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+      error: 'Upload failed',
+      status: apiRes.status,
+      message: `Upload operation failed with HTTP status ${apiRes.status}`,
+      details: bodyText || undefined,
+      success: false,
+    });
   } catch (err) {
     console.error('Proxy error:', err);
     res.status(500).json({ error: 'Internal server error', details: String(err) });

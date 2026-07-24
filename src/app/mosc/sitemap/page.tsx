@@ -11,7 +11,7 @@ const SitemapPage = () => {
     {
       title: 'Main Sections',
       links: [
-        { name: 'Home', href: '/mosc' },
+        { name: 'Home', href: '/mosc-old' },
         { name: 'The Catholicate', href: '/mosc/catholicate' },
         { name: 'Administration', href: '/mosc/administration' },
         { name: 'The Church', href: '/mosc/the-church' },
@@ -44,13 +44,13 @@ const SitemapPage = () => {
         { name: 'Theological Seminaries', href: '/mosc/theological' },
         { name: 'Lectionary', href: '/mosc/lectionary' },
         { name: 'Downloads', href: '/mosc/downloads' },
-        { name: 'Gallery', href: '/mosc/photo-gallery' }
+        { name: 'Gallery', href: '/mosc/gallery' }
       ]
     },
     {
       title: 'External Links',
       links: [
-        { name: 'Directory', href: 'http://directory.mosc.in/', external: true },
+        { name: 'Directory', href: '/mosc/directory' },
         { name: 'Calendar', href: 'http://calendar.mosc.in/', external: true },
         { name: 'E-mail', href: 'https://accounts.google.com/ServiceLogin', external: true }
       ]
@@ -58,18 +58,18 @@ const SitemapPage = () => {
   ];
 
   return (
-    <div className="bg-background">
+    <div className="bg-syro-bg-gray">
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-background to-muted">
+      <section className="py-16 bg-gradient-to-br from-syro-bg-gray to-syro-bg-gray">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="w-20 h-20 bg-primary rounded-lg flex items-center justify-center mx-auto mb-6 sacred-shadow-lg">
-              <span className="text-primary-foreground text-4xl font-bold" role="img" aria-label="Sitemap">🗺️</span>
+            <div className="w-20 h-20 bg-syro-red rounded-lg flex items-center justify-center mx-auto mb-6 shadow-syro-card-hover">
+              <span className="text-syro-red-foreground text-4xl font-bold" role="img" aria-label="Sitemap">🗺️</span>
             </div>
-            <h1 className="font-heading font-semibold text-4xl text-foreground mb-4">
+            <h1 className="font-syro-display font-semibold text-4xl text-syro-blue mb-4">
               Website Sitemap
             </h1>
-            <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            <p className="font-syro-primary text-lg text-syro-dark-gray max-w-3xl mx-auto leading-relaxed">
               Navigate through all sections and pages of the Malankara Orthodox Syrian Church website.
               Find information about our faith, history, administration, and spiritual resources.
             </p>
@@ -78,12 +78,12 @@ const SitemapPage = () => {
       </section>
 
       {/* Sitemap Structure */}
-      <section className="py-16 bg-card">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {sitemapStructure.map((section) => (
-              <div key={section.title} className="bg-background rounded-lg sacred-shadow p-6">
-                <h2 className="font-heading font-semibold text-xl text-foreground mb-6">
+              <div key={section.title} className="bg-syro-bg-gray rounded-lg shadow-syro-card p-6">
+                <h2 className="font-syro-display font-semibold text-xl text-syro-blue mb-6">
                   {section.title}
                 </h2>
                 <nav className="space-y-3" role="navigation" aria-label={`${section.title} navigation`}>
@@ -94,7 +94,7 @@ const SitemapPage = () => {
                           href={link.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block text-muted-foreground hover:text-primary reverent-transition text-sm"
+                          className="block text-syro-dark-gray hover:text-syro-red transition-all duration-300 text-sm"
                         >
                           {link.name}
                           <span className="ml-1" role="img" aria-label="External link">🔗</span>
@@ -102,7 +102,7 @@ const SitemapPage = () => {
                       ) : (
                         <Link
                           href={link.href}
-                          className="block text-muted-foreground hover:text-primary reverent-transition text-sm"
+                          className="block text-syro-dark-gray hover:text-syro-red transition-all duration-300 text-sm"
                         >
                           {link.name}
                         </Link>
@@ -117,13 +117,13 @@ const SitemapPage = () => {
       </section>
 
       {/* Quick Search */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-syro-bg-gray">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="font-heading font-semibold text-3xl text-foreground mb-4">
+            <h2 className="font-syro-display font-semibold text-3xl text-syro-blue mb-4">
               Can't Find What You're Looking For?
             </h2>
-            <p className="font-body text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="font-syro-primary text-lg text-syro-dark-gray mb-8 max-w-2xl mx-auto">
               Use our search functionality or contact us for assistance in finding specific information.
             </p>
 
@@ -131,14 +131,14 @@ const SitemapPage = () => {
               <div className="flex space-x-4">
                 <Link
                   href="/mosc/contact-info"
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 reverent-transition"
+                  className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-syro-red text-syro-red-foreground rounded-lg hover:bg-syro-red/90 transition-all duration-300"
                 >
                   <span className="mr-2" role="img" aria-label="Contact">📞</span>
                   Contact Us
                 </Link>
                 <Link
-                  href="/mosc"
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 reverent-transition"
+                  href="/mosc-old"
+                  className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-all duration-300"
                 >
                   <span className="mr-2" role="img" aria-label="Home">🏠</span>
                   Go Home

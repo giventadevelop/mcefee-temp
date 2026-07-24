@@ -1,10 +1,15 @@
 "use server";
 
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { getAppUrl, getTenantId } from '@/lib/env';
+import { getAppUrl, getTenantId, getApiBaseUrl } from '@/lib/env';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
 import type { UserProfileDTO } from '@/types';
-import { updateUserProfileServer, createUserProfileServer } from './ApiServerActions';
+import {
+  updateUserProfileServer,
+  createUserProfileServer,
+  fetchUserProfileByEmailServer,
+  generateEmailSubscriptionTokenServer,
+} from './ApiServerActions';
 
 /**
  * Server action to trigger profile reconciliation after authentication
@@ -30,7 +35,7 @@ export async function triggerProfileReconciliationServer() {
     console.log('[PROFILE-RECONCILIATION-SERVER] 👤 User authenticated:', userId);
 
     // Get API base URL
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const apiBaseUrl = getApiBaseUrl();
     if (!apiBaseUrl) {
       throw new Error('API base URL not configured');
     }
@@ -225,6 +230,22 @@ export async function createUserProfileAction(payload: Omit<UserProfileDTO, 'id'
   return createUserProfileServer(payload);
 }
 
+/**
+ * Fetch user profile by email - server action wrapper for use from client components.
+ * Keeps ApiServerActions (Clerk server) out of the client bundle.
+ */
+export async function fetchUserProfileByEmailAction(email: string): Promise<UserProfileDTO | null> {
+  return fetchUserProfileByEmailServer(email);
+}
+
+/**
+ * Generate email subscription token - server action wrapper for use from client components.
+ * Keeps ApiServerActions (Clerk server) out of the client bundle.
+ */
+export async function generateEmailSubscriptionTokenAction(profileId: number): Promise<{ success: boolean; token?: string; error?: string }> {
+  return generateEmailSubscriptionTokenServer(profileId);
+}
+
 export async function resubscribeEmailAction(email: string, token: string): Promise<{ success: boolean; message: string }> {
   try {
     console.log('[RESUBSCRIBE-EMAIL-SERVER] 🚀 Resubscribe email server action called');
@@ -232,7 +253,7 @@ export async function resubscribeEmailAction(email: string, token: string): Prom
     console.log('[RESUBSCRIBE-EMAIL-SERVER] 🔑 Token:', token);
 
     // Get API base URL
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const apiBaseUrl = getApiBaseUrl();
     if (!apiBaseUrl) {
       throw new Error('API base URL not configured');
     }
@@ -304,7 +325,7 @@ export async function unsubscribeEmailAction(email: string, token: string): Prom
     console.log('[UNSUBSCRIBE-EMAIL-SERVER] 🔑 Token:', token);
 
     // Get API base URL
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const apiBaseUrl = getApiBaseUrl();
     if (!apiBaseUrl) {
       throw new Error('API base URL not configured');
     }

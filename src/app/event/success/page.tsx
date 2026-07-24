@@ -4,6 +4,7 @@ import { getAppUrl } from '@/lib/env';
 import { formatInTimeZone } from 'date-fns-tz';
 import type { EventDetailsDTO, EventAttendeeDTO, EventAttendeeGuestDTO } from '@/types';
 import SuccessClient from './SuccessClient';
+import PaymentSuccessClient from './PaymentSuccessClient';
 import { getEventAttendee, getEventAttendeeGuests } from './ApiServerActions';
 
 interface SuccessPageProps {
@@ -12,6 +13,7 @@ interface SuccessPageProps {
     session_id?: string;
     pi?: string;
     attendeeId?: string;
+    transactionId?: string; // New: for backend payment flow
   };
 }
 
@@ -53,11 +55,77 @@ function LoadingSkeleton() {
   );
 }
 
-export default async function SuccessPage({ searchParams }: SuccessPageProps) {
-  const { eventId, session_id, pi, attendeeId } = searchParams;
+async function findPaymentTransactionByPaymentIntentId(paymentIntentId: string): Promise<string | null> {
+  try {
+    const baseUrl = getAppUrl();
+    // Query payment transactions by paymentReference (which contains the Payment Intent ID)
+    const params = new URLSearchParams({
+      'paymentReference.equals': paymentIntentId,
+    });
+    const response = await fetch(`${baseUrl}/api/proxy/payments?${params.toString()}`, {
+      cache: 'no-store',
+    });
 
-  // If session_id or pi parameters are present, use SuccessClient
+    if (!response.ok) {
+      console.error('[SuccessPage] Failed to find payment transaction by Payment Intent ID:', response.status);
+      // Try alternative: look up via event-ticket-transactions (legacy flow)
+      const ticketParams = new URLSearchParams({
+        'stripePaymentIntentId.equals': paymentIntentId,
+      });
+      const ticketResponse = await fetch(`${baseUrl}/api/proxy/event-ticket-transactions?${ticketParams.toString()}`, {
+        cache: 'no-store',
+      });
+      if (ticketResponse.ok) {
+        const ticketTransactions = await ticketResponse.json();
+        if (Array.isArray(ticketTransactions) && ticketTransactions.length > 0) {
+          // For legacy flow, we can use the ticket transaction ID
+          // But we need the payment transaction ID, so return null and let legacy flow handle it
+          console.log('[SuccessPage] Found ticket transaction but need payment transaction ID');
+          return null;
+        }
+      }
+      return null;
+    }
+
+    const transactions = await response.json();
+    if (Array.isArray(transactions) && transactions.length > 0) {
+      const transaction = transactions[0];
+      // Backend returns transactionId or transactionReference
+      return transaction.transactionId || transaction.transactionReference || String(transaction.id) || null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('[SuccessPage] Error looking up payment transaction:', error);
+    return null;
+  }
+}
+
+export default async function SuccessPage({ searchParams }: SuccessPageProps) {
+  // Next.js 15+ requires awaiting searchParams
+  const resolvedSearchParams = typeof searchParams.then === 'function' ? await searchParams : searchParams;
+  const { eventId, session_id, pi, attendeeId, transactionId } = resolvedSearchParams;
+
+  // If transactionId is present, use PaymentSuccessClient (new backend payment flow)
+  if (transactionId) {
+    return (
+      <Suspense fallback={<LoadingSkeleton />}>
+        <PaymentSuccessClient
+          transactionId={transactionId}
+          eventId={eventId}
+        />
+      </Suspense>
+    );
+  }
+
+  // CRITICAL: For desktop flow with Payment Intent ID, do NOT look up transaction server-side
+  // Desktop flow uses SuccessClient which handles GET-only lookup and polling
+  // Server-side lookup would fail if webhook hasn't processed yet, causing errors
+  // If session_id or pi parameters are present, use SuccessClient (Stripe flow)
   if (session_id || pi) {
+    // Desktop flow: SuccessClient will handle GET-only lookup and polling
+    // Mobile flow: SuccessClient will detect mobile and redirect to ticket-qr page
+    // Do NOT try to look up transaction server-side - let client component handle it
     return (
       <Suspense fallback={<LoadingSkeleton />}>
         <SuccessClient

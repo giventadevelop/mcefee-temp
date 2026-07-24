@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { FaUpload, FaTimes, FaSpinner, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaUpload, FaTimes, FaSpinner, FaTrash } from 'react-icons/fa';
 import type { ExecutiveCommitteeTeamMemberDTO, ExecutiveCommitteeTeamMemberFormData } from '@/types/executiveCommitteeTeamMember';
-import { createExecutiveCommitteeMember, updateExecutiveCommitteeMember, uploadTeamMemberProfileImage } from './ApiServerActions';
+import { createExecutiveCommitteeMember, updateExecutiveCommitteeMember } from './ApiServerActions';
+import { uploadTeamMemberProfileImage } from './ExecutiveCommitteeUploadActions';
 import DragDropImageUpload from '@/components/DragDropImageUpload';
 import SuccessDialog from '@/components/SuccessDialog';
 import ErrorDialog from '@/components/ErrorDialog';
@@ -318,11 +319,26 @@ export default function ExecutiveCommitteeForm({
         </div>
 
         <div>
-          <label className="block font-medium">Priority Order</label>
+          <div className="flex items-center gap-2 mb-1">
+            <label className="block font-medium">Priority Order</label>
+            <span
+              className="text-blue-600 cursor-help"
+              title="Lower number = higher rank (0 first, 10 later). Row 1 on the homepage shows only the single highest-priority member (rank 1); row 2+ show 3 per row."
+              aria-label="Priority order help"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </span>
+          </div>
+          <div className="mb-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+            <strong>Tip:</strong> Lower number = higher rank (0 is first, 10 is later). List and homepage are sorted by this value ascending. <strong>Homepage layout:</strong> Row 1 shows only the single highest-priority member (rank 1); row 2 and below show 3 members per row.
+          </div>
           <input
             type="number"
             {...register('priorityOrder', { valueAsNumber: true })}
             className="w-full border border-gray-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500"
+            title="Lower number = higher rank (0 first, 10 later). Row 1 on homepage = one member only (rank 1)."
           />
         </div>
 
@@ -377,11 +393,16 @@ export default function ExecutiveCommitteeForm({
           <button
             type="button"
             onClick={addExpertiseItem}
-            className="inline-flex items-center gap-2 text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-3 py-2 rounded-md transition-colors"
-            title="Add expertise item"
+            className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+            title="Add Expertise"
+            aria-label="Add Expertise"
           >
-            <FaPlus className="w-4 h-4" />
-            Add Expertise
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <span className="font-semibold text-blue-700">Add Expertise</span>
           </button>
         </div>
         <p className="mt-2 text-xs text-gray-500">
@@ -462,26 +483,37 @@ export default function ExecutiveCommitteeForm({
         <button
           type="button"
           onClick={onCancel}
-          className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+          className="flex-shrink-0 h-14 rounded-xl bg-red-100 hover:bg-red-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           disabled={isSubmitting}
+          title="Cancel"
+          aria-label="Cancel"
         >
-          Cancel
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-200 flex items-center justify-center">
+            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <span className="font-semibold text-red-700">Cancel</span>
         </button>
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2 transition-colors disabled:opacity-50"
+          className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           disabled={isSubmitting}
+          title={isSubmitting ? 'Saving...' : member ? 'Update Member' : 'Create Member'}
+          aria-label={isSubmitting ? 'Saving...' : member ? 'Update Member' : 'Create Member'}
         >
-          {isSubmitting ? (
-            <>
-              <FaSpinner className="w-4 h-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              {member ? 'Update' : 'Create'} Member
-            </>
-          )}
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+            {isSubmitting ? (
+              <FaSpinner className="w-6 h-6 text-blue-600 animate-spin" />
+            ) : (
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="font-semibold text-blue-700">
+            {isSubmitting ? 'Saving...' : member ? 'Update Member' : 'Create Member'}
+          </span>
         </button>
       </div>
 

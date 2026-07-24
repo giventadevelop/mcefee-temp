@@ -14,19 +14,26 @@ node_modules/
 out/
 
 # Environment variables
-.env
+# Ignore all .env files
+.env*
 .env.*
-.env.local
-.env.development
-.env.production
-.env.production.*
-.env.local*
-.task-master/.env
-.task-master/.env.local
-.env.amplify
-.env.amplify.example
+
+# Except .env.example (keep as template)
+.env.example
+
+# Task master env files
+.task-master/.env*
+!.task-master/.env.example
+
+# Local MOSC migration download cache (PDF binaries)
+.mosc-downloads/
+mosc_downloads/
+
+# Other env-related files
 env-vars.json
 current-env.json
+code_html_template/batch_files/database_target.local.env
+code_html_template/batch_files/database_target.prod.env
 
 # Editor directories and files
 .idea
@@ -61,3 +68,28 @@ dev.js
 .qoder/rules/byterover-rules.md
 .augment/rules/byterover-rules.md# Clerk credentials
 .clerk/
+
+# HeyGen generated Gas Station COO videos (local only; API key in .env.local)
+documentation/tenant_management/gas_station_site/videos/
+
+# Test authentication state (contains session tokens)
+TestSprite/sanity-tests/.auth-state.json
+TestSprite/sanity-tests/screenshots/
+TestSprite/**/screenshots/
+
+# Admin test credentials and state
+TestSprite/admin-tests/auth.json
+TestSprite/admin-tests/.auth-state.json
+TestSprite/admin-tests/screenshots/
+# Accumulating E2E coverage JSON/HTML + LOOP_LOG (do not commit)
+TestSprite/reports/
+TestSprite/sanity-tests/screenshots/
+
+# All screenshot folders (catch-all pattern for any screenshots directory)
+**/screenshots/
+
+# Local scratch files (doc extraction, one-off analysis)
+.tmp_*.txt
+
+# Generated prod SQL dumps — may contain encrypted payment/Twilio credentials
+code_html_template/SQLS/corrected_event_media_inserts.ordered_PROD.sql

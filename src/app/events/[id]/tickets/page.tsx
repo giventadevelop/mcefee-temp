@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { FaTags, FaCreditCard, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaMapPin, FaTicketAlt, FaUser, FaEnvelope, FaMoneyBillWave, FaReceipt } from 'react-icons/fa';
 import { Modal } from '@/components/Modal';
 import { StripePaymentRequestButton } from '@/components/StripePaymentRequestButton';
@@ -12,6 +12,7 @@ import LocationDisplay from '@/components/LocationDisplay';
 
 export default function TicketingPage() {
   const params = useParams();
+  const router = useRouter();
   const eventId = params?.id;
   const [event, setEvent] = useState<any>(null);
   const [ticketTypes, setTicketTypes] = useState<any[]>([]);
@@ -335,7 +336,27 @@ export default function TicketingPage() {
       return;
     }
 
-    // 4. Start processing and call Stripe API directly.
+    // 4. Check payment_flow_mode and manual_payment_enabled, route accordingly
+    const shouldUseManualPayment =
+      event?.paymentFlowMode === 'MANUAL_ONLY' ||
+      (event?.paymentFlowMode === 'HYBRID' && event?.manualPaymentEnabled === true);
+
+    if (shouldUseManualPayment) {
+      // Route to manual checkout
+      const params = new URLSearchParams();
+      params.set('cart', JSON.stringify(cart.map(item => ({
+        ticketTypeId: item.ticketType.id,
+        quantity: item.quantity,
+      }))));
+      if (finalDiscount?.id) {
+        params.set('discountCodeId', finalDiscount.id.toString());
+      }
+      params.set('email', email);
+      router.push(`/events/${eventId}/manual-checkout?${params.toString()}`);
+      return;
+    }
+
+    // 5. Default: Start processing and call Stripe API directly.
     setIsProcessing(true);
 
     try {

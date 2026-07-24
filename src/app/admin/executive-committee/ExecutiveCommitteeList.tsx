@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FaEdit, FaTrashAlt, FaEye, FaLinkedin, FaTwitter, FaGlobe, FaUpload } from 'react-icons/fa';
 import type { ExecutiveCommitteeTeamMemberDTO } from '@/types/executiveCommitteeTeamMember';
 import ReactDOM from 'react-dom';
+import AdminListSearchCombobox from '@/components/admin/AdminListSearchCombobox';
 
 interface ExecutiveCommitteeListProps {
   members: ExecutiveCommitteeTeamMemberDTO[];
@@ -11,6 +11,13 @@ interface ExecutiveCommitteeListProps {
   onView: (member: ExecutiveCommitteeTeamMemberDTO) => void;
   onDelete: (member: ExecutiveCommitteeTeamMemberDTO) => void;
   onUpload: (member: ExecutiveCommitteeTeamMemberDTO) => void;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  onPageChange: (page: number) => void;
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+  loading?: boolean;
 }
 
 // DetailsTooltip component following the UI style guide
@@ -137,7 +144,36 @@ export default function ExecutiveCommitteeList({
   onView,
   onDelete,
   onUpload,
+  page,
+  pageSize,
+  totalCount,
+  onPageChange,
+  searchTerm,
+  onSearchChange,
+  loading,
 }: ExecutiveCommitteeListProps) {
+  // Search is committed server-side (`.contains` criteria); `members` is the current server page.
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const startItem = totalCount > 0 ? page * pageSize + 1 : 0;
+  const endItem = totalCount > 0 ? Math.min(page * pageSize + members.length, totalCount) : 0;
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    onPageChange(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset page when searchTerm changes
+  }, [searchTerm]);
+  
+  const handlePrevPage = () => {
+    if (page > 0) {
+      onPageChange(page - 1);
+    }
+  };
+  
+  const handleNextPage = () => {
+    if (page < totalPages - 1) {
+      onPageChange(page + 1);
+    }
+  };
   // Tooltip state management
   const [tooltipMember, setTooltipMember] = useState<ExecutiveCommitteeTeamMemberDTO | null>(null);
   const [tooltipAnchor, setTooltipAnchor] = useState<DOMRect | null>(null);
@@ -170,7 +206,7 @@ export default function ExecutiveCommitteeList({
     };
   }, []);
 
-  if (members.length === 0) {
+  if (members.length === 0 && !searchTerm.trim()) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-400 text-6xl mb-4">👥</div>
@@ -180,8 +216,34 @@ export default function ExecutiveCommitteeList({
     );
   }
 
+  const isLoading = !!loading;
+
   return (
     <div className="bg-white shadow-sm rounded-lg overflow-hidden mx-8 my-6">
+      {/* Search bar */}
+      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <label htmlFor="exec-committee-search" className="sr-only">Search members</label>
+        <AdminListSearchCombobox<ExecutiveCommitteeTeamMemberDTO & Record<string, unknown>>
+          items={members as (ExecutiveCommitteeTeamMemberDTO & Record<string, unknown>)[]}
+          committedValue={searchTerm}
+          onCommit={onSearchChange}
+          inputId="exec-committee-search"
+          ariaLabel="Search members by name, title, designation, or department"
+          placeholder="Search by first name, last name, title, designation, or department..."
+          className="relative w-full max-w-xl"
+          inputClassName="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          getSearchFields={(m) => [m.firstName, m.lastName, m.title, m.designation, m.department, m.id]}
+          getCommitValue={(m) => m.title?.trim() || `${m.firstName} ${m.lastName}`.trim()}
+          formatPrimary={(m) => `${m.firstName} ${m.lastName}`.trim()}
+          formatSecondary={(m) => [m.title, m.designation, m.department].filter(Boolean).join(' · ')}
+        />
+        {searchTerm.trim() && (
+          <p className="mt-2 text-sm text-gray-600">
+            {totalCount} member{totalCount !== 1 ? 's' : ''} match your search
+          </p>
+        )}
+      </div>
+
       {/* Tooltip note for users */}
       <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
         <p className="text-sm text-blue-700">
@@ -193,6 +255,9 @@ export default function ExecutiveCommitteeList({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Priority
+              </th>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Member
               </th>
@@ -207,6 +272,9 @@ export default function ExecutiveCommitteeList({
           <tbody className="bg-white divide-y divide-gray-200">
             {members.map((member) => (
               <tr key={member.id} className="hover:bg-gray-50">
+                <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {member.priorityOrder ?? '—'}
+                </td>
                 <td
                   className="px-3 py-3 whitespace-nowrap cursor-pointer"
                   onMouseEnter={(e) => handleMouseEnter(member, e)}
@@ -247,34 +315,59 @@ export default function ExecutiveCommitteeList({
                   <div className="text-sm text-gray-500">{member.department || 'No department'}</div>
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-2">
                     <button
-                      onClick={() => onView(member)}
-                      className="text-blue-600 hover:text-blue-900 p-1.5 rounded hover:bg-blue-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onView(member);
+                      }}
+                      className="flex-shrink-0 w-14 h-14 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center transition-all duration-300 hover:scale-110"
                       title="View details"
+                      aria-label="View details"
                     >
-                      <FaEye className="w-4 h-4" />
+                      <svg className="w-10 h-10 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
                     </button>
                     <button
-                      onClick={() => onEdit(member)}
-                      className="text-teal-600 hover:text-teal-900 p-1.5 rounded hover:bg-teal-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(member);
+                      }}
+                      className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center transition-all duration-300 hover:scale-110"
                       title="Edit member"
+                      aria-label="Edit member"
                     >
-                      <FaEdit className="w-4 h-4" />
+                      <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                     </button>
                     <button
-                      onClick={() => onDelete(member)}
-                      className="text-red-600 hover:text-red-900 p-1.5 rounded hover:bg-red-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(member);
+                      }}
+                      className="flex-shrink-0 w-14 h-14 rounded-xl bg-red-100 hover:bg-red-200 flex items-center justify-center transition-all duration-300 hover:scale-110"
                       title="Delete member"
+                      aria-label="Delete member"
                     >
-                      <FaTrashAlt className="w-4 h-4" />
+                      <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                     <button
-                      onClick={() => onUpload(member)}
-                      className="text-purple-600 hover:text-purple-900 p-1.5 rounded hover:bg-purple-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpload(member);
+                      }}
+                      className="flex-shrink-0 w-14 h-14 rounded-xl bg-purple-100 hover:bg-purple-200 flex items-center justify-center transition-all duration-300 hover:scale-110"
                       title="Upload profile image"
+                      aria-label="Upload profile image"
                     >
-                      <FaUpload className="w-4 h-4" />
+                      <svg className="w-10 h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
                     </button>
                   </div>
                 </td>
@@ -282,6 +375,71 @@ export default function ExecutiveCommitteeList({
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls - Always visible, matching admin page style */}
+      <div className="mt-8">
+        <div className="flex justify-between items-center gap-2">
+          {/* Previous Button */}
+          <button
+            onClick={handlePrevPage}
+            disabled={page === 0 || isLoading}
+            className="px-3 sm:px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+            title="Previous Page"
+            aria-label="Previous Page"
+            type="button"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="hidden sm:inline">Previous</span>
+          </button>
+
+          {/* Page Info */}
+          <div className="px-2 sm:px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm flex-shrink-0">
+            <span className="text-xs sm:text-sm font-bold text-blue-700">
+              Page <span className="text-blue-600">{page + 1}</span> of <span className="text-blue-600">{totalPages}</span>
+            </span>
+          </div>
+
+          {/* Next Button */}
+          <button
+            onClick={handleNextPage}
+            disabled={page >= totalPages - 1 || isLoading}
+            className="px-3 sm:px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+            title="Next Page"
+            aria-label="Next Page"
+            type="button"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Item Count Text */}
+        <div className="text-center mt-3">
+          {totalCount > 0 ? (
+            <div className="inline-flex items-center px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
+              <span className="text-sm text-gray-700">
+                Showing <span className="font-bold text-blue-600">{startItem}</span> to <span className="font-bold text-blue-600">{endItem}</span> of <span className="font-bold text-blue-600">{totalCount}</span> members
+              </span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 border-2 border-orange-300 rounded-lg shadow-sm">
+              <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-medium text-orange-700">
+                {searchTerm.trim() ? 'No members match your search.' : 'No members found.'}
+              </span>
+              {searchTerm.trim() && (
+                <span className="text-sm text-orange-600">Try different keywords.</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tooltip */}

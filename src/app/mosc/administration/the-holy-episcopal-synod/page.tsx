@@ -1,293 +1,105 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import QuickLinks from '../../components/QuickLinks';
+import SyroPageBanner from '../../components/SyroPageBanner';
+import AdministrationSidebar from '../components/AdministrationSidebar';
 
 export const metadata = {
   title: 'The Holy Episcopal Synod',
   description: 'The highest governing body consisting of all bishops of the church.',
 };
 
-const HolyEpiscopalSynodPage = () => {
+export default function HolyEpiscopalSynodPage() {
   return (
-    <div className="bg-background">
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-background to-muted">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-primary rounded-lg flex items-center justify-center mx-auto mb-6 sacred-shadow-lg">
-              <span className="text-primary-foreground text-4xl font-bold" role="img" aria-label="Holy Episcopal Synod">👥</span>
-            </div>
-            <h1 className="font-heading font-semibold text-4xl text-foreground mb-4">
-              The Holy Episcopal Synod
-            </h1>
-            <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              The highest governing body consisting of all bishops of the church.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="bg-syro-bg-gray">
+      <SyroPageBanner title="The Holy Episcopal Synod" breadcrumbFrom="administration" />
 
-      {/* Main Content */}
-      <section className="py-16 bg-card">
+      <section className="py-16 bg-syro-bg-gray">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-3">
-              <div className="bg-background rounded-lg sacred-shadow p-8">
-                {/* Featured Image */}
-                <div className="mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-[rgba(50,50,93,0.25)_0px_6px_12px_-2px,rgba(0,0,0,0.3)_0px_3px_7px_-3px] p-8">
+                <div className="mb-8 flex justify-center">
                   <Image
                     src="/images/administration/holy-episcopal-synod.jpg"
                     alt="The Holy Episcopal Synod"
-                    width={500}
-                    height={300}
-                    className="rounded-lg sacred-shadow w-full h-auto"
-                    priority
+                    width={600}
+                    height={360}
+                    className="rounded-lg w-full max-w-md h-auto object-contain"
+                    sizes="(min-width: 1024px) 37.5vw, 50vw"
                   />
                 </div>
 
-                {/* Content */}
                 <div className="prose prose-lg max-w-none">
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
-                    The Episcopal Synod with the Catholicos as its president is the apex body of all bishops. The authority 
-                    of the synod is final and binding. It has exclusive rights and privileges in the matter of upholding the 
-                    faith of the church, its discipline and order of Apostolic Succession. As regards temporal matters the 
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
+                    The Episcopal Synod with the Catholicos as its president is the apex body of all bishops. The authority
+                    of the synod is final and binding. It has exclusive rights and privileges in the matter of upholding the
+                    faith of the church, its discipline and order of Apostolic Succession. As regards temporal matters the
                     church is guided by the Malankara Syrian Christian Association.
                   </p>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
-                    The bishops lead the diocese assigned to them by the synod. Presently there are 31 bishops including 
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
+                    The bishops lead the diocese assigned to them by the synod. Presently there are 31 bishops including
                     H. H, The Catholicos.
                   </p>
 
-                  <div className="bg-muted/30 rounded-lg p-6 mb-6">
-                    <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
+                  <div className="bg-syro-bg-gray rounded-lg p-6 mb-6">
+                    <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-4">
                       Constitution Sections 102-109
                     </h3>
-                    <p className="font-body text-muted-foreground leading-relaxed mb-4">
-                      Section 102 to 109 of The constitution of Malankara Orthodox church deals about the Episcopal Synod. 
+                    <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-4">
+                      Section 102 to 109 of The constitution of Malankara Orthodox church deals about the Episcopal Synod.
                       It is as follows:
                     </p>
 
                     <div className="space-y-4">
-                      <div className="flex items-start space-x-3">
-                        <span className="font-heading font-semibold text-primary">102.</span>
-                        <p className="font-body text-muted-foreground">There shall be an Episcopal Synod in Malankara.</p>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <span className="font-heading font-semibold text-primary">103.</span>
-                        <p className="font-body text-muted-foreground">
-                          All Prelates in Malankara Orthodox Syrian Church who have been duly approved as per the constitution 
-                          shall be members of this Synod.
-                        </p>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <span className="font-heading font-semibold text-primary">104.</span>
-                        <p className="font-body text-muted-foreground">The Catholicos shall be the President of the Synod.</p>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <span className="font-heading font-semibold text-primary">105.</span>
-                        <p className="font-body text-muted-foreground">
-                          The Catholicos shall convene the Synod and preside over the Synod.
-                        </p>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <span className="font-heading font-semibold text-primary">106.</span>
-                        <p className="font-body text-muted-foreground">
-                          When there is no Catholicos or if there is any accusation against the Catholicos and the Catholicos 
-                          does not convene the Synod for considering such accusation, the Senior Metropolitan shall convene 
-                          the Synod and preside over the Synod.
-                        </p>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <span className="font-heading font-semibold text-primary">107.</span>
-                        <p className="font-body text-muted-foreground">
-                          The Episcopal Synod shall have the authority to decide matters concerning faith, order and discipline. 
-                          When the Synod shall meet for this purpose the Synod may select such persons as the Synod may deem 
-                          needed for consultation.
-                        </p>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <span className="font-heading font-semibold text-primary">108.</span>
-                        <p className="font-body text-muted-foreground">
-                          No one shall have the right to alter the faith of the Church. But in case there may arise any dispute 
-                          as to what is faith, the Episcopal synod above said may decide the matter and the final decision about 
-                          this shall vest with the Ecumenical Synod.
-                        </p>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <span className="font-heading font-semibold text-primary">109.</span>
-                        <p className="font-body text-muted-foreground">
-                          The Episcopal Synod may in consultation with the Association Managing committee appoint sub-committees 
-                          for the purpose of Theological Education, Mission Work, Sunday school and similar matters.
-                        </p>
-                      </div>
+                      {[
+                        { num: '102', text: 'There shall be an Episcopal Synod in Malankara.' },
+                        { num: '103', text: 'All Prelates in Malankara Orthodox Syrian Church who have been duly approved as per the constitution shall be members of this Synod.' },
+                        { num: '104', text: 'The Catholicos shall be the President of the Synod.' },
+                        { num: '105', text: 'The Catholicos shall convene the Synod and preside over the Synod.' },
+                        { num: '106', text: 'When there is no Catholicos or if there is any accusation against the Catholicos and the Catholicos does not convene the Synod for considering such accusation, the Senior Metropolitan shall convene the Synod and preside over the Synod.' },
+                        { num: '107', text: 'The Episcopal Synod shall have the authority to decide matters concerning faith, order and discipline. When the Synod shall meet for this purpose the Synod may select such persons as the Synod may deem needed for consultation.' },
+                        { num: '108', text: 'No one shall have the right to alter the faith of the Church. But in case there may arise any dispute as to what is faith, the Episcopal synod above said may decide the matter and the final decision about this shall vest with the Ecumenical Synod.' },
+                        { num: '109', text: 'The Episcopal Synod may in consultation with the Association Managing committee appoint sub-committees for the purpose of Theological Education, Mission Work, Sunday school and similar matters.' },
+                      ].map(({ num, text }) => (
+                        <div key={num} className="flex items-start space-x-3">
+                          <span className="font-syro-display font-semibold text-syro-red">{num}.</span>
+                          <p className="font-syro-primary text-syro-dark-gray">{text}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="bg-primary/10 rounded-lg p-6">
-                    <Link 
-                      href="/mosc/holysynod" 
-                      className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md font-body font-medium reverent-transition hover:bg-primary/90"
+                  <div className="bg-syro-red/10 rounded-lg p-6">
+                    <Link
+                      href="/mosc/holy-synod"
+                      className="syro-primary-button inline-flex items-center gap-2"
                     >
                       View all Episcopal Synod Members
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
                     </Link>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-background rounded-lg sacred-shadow p-6 mb-6">
-                <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
-                  Administration Structure
-                </h3>
-                <nav className="space-y-2">
-                  <Link 
-                    href="/mosc/administration/administration" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    The Constitution of the Malankara Orthodox Church
-                  </Link>
-                  <Link 
-                    href="/mosc/administration/he-canon-law-of-the-malankara-orthodox-church" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    The Canon Law of the Malankara Orthodox Church
-                  </Link>
-                  <Link 
-                    href="/mosc/administration/the-holy-episcopal-synod" 
-                    className="block px-3 py-2 bg-primary text-primary-foreground rounded-md font-body text-sm reverent-transition"
-                  >
-                    The Holy Episcopal Synod
-                  </Link>
-                  <Link 
-                    href="/mosc/administration/malankara-association" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Malankara Association
-                  </Link>
-                  <Link 
-                    href="/mosc/administration/the-managing-committee" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    The Managing Committee
-                  </Link>
-                  <Link 
-                    href="/mosc/administration/the-working-committee" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    The Working Committee
-                  </Link>
-                  <Link 
-                    href="/mosc/administration/the-diocesan-general-body" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    The Diocesan General Body
-                  </Link>
-                  <Link 
-                    href="/mosc/administration/the-parish-managing-committee" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    The Parish Managing Committee
-                  </Link>
-                  <Link 
-                    href="/mosc/administration/the-parish-general-body" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    The Parish General Body
-                  </Link>
-                </nav>
-              </div>
-
-              {/* Quick Links */}
-              <div className="bg-background rounded-lg sacred-shadow p-6">
-                <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
-                  Quick Links
-                </h3>
-                <nav className="space-y-2">
-                  <Link 
-                    href="/mosc/downloads/kalpana" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Kalpana
-                  </Link>
-                  <Link 
-                    href="/mosc/downloads" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Downloads
-                  </Link>
-                  <Link 
-                    href="/mosc/institutions" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Institutions
-                  </Link>
-                  <Link 
-                    href="/mosc/training" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Training
-                  </Link>
-                  <Link 
-                    href="/mosc/publications" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Publications
-                  </Link>
-                  <Link 
-                    href="/mosc/spiritual" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Spiritual Organisations
-                  </Link>
-                  <Link 
-                    href="/mosc/theological" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Theological Seminaries
-                  </Link>
-                  <Link 
-                    href="/mosc/lectionary" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Lectionary
-                  </Link>
-                  <Link 
-                    href="/mosc/photo-gallery" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Gallery
-                  </Link>
-                  <Link 
-                    href="/mosc/contact-info" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Contact Info
-                  </Link>
-                  <Link 
-                    href="/mosc/faqs" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    FAQs
-                  </Link>
-                </nav>
+              <div className="mt-8 hidden lg:block">
+                <QuickLinks />
               </div>
             </div>
+
+            <div className="space-y-6 lg:col-span-1">
+              <AdministrationSidebar currentSlug="the-holy-episcopal-synod" />
+            </div>
+          </div>
+          <div className="mt-8 lg:hidden">
+            <QuickLinks />
           </div>
         </div>
       </section>
     </div>
   );
-};
-
-export default HolyEpiscopalSynodPage;
+}

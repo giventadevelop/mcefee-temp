@@ -218,6 +218,60 @@ is_home_page_hero_image BOOLEAN NOT NULL DEFAULT false
 - **Images:** `public/images/` directory
 - **Documentation:** `documentation/hero-image-selection-overlay-logic.md`
 
+## Multiple Hero Images for Same Event
+
+### Current Behavior
+
+When an event has **multiple media items** with `isHomePageHeroImage = true`, the system currently:
+
+1. **Filters** all media items where `isHomePageHeroImage = true` for that event
+2. **Selects only the first matching media item** (`filteredMedia[0]`)
+3. **Ignores all other hero images** for that same event
+
+**Implementation Location:** `src/hooks/useFilteredEvents.ts` (line 77)
+
+```typescript
+if (filteredMedia.length > 0) {
+  results.push({
+    event,
+    media: filteredMedia[0] // Takes ONLY the first matching media
+  });
+}
+```
+
+### Implications
+
+- **No Prioritization:** The selection is based on array order (typically database insertion order), not by priority, date, or any other criteria
+- **Single Image Per Event:** Only one hero image per event will appear in the rotation, even if multiple are marked
+- **No Guaranteed Order:** The "first" image may vary depending on how the data is retrieved from the database
+
+### Potential Improvements
+
+If you need to handle multiple hero images for the same event, consider:
+
+1. **Sort by `displayOrder`** (if available):
+   ```typescript
+   filteredMedia.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+   ```
+
+2. **Sort by `updatedAt`** (most recent first):
+   ```typescript
+   filteredMedia.sort((a, b) =>
+     new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+   );
+   ```
+
+3. **Include Multiple Images from Same Event:**
+   ```typescript
+   filteredMedia.forEach(mediaItem => {
+     results.push({ event, media: mediaItem });
+   });
+   ```
+
+4. **Use `startDisplayingFromDate` Priority:**
+   - Prioritize images with earlier or matching `startDisplayingFromDate`
+   - Fallback to images without a date set
+
 ## Notes
 
 - The hero image rotation should include the default image as a fallback
@@ -225,3 +279,4 @@ is_home_page_hero_image BOOLEAN NOT NULL DEFAULT false
 - All overlay buttons should have hover effects and proper accessibility
 - The system should gracefully handle missing overlay images
 - Console logging should be minimal in production builds
+- **Important:** Currently, only one hero image per event is selected - if multiple exist, only the first one in the filtered array is used

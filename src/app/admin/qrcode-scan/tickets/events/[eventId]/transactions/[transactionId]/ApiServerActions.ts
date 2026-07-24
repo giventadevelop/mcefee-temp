@@ -1,7 +1,7 @@
 "use server";
 import { QrCodeUsageDTO, EventTicketTransactionDTO } from '@/types';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
-import { getAppUrl } from '@/lib/env';
+import { getAppUrl, getApiBaseUrl } from '@/lib/env';
 
 const BASE_URL = getAppUrl();
 
@@ -34,8 +34,11 @@ export async function updateQrCodeCheckIn(
 }
 
 export async function updateEventTicketTransactionCheckIn(transactionId: string, payload: Partial<EventTicketTransactionDTO>) {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const url = `${API_BASE_URL}/api/event-ticket-transactions/${transactionId}`;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
+  const url = `${getApiBase()}/api/event-ticket-transactions/${transactionId}`;
   let token = await getCachedApiJwt();
   if (!token) {
     token = await generateApiJwt();

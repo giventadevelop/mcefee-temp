@@ -1,8 +1,8 @@
 import { UserTaskDTO, UserSubscriptionDTO } from '@/types';
-import { getAppUrl } from '@/lib/env';
+import { getAppUrlFromRequestHeaders } from '@/lib/env';
 
 export async function deleteTaskServer(taskId: string): Promise<boolean> {
-  const baseUrl = getAppUrl();
+  const baseUrl = await getAppUrlFromRequestHeaders();
 
   try {
     const response = await fetch(`${baseUrl}/api/tasks`, {
@@ -18,7 +18,7 @@ export async function deleteTaskServer(taskId: string): Promise<boolean> {
 }
 
 export async function checkSubscriptionStatusServer(userProfileId: number): Promise<UserSubscriptionDTO | null> {
-  const baseUrl = getAppUrl();
+  const baseUrl = await getAppUrlFromRequestHeaders();
 
   try {
     const response = await fetch(

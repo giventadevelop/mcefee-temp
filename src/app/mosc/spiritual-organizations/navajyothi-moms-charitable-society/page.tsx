@@ -1,116 +1,134 @@
 import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import SpiritualOrgSubpageLayout from '../SpiritualOrgSubpageLayout';
 
 export const metadata = {
   title: 'NAVAJYOTHI MOMS CHARITABLE SOCIETY | MOSC',
-  description: 'The Navajyothi MOMS Charitable Society is an organization for poor, self- employed women workers in the community. Established in 2009, it is a registered chari...',
+  description: 'Navajyothi MOMS Charitable Society is for poor, self-employed women workers. Established 2009. Patron H.H. Baselious Marthoma Mathews III. President H.G Dr. Yuhanon Mar Diascoros Metropolitan.',
 };
 
 const NavajyothiMomsCharitableSocietyPage = () => {
   return (
-    <div className="bg-background">
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-background to-muted">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-primary rounded-lg flex items-center justify-center mx-auto mb-6 sacred-shadow-lg">
-              <span className="text-primary-foreground text-4xl font-bold" role="img" aria-label="NAVAJYOTHI MOMS CHARITABLE SOCIETY">💝</span>
-            </div>
-            <h1 className="font-heading font-semibold text-4xl text-foreground mb-4">
-              NAVAJYOTHI MOMS CHARITABLE SOCIETY
-            </h1>
-            <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              The Navajyothi MOMS Charitable Society is an organization for poor, self- employed women workers in the community. Established in 2009, it is a registered charitable organization owned by Malankara Orthodox...
-            </p>
-          </div>
-        </div>
-      </section>
+    <SpiritualOrgSubpageLayout
+      title="NAVAJYOTHI MOMS CHARITABLE SOCIETY"
+      currentHref="/mosc/spiritual-organizations/navajyothi-moms-charitable-society"
+    >
+      <div className="space-y-6 font-syro-primary text-syro-dark-gray leading-relaxed">
+        <p>
+          The Navajyothi MOMS Charitable Society is an organization for poor, self- employed women workers in the community. Established in 2009, it is a registered charitable organization owned by Malankara Orthodox Syrian Church. It is a registered society under &apos;The Travancore-Cochin Literary, Scientific and Charitable Societies Registration Act, 1955&apos; and has been registered with the Income Tax Department of the Central Government and has received IT Exemption Certificate under Section 12AA and 80G.
+        </p>
 
-      {/* Content Section */}
-      <section className="py-16 bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-              <div className="bg-background rounded-lg sacred-shadow p-8">
-                <h2 className="font-heading font-semibold text-2xl text-foreground mb-6">
-                  About NAVAJYOTHI MOMS CHARITABLE SOCIETY
-                </h2>
-                <div className="space-y-4 font-body text-muted-foreground leading-relaxed">
-                  <p>The Navajyothi MOMS Charitable Society is an organization for poor, self- employed women workers in the community. Established in 2009, it is a registered charitable organization owned by Malankara Orthodox...</p>
-                </div>
-              </div>
-            </div>
+        <p>
+          <strong className="text-syro-blue">Mission of the organization:</strong> We aim at women development and poverty alleviation through agriculture, self-employment, micro credit, micro- small -medium enterprises (MSME), product distribution, waste management and training programmes. We also lay special emphasis on the welfare of widows, differently abled young women and single women.
+        </p>
 
-            <div className="space-y-6">
-              {/* Quick Info */}
-              <div className="bg-background rounded-lg sacred-shadow p-6">
-                <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
-                  Quick Information
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-primary text-xl" role="img" aria-label="Organization">💝</span>
-                    <div>
-                      <h4 className="font-heading font-medium text-foreground">Organization Type</h4>
-                      <p className="font-body text-muted-foreground text-sm">Spiritual Organization</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-primary text-xl" role="img" aria-label="Church">⛪</span>
-                    <div>
-                      <h4 className="font-heading font-medium text-foreground">Church Affiliation</h4>
-                      <p className="font-body text-muted-foreground text-sm">Malankara Orthodox Syrian Church</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <p>
+          The Navajyothi MOMS&apos;s main goal is to organize women for full employment, whereby they obtain work security, income security, food security and social security. We organize women to ensure that every family obtains full employment and regular income.
+        </p>
 
-              {/* Related Organizations */}
-              <div className="bg-background rounded-lg sacred-shadow p-6">
-                <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
-                  Related Organizations
-                </h3>
-                <div className="space-y-3">
-                  <Link 
-                    href="/mosc/spiritual-organizations" 
-                    className="block text-primary hover:text-primary/80 font-medium reverent-transition"
-                  >
-                    ← All Spiritual Organizations
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        <p>
+          Navajyothi encourage women to achieve their goals of employment and self-reliance through the strategy of participatory development and empowerment. More than ever, our members are ready to face the winds of change and the impact of the pandemic through hard work and self-reliance.
+        </p>
 
-      {/* Call to Action */}
-      <section className="py-16 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="font-heading font-semibold text-3xl text-foreground mb-4">
-            Get Involved
-          </h2>
-          <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-            Learn more about how you can participate in the activities and programs of NAVAJYOTHI MOMS CHARITABLE SOCIETY.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/mosc/spiritual-organizations"
-              className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 reverent-transition"
-            >
-              Explore All Organizations
-            </Link>
-            <Link
-              href="/mosc"
-              className="inline-flex items-center justify-center px-6 py-3 bg-background text-foreground border border-border rounded-lg hover:bg-muted reverent-transition"
-            >
-              Learn About MOSC
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Products & Services
+        </h2>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2">
+          Food processing by SHGs
+        </h3>
+        <p>
+          Through small-scale rural-based food processing units, we support women by offering market for farm products and generate off-farm employment.
+        </p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Training for skill development
+        </h3>
+        <p>
+          With higher levels of skills women adjust more effectively to the challenges and opportunities of the present world. Our &apos;Capacity building and Revolving fund programme&apos; ensures the economic and social growth of women.
+        </p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Promotion of agriculture
+        </h3>
+        <p>
+          It is important to achieve &quot;sustainable agricultural production&quot; for eradicating hunger and stimulating economic growth. We encourage women to have roof-top farming in urban areas and subsistence farming in rural areas by supporting crop production and raising livestock.
+        </p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          SHG activities by members
+        </h3>
+        <p>
+          We have more than 200 active women Self Help Groups (SHGs) in 14 districts of the Kerala state. All these groups are involved in various small-scale production activities, which include candle making, LED bulb/star assembling, stitching, confectionary making, catering, poultry rearing, goat rearing and small-scale farming.
+        </p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Supporting students and cancer patients
+        </h3>
+        <p>
+          Our units also take-up charitable activities like supporting cancer patients, kidney patients and students deprived economically, through selling locally made products.
+        </p>
+
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Office Bearers & Contact
+        </h2>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2">
+          Patron
+        </h3>
+        <p>H.H. Baselious Marthoma Mathews III</p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          President
+        </h3>
+        <p>H.G Dr. Yuhanon Mar Diascoros Metropolitan</p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Vice President
+        </h3>
+        <p>Fr. Boby Peter, Ph: 7034707077</p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Exe. Director
+        </h3>
+        <p>Rev. Fr. Thomas Paul Ramban, Ph: 9496455952</p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Director
+        </h3>
+        <p>Dr. Siby Tharakan, Ph: 7025067695</p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          General Secretary
+        </h3>
+        <p>Mrs. Santhamma Varghese, Ph: 9496156939</p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Treasurer
+        </h3>
+        <p>Mrs. Ritha Varghese, Ph: 9495116016</p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Joint Secretary
+        </h3>
+        <p>Mrs. Mini Sivaji, Ph: 9400603188</p>
+
+        <h3 className="font-syro-display font-semibold text-xl text-syro-blue border-b border-syro-table-border pb-2 mt-8">
+          Address
+        </h3>
+        <p>
+          NAVAJYOTHI MOMS CHARITABLE SOCIETY<br />
+          Catholicate Office<br />
+          Devalokam, Kottayam, Kerala, PIN: 686004
+        </p>
+        <p>Phone: +917025067695</p>
+        <p>
+          Email:{' '}
+          <a href="mailto:navajyothimoms@yahoo.com" className="text-syro-red hover:underline">
+            navajyothimoms@yahoo.com
+          </a>
+        </p>
+      </div>
+    </SpiritualOrgSubpageLayout>
   );
 };
 

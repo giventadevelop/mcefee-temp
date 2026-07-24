@@ -1,16 +1,19 @@
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
-import { getAppUrl } from '@/lib/env';
+import { getAppUrl, getTenantId, getApiBaseUrl } from '@/lib/env';
 import { withTenantId } from '@/lib/withTenantId';
-import type { EventFeaturedPerformersDTO } from '@/types';
+import type { EventFeaturedPerformersDTO, EventMediaDTO } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 const baseUrl = getAppUrl();
 
 export async function fetchEventFeaturedPerformersServer(eventId: number) {
   const params = new URLSearchParams();
   params.append('eventId.equals', eventId.toString());
 
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-featured-performers?${params.toString()}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-featured-performers?${params.toString()}`, {
     cache: 'no-store',
   });
 
@@ -22,7 +25,7 @@ export async function fetchEventFeaturedPerformersServer(eventId: number) {
 }
 
 export async function fetchEventFeaturedPerformerServer(id: number) {
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-featured-performers/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-featured-performers/${id}`, {
     cache: 'no-store',
   });
 
@@ -36,12 +39,12 @@ export async function fetchEventFeaturedPerformerServer(id: number) {
 export async function createEventFeaturedPerformerServer(performer: Omit<EventFeaturedPerformersDTO, 'id' | 'createdAt' | 'updatedAt'>) {
   // Ensure performanceDurationMinutes is at least 1 (backend validation requirement)
   const currentTime = new Date().toISOString();
-  
+
   // Helper function to convert empty strings to null for URL fields
   const cleanUrlField = (value: string | undefined | null): string | null => {
     return (value && value.trim() !== '') ? value : null;
   };
-  
+
   const payload = withTenantId({
     ...performer,
     createdAt: currentTime,
@@ -59,18 +62,18 @@ export async function createEventFeaturedPerformerServer(performer: Omit<EventFe
     performanceImageUrl: cleanUrlField(performer.performanceImageUrl),
     galleryImageUrls: cleanUrlField(performer.galleryImageUrls),
   });
-  
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-featured-performers`, {
+
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-featured-performers`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Failed to create event featured performer: ${errorText}`);
   }
-  
+
   return await response.json();
 }
 
@@ -79,9 +82,9 @@ export async function updateEventFeaturedPerformerServer(id: number, performer: 
   const cleanUrlField = (value: string | undefined | null): string | null => {
     return (value && value.trim() !== '') ? value : null;
   };
-  
-  const payload = withTenantId({ 
-    ...performer, 
+
+  const payload = withTenantId({
+    ...performer,
     id,
     // Convert empty URL fields to null to satisfy database constraints
     facebookUrl: performer.facebookUrl ? cleanUrlField(performer.facebookUrl) : undefined,
@@ -95,23 +98,66 @@ export async function updateEventFeaturedPerformerServer(id: number, performer: 
     performanceImageUrl: performer.performanceImageUrl ? cleanUrlField(performer.performanceImageUrl) : undefined,
     galleryImageUrls: performer.galleryImageUrls ? cleanUrlField(performer.galleryImageUrls) : undefined,
   });
-  
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-featured-performers/${id}`, {
+
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-featured-performers/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/merge-patch+json' },
     body: JSON.stringify(payload),
   });
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Failed to update event featured performer: ${errorText}`);
   }
-  
+
+  return await response.json();
+}
+
+/**
+ * Associate a performer with an event using the dedicated associate endpoint.
+ * This is the proper way to associate a performer with an event and avoids Hibernate ID change errors.
+ */
+export async function associatePerformerWithEventServer(performerId: number, eventId: number) {
+  const response = await fetchWithJwtRetry(
+    `${getApiBase()}/api/event-featured-performers/${performerId}/associate/${eventId}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to associate performer with event: ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Disassociate a performer from an event (set event_id to null) using the dedicated disassociate endpoint.
+ */
+export async function disassociatePerformerFromEventServer(performerId: number) {
+  const response = await fetchWithJwtRetry(
+    `${getApiBase()}/api/event-featured-performers/${performerId}/disassociate`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to disassociate performer from event: ${errorText}`);
+  }
+
   return await response.json();
 }
 
 export async function deleteEventFeaturedPerformerServer(id: number) {
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-featured-performers/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-featured-performers/${id}`, {
     method: 'DELETE',
   });
 
@@ -121,4 +167,200 @@ export async function deleteEventFeaturedPerformerServer(id: number) {
   }
 
   return true;
+}
+
+// Get available performers (not mapped to current event) with pagination and search
+export async function fetchAvailablePerformersServer(eventId: number, page = 0, size = 20, searchTerm = '') {
+  try {
+    console.log('🔍 Fetching available performers for event ID:', eventId, { page, size, searchTerm });
+
+    // Step 1: Get performers assigned to the current event (event-scoped, small set)
+    const assignedPerformers = await fetchEventFeaturedPerformersServer(eventId);
+    const assignedPerformerIds = Array.from(new Set(
+      (Array.isArray(assignedPerformers) ? assignedPerformers : [assignedPerformers])
+        .map((performer: any) => performer.id)
+        .filter(Boolean)
+    ));
+    console.log('🔍 Performer IDs assigned to current event:', assignedPerformerIds);
+
+    // Step 2: Fetch ONE server page of tenant performers via JHipster criteria,
+    // excluding assigned ids (repeated id.notIn) and searching server-side (name.contains)
+    const params = new URLSearchParams();
+    params.append('page', String(page));
+    params.append('size', String(size));
+    params.append('sort', 'name,asc');
+    if (searchTerm) {
+      params.append('name.contains', searchTerm);
+    }
+    assignedPerformerIds.forEach((id) => params.append('id.notIn', String(id)));
+
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-featured-performers?${params.toString()}`, {
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.warn('⚠️ Failed to fetch available performers:', response.status, response.statusText);
+      return { content: [], totalElements: 0, totalPages: 0, assignedCount: assignedPerformerIds.length, totalPerformers: 0 };
+    }
+
+    const data = await response.json();
+    const content: EventFeaturedPerformersDTO[] = Array.isArray(data) ? data : [data];
+    // Total available performers comes from the X-Total-Count response header
+    const totalElements = parseInt(response.headers.get('x-total-count') || '0', 10) || content.length;
+    console.log('✅ Available performers page:', content.length, 'of', totalElements);
+
+    return {
+      content,
+      totalElements,
+      totalPages: Math.ceil(totalElements / size),
+      assignedCount: assignedPerformerIds.length,
+      totalPerformers: totalElements + assignedPerformerIds.length
+    };
+  } catch (error) {
+    console.warn('❌ Error fetching available performers:', error);
+    return { content: [], totalElements: 0, totalPages: 0, assignedCount: 0, totalPerformers: 0 };
+  }
+}
+
+/**
+ * Upload event-specific performer poster
+ * Uses the generic /api/proxy/event-medias/upload endpoint with eventId, performerId, and eventMediaType
+ */
+export async function uploadEventPerformerPosterServer(
+  eventId: number,
+  performerId: number,
+  file: File,
+  title?: string,
+  description?: string,
+  tenantId?: string
+): Promise<EventMediaDTO> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const params = new URLSearchParams();
+  params.append('eventId', String(eventId));
+  params.append('performerId', String(performerId));
+  params.append('tenantId', tenantId || getTenantId());
+  params.append('isPublic', 'true');
+
+  // Set eventMediaType to indicate this is a custom poster
+  params.append('eventMediaType', 'EVENT_PERFORMER_POSTER');
+
+  // Set storage type
+  params.append('storageType', 'S3');
+
+  // Set required flags
+  params.append('eventFlyer', 'false');
+  params.append('isEventManagementOfficialDocument', 'false');
+  params.append('isHeroImage', 'false');
+  params.append('isActiveHeroImage', 'false');
+  params.append('isFeaturedImage', 'false');
+
+  // Title and description
+  if (title) {
+    params.append('title', title);
+  } else {
+    params.append('title', `Custom Poster - Event ${eventId} - Performer ${performerId}`);
+  }
+
+  if (description) {
+    params.append('description', description);
+  } else {
+    params.append('description', `Custom poster for event-performer combination`);
+  }
+
+  // Set startDisplayingFromDate to today's date (YYYY-MM-DD format) to satisfy NOT NULL constraint
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  params.append('startDisplayingFromDate', today);
+
+  const baseUrl = getAppUrl();
+  const url = `${baseUrl}/api/proxy/event-medias/upload?${params.toString()}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to upload performer poster: ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Fetch media for a specific event-performer combination
+ */
+export async function fetchEventPerformerMediaServer(
+  eventId: number,
+  performerId: number,
+  tenantId?: string
+): Promise<EventMediaDTO[]> {
+  const baseUrl = getAppUrl();
+  const params = new URLSearchParams();
+
+  // Use eventId.equals and performerId.equals query parameters (JHipster criteria syntax)
+  params.append('eventId.equals', String(eventId));
+  params.append('performerId.equals', String(performerId));
+
+  // Add tenantId filter (always include tenantId for multi-tenant filtering)
+  const tenantIdToUse = tenantId || getTenantId();
+  params.append('tenantId.equals', tenantIdToUse);
+
+  // Sort by priority ranking (ascending - lower = higher priority)
+  params.append('sort', 'priorityRanking,asc');
+
+  const url = `${baseUrl}/api/proxy/event-medias?${params.toString()}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    console.warn(`Failed to fetch event-performer media: ${response.status} ${response.statusText}`);
+    return [];
+  }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+}
+
+/**
+ * Update media priority ranking
+ */
+export async function updateMediaPriorityRankingServer(
+  mediaId: number,
+  priorityRanking: number
+): Promise<EventMediaDTO> {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-medias/${mediaId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/merge-patch+json' },
+    body: JSON.stringify({ priorityRanking }),
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to update media priority: ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Delete event media
+ */
+export async function deleteEventMediaServer(mediaId: number): Promise<void> {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-medias/${mediaId}`, {
+    method: 'DELETE',
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to delete media: ${errorText}`);
+  }
 }

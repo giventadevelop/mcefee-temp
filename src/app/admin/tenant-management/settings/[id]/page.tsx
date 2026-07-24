@@ -1,9 +1,15 @@
 import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
-import { fetchTenantSetting } from '@/app/admin/tenant-management/settings/ApiServerActions';
+import { notFound, redirect } from 'next/navigation';
+import { fetchTenantSetting, fetchTenantSettingsByTenantId } from '@/app/admin/tenant-management/settings/ApiServerActions';
+import { fetchTenantOrganization, fetchTenantOrganizations } from '@/app/admin/tenant-management/organizations/ApiServerActions';
 import Link from 'next/link';
-import { FaArrowLeft, FaEdit, FaTrash, FaBuilding, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 import { TenantSettingsDTO, TenantOrganizationDTO } from '@/app/admin/tenant-management/types';
+import TenantSettingsViewClient from './TenantSettingsViewClient';
+import {
+  getAppScopedTenantId,
+  isSatelliteTenantSettingsScope,
+} from '@/lib/tenantSettingsScope';
 
 interface PageProps {
   params: { id: string };
@@ -19,6 +25,17 @@ export default async function TenantSettingsViewPage({ params }: PageProps) {
     notFound();
   }
 
+  if (isSatelliteTenantSettingsScope()) {
+    const configuredTenantId = getAppScopedTenantId();
+    const forConfiguredTenant = await fetchTenantSettingsByTenantId(configuredTenantId);
+    if (forConfiguredTenant?.id && forConfiguredTenant.id !== settingsId) {
+      redirect(`/admin/tenant-management/settings/${forConfiguredTenant.id}`);
+    }
+    if (!forConfiguredTenant) {
+      notFound();
+    }
+  }
+
   // Fetch settings data
   let settings: TenantSettingsDTO | null = null;
   let organization: TenantOrganizationDTO | null = null;
@@ -30,9 +47,34 @@ export default async function TenantSettingsViewPage({ params }: PageProps) {
       notFound();
     }
 
-    // Use organization data from settings response (already included)
-    if (settings.tenantOrganization && settings.tenantOrganization.id) {
+    // Prefer organization data from settings response; hydrate if incomplete.
+    if (settings.tenantOrganization?.id) {
       organization = settings.tenantOrganization;
+
+      // Some API payloads include only tenantOrganization.id; fetch full org for display fields.
+      if (!organization.organizationName?.trim()) {
+        try {
+          const fullOrganization = await fetchTenantOrganization(settings.tenantOrganization.id);
+          if (fullOrganization) {
+            organization = fullOrganization;
+          }
+        } catch (orgErr) {
+          console.error('Error fetching organization by id:', orgErr);
+        }
+      }
+    } else if (settings.tenantId) {
+      // Fallback: resolve organization by tenantId when relationship is absent on tenant-settings payload.
+      try {
+        const orgResult = await fetchTenantOrganizations(
+          { page: 0, pageSize: 1 },
+          { tenantId: settings.tenantId }
+        );
+        if (orgResult.data.length > 0) {
+          organization = orgResult.data[0];
+        }
+      } catch (orgErr) {
+        console.error('Error fetching organization by tenantId:', orgErr);
+      }
     }
   } catch (err) {
     console.error('Error fetching settings:', err);
@@ -41,7 +83,7 @@ export default async function TenantSettingsViewPage({ params }: PageProps) {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ paddingTop: '120px' }}>
         <div className="mb-8">
           <Link
             href="/admin/tenant-management/settings"
@@ -82,17 +124,21 @@ export default async function TenantSettingsViewPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ paddingTop: '120px' }}>
       {/* Breadcrumb Navigation */}
       <nav className="flex mb-8" aria-label="Breadcrumb">
         <ol className="inline-flex items-center space-x-1 md:space-x-3">
           <li className="inline-flex items-center">
             <Link
               href="/admin"
-              className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
+              className="flex-shrink-0 h-14 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+              title="Admin Dashboard"
+              aria-label="Admin Dashboard"
             >
-              <FaArrowLeft className="w-4 h-4 mr-2" />
-              Admin Dashboard
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                <FaArrowLeft className="w-6 h-6 text-gray-600" />
+              </div>
+              <span className="font-semibold text-gray-700">Admin Dashboard</span>
             </Link>
           </li>
           <li>
@@ -160,18 +206,24 @@ export default async function TenantSettingsViewPage({ params }: PageProps) {
           <div className="flex gap-3">
             <Link
               href={`/admin/tenant-management/settings/${id}/edit`}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center transition-all duration-300 hover:scale-110"
+              title="Edit Settings"
+              aria-label="Edit Settings"
             >
-              <FaEdit />
-              Edit Settings
+              <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
             </Link>
             {organization && (
               <Link
                 href={`/admin/tenant-management/organizations/${organization.id}`}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                className="flex-shrink-0 w-14 h-14 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                title="View Organization"
+                aria-label="View Organization"
               >
-                <FaBuilding />
-                View Organization
+                <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
               </Link>
             )}
           </div>
@@ -180,286 +232,14 @@ export default async function TenantSettingsViewPage({ params }: PageProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Settings Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* General Settings */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">General Settings</h3>
-            </div>
-            <div className="px-6 py-4">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Tenant ID</dt>
-                  <dd className="mt-1 text-sm text-gray-900 font-mono">
-                    {settings?.tenantId}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Organization</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {organization ? (
-                      <Link
-                        href={`/admin/tenant-management/organizations/${organization.id}`}
-                        className="text-blue-600 hover:text-blue-500"
-                      >
-                        {organization.organizationName}
-                      </Link>
-                    ) : (
-                      'Not found'
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">User Registration</dt>
-                  <dd className="mt-1">
-                    {settings?.allowUserRegistration ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaToggleOn className="w-3 h-3 mr-1" />
-                        Enabled
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        <FaToggleOff className="w-3 h-3 mr-1" />
-                        Disabled
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Created At</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {settings?.createdAt
-                      ? new Date(settings.createdAt).toLocaleDateString()
-                      : 'Unknown'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Updated At</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {settings?.updatedAt
-                      ? new Date(settings.updatedAt).toLocaleDateString()
-                      : 'Unknown'}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          {/* Integration Settings */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Integration Settings</h3>
-            </div>
-            <div className="px-6 py-4">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">WhatsApp Integration</dt>
-                  <dd className="mt-1">
-                    {settings?.enableWhatsappIntegration ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaToggleOn className="w-3 h-3 mr-1" />
-                        Enabled
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        <FaToggleOff className="w-3 h-3 mr-1" />
-                        Disabled
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Email Marketing</dt>
-                  <dd className="mt-1">
-                    {settings?.enableEmailMarketing ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaToggleOn className="w-3 h-3 mr-1" />
-                        Enabled
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        <FaToggleOff className="w-3 h-3 mr-1" />
-                        Disabled
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Event Management</dt>
-                  <dd className="mt-1">
-                    {settings?.enableEventManagement ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaToggleOn className="w-3 h-3 mr-1" />
-                        Enabled
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        <FaToggleOff className="w-3 h-3 mr-1" />
-                        Disabled
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Payment Processing</dt>
-                  <dd className="mt-1">
-                    {settings?.enablePaymentProcessing ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaToggleOn className="w-3 h-3 mr-1" />
-                        Enabled
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        <FaToggleOff className="w-3 h-3 mr-1" />
-                        Disabled
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          {/* Limits and Quotas */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Limits and Quotas</h3>
-            </div>
-            <div className="px-6 py-4">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Max Users</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {settings?.maxUsers || 'Unlimited'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Max Events</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {settings?.maxEvents || 'Unlimited'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Max Storage (GB)</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {settings?.maxStorageGB || 'Unlimited'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Max API Calls</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {settings?.maxApiCallsPerMonth || 'Unlimited'}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          {/* Homepage Display Settings */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Homepage Display Settings</h3>
-            </div>
-            <div className="px-6 py-4">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Show Events Section</dt>
-                  <dd className="mt-1">
-                    {settings?.showEventsSectionInHomePage ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaToggleOn className="w-3 h-3 mr-1" />
-                        Visible
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        <FaToggleOff className="w-3 h-3 mr-1" />
-                        Hidden
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Show Team Members Section</dt>
-                  <dd className="mt-1">
-                    {settings?.showTeamMembersSectionInHomePage ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaToggleOn className="w-3 h-3 mr-1" />
-                        Visible
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        <FaToggleOff className="w-3 h-3 mr-1" />
-                        Hidden
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Show Sponsors Section</dt>
-                  <dd className="mt-1">
-                    {settings?.showSponsorsSectionInHomePage ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaToggleOn className="w-3 h-3 mr-1" />
-                        Visible
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        <FaToggleOff className="w-3 h-3 mr-1" />
-                        Hidden
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          {/* Customization */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Customization</h3>
-            </div>
-            <div className="px-6 py-4">
-              <dl className="space-y-6">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Custom CSS</dt>
-                  <dd className="mt-1">
-                    {settings?.customCss ? (
-                      <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-x-auto">
-                        {settings.customCss}
-                      </pre>
-                    ) : (
-                      <span className="text-sm text-gray-500">No custom CSS</span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Custom JavaScript</dt>
-                  <dd className="mt-1">
-                    {settings?.customJs ? (
-                      <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-x-auto">
-                        {settings.customJs}
-                      </pre>
-                    ) : (
-                      <span className="text-sm text-gray-500">No custom JavaScript</span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Email Provider Config</dt>
-                  <dd className="mt-1">
-                    {settings?.emailProviderConfig ? (
-                      <pre className="bg-gray-100 p-3 rounded-md text-xs overflow-x-auto">
-                        {JSON.stringify(JSON.parse(settings.emailProviderConfig), null, 2)}
-                      </pre>
-                    ) : (
-                      <span className="text-sm text-gray-500">No email provider configuration</span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
+        <div className="lg:col-span-2">
+          {settings && (
+            <TenantSettingsViewClient
+              settings={settings}
+              settingsId={settingsId}
+              organization={organization}
+            />
+          )}
         </div>
 
         {/* Sidebar */}
@@ -472,18 +252,30 @@ export default async function TenantSettingsViewPage({ params }: PageProps) {
             <div className="px-6 py-4 space-y-3">
               <Link
                 href={`/admin/tenant-management/settings/${id}/edit`}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2"
+                className="w-full flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105"
+                title="Edit Settings"
+                aria-label="Edit Settings"
               >
-                <FaEdit />
-                Edit Settings
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <span className="font-semibold text-blue-700">Edit Settings</span>
               </Link>
               {organization && (
                 <Link
                   href={`/admin/tenant-management/organizations/${organization.id}`}
-                  className="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2"
+                  className="w-full flex-shrink-0 h-14 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105"
+                  title="View Organization"
+                  aria-label="View Organization"
                 >
-                  <FaBuilding />
-                  View Organization
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <span className="font-semibold text-green-700">View Organization</span>
                 </Link>
               )}
             </div>
@@ -546,8 +338,13 @@ export default async function TenantSettingsViewPage({ params }: PageProps) {
                     <dd className="mt-1 text-sm text-gray-900">
                       <Link
                         href={`/admin/tenant-management/organizations/${organization.id}`}
-                        className="text-blue-600 hover:text-blue-500"
+                        className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium"
                       >
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                        </div>
                         {organization.organizationName}
                       </Link>
                     </dd>

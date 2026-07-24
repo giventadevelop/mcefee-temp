@@ -1,40 +1,21 @@
-import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
-import { createTenantSetting } from '@/app/admin/tenant-management/settings/ApiServerActions';
-import { fetchTenantOrganizations } from '@/app/admin/tenant-management/organizations/ApiServerActions';
-import TenantSettingsForm from '@/app/admin/tenant-management/components/TenantSettingsForm';
+import { fetchRecentTenantOrganizationsForSelectServer } from '@/app/admin/tenant-management/organizations/organizationSelectServerActions';
+import NewTenantSettingsClient from '@/app/admin/tenant-management/settings/new/NewTenantSettingsClient';
 import Link from 'next/link';
-import { FaArrowLeft } from 'react-icons/fa';
-import { TenantSettingsFormDTO } from '@/app/admin/tenant-management/types';
 
 interface PageProps {
-  searchParams: { tenantId?: string };
+  searchParams: Promise<{ tenantId?: string }> | { tenantId?: string };
 }
 
 export default async function NewTenantSettingsPage({ searchParams }: PageProps) {
-  // Fetch organizations for dropdown
-  let organizations = [];
-  try {
-    const result = await fetchTenantOrganizations({ page: 0, pageSize: 100 }, {});
-    organizations = result.data;
-  } catch (error) {
-    console.error('Error fetching organizations:', error);
-  }
+  const resolvedSearchParams =
+    typeof (searchParams as Promise<{ tenantId?: string }>).then === 'function'
+      ? await (searchParams as Promise<{ tenantId?: string }>)
+      : (searchParams as { tenantId?: string });
 
-  async function handleSubmit(data: TenantSettingsFormDTO) {
-    'use server';
-
-    try {
-      await createTenantSetting(data);
-      redirect('/admin/tenant-management/settings');
-    } catch (error) {
-      console.error('Error creating settings:', error);
-      throw error;
-    }
-  }
+  const organizations = await fetchRecentTenantOrganizationsForSelectServer();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ paddingTop: '120px' }}>
       {/* Breadcrumb Navigation */}
       <nav className="flex mb-8" aria-label="Breadcrumb">
         <ol className="inline-flex items-center space-x-1 md:space-x-3">
@@ -43,7 +24,9 @@ export default async function NewTenantSettingsPage({ searchParams }: PageProps)
               href="/admin"
               className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
             >
-              <FaArrowLeft className="w-4 h-4 mr-2" />
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
               Admin Dashboard
             </Link>
           </li>
@@ -95,7 +78,11 @@ export default async function NewTenantSettingsPage({ searchParams }: PageProps)
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Create New Settings</h1>
         <p className="mt-2 text-sm text-gray-600">
-          Configure settings for a tenant organization
+          Configure settings for a tenant organization. To add a new tenant with an auto-generated ID, create the organization first under{' '}
+          <Link href="/admin/tenant-management/organizations/new" className="text-blue-600 hover:text-blue-800 font-medium">
+            Organizations → New Organization
+          </Link>
+          .
         </p>
       </div>
 
@@ -105,25 +92,9 @@ export default async function NewTenantSettingsPage({ searchParams }: PageProps)
           <h2 className="text-lg font-medium text-gray-900">Settings Configuration</h2>
         </div>
         <div className="px-6 py-6">
-          <TenantSettingsForm
-            mode="create"
-            onSubmit={handleSubmit}
+          <NewTenantSettingsClient
             organizations={organizations}
-            initialData={{
-              tenantId: searchParams.tenantId || '',
-              allowUserRegistration: true,
-              enableWhatsappIntegration: false,
-              enableEmailMarketing: false,
-              enableEventManagement: true,
-              enablePaymentProcessing: false,
-              maxUsers: null,
-              maxEvents: null,
-              maxStorageGB: null,
-              maxApiCallsPerMonth: null,
-              customCss: '',
-              customJs: '',
-              emailProviderConfig: '{}'
-            }}
+            initialTenantId={resolvedSearchParams.tenantId}
           />
         </div>
       </div>

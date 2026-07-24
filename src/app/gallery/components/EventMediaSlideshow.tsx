@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { 
-  X, 
-  ChevronLeft, 
+import {
+  X,
+  ChevronLeft,
   ChevronRight,
   Play,
   Pause,
@@ -18,10 +18,11 @@ interface EventMediaSlideshowProps {
   event: EventDetailsDTO;
   media: EventMediaDTO[];
   onClose: () => void;
+  initialIndex?: number;
 }
 
-export function EventMediaSlideshow({ event, media, onClose }: EventMediaSlideshowProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+export function EventMediaSlideshow({ event, media, onClose, initialIndex = 0 }: EventMediaSlideshowProps) {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(3000); // 3 seconds per slide
@@ -35,6 +36,13 @@ export function EventMediaSlideshow({ event, media, onClose }: EventMediaSlidesh
 
   const currentMedia = media[currentIndex];
   const isVideo = currentMedia?.eventMediaType.startsWith('video/');
+
+  // Update currentIndex when initialIndex changes
+  useEffect(() => {
+    if (initialIndex >= 0 && initialIndex < media.length) {
+      setCurrentIndex(initialIndex);
+    }
+  }, [initialIndex, media.length]);
 
   // Auto-play functionality
   useEffect(() => {
@@ -195,7 +203,7 @@ export function EventMediaSlideshow({ event, media, onClose }: EventMediaSlidesh
                   <span className="ml-2">{formatFileSize(currentMedia.fileSize)}</span>
                 </div>
               </div>
-              
+
               {currentMedia.altText && (
                 <div>
                   <span className="text-gray-400">Alt Text:</span>

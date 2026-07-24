@@ -1,8 +1,19 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { HomeSectionRail } from '@/components/HomeSectionRail';
+import { HomeSectionTitle } from '@/components/HomeSectionTitle';
 
-const culturalServices = [
+type ServiceColor = 'green' | 'orange' | 'blue' | 'yellow';
+
+type CulturalServiceItem = {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: ServiceColor;
+};
+
+const culturalServices: CulturalServiceItem[] = [
   {
     icon: (
       <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,65 +56,135 @@ const culturalServices = [
   }
 ];
 
+const TILT_MAX_RX = 6;
+const TILT_MAX_RY = 8;
+
+function CulturalGlassCard({ service, index }: { service: CulturalServiceItem; index: number }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0, z: 0 });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) {
+      setReducedMotion(true);
+      setInView(true);
+      return;
+    }
+    const el = wrapRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (reducedMotion) return;
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    const ry = Math.max(-TILT_MAX_RY, Math.min(TILT_MAX_RY, x * 2 * TILT_MAX_RY));
+    const rx = Math.max(-TILT_MAX_RX, Math.min(TILT_MAX_RX, -y * 2 * TILT_MAX_RX));
+    const z = 10 + (Math.abs(x) + Math.abs(y)) * 14;
+    setTilt({ rx, ry, z: Math.min(26, z) });
+  }, [reducedMotion]);
+
+  const onMouseLeave = useCallback(() => {
+    setTilt({ rx: 0, ry: 0, z: 0 });
+  }, []);
+
+  const iconBg =
+    service.color === 'green'
+      ? 'bg-green-100/85 backdrop-blur-sm border border-green-200/50 shadow-sm'
+      : service.color === 'orange'
+        ? 'bg-orange-100/85 backdrop-blur-sm border border-orange-200/50 shadow-sm'
+        : service.color === 'blue'
+          ? 'bg-blue-100/85 backdrop-blur-sm border border-blue-200/50 shadow-sm'
+          : 'bg-yellow-100/85 backdrop-blur-sm border border-yellow-200/50 shadow-sm';
+
+  const faceStyle: React.CSSProperties | undefined = reducedMotion
+    ? undefined
+    : {
+        transform: `perspective(1100px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateZ(${tilt.z}px)`
+      };
+
+  return (
+    <div
+      ref={wrapRef}
+      className={`services-glass-card-wrap${inView ? ' services-glass-card-wrap--visible' : ''}`}
+      style={{ ['--services-reveal-delay' as string]: `${index * 80}ms` }}
+    >
+      <div
+        role="article"
+        aria-labelledby={`services-card-title-${index}`}
+        className="services-glass-card-face services-cultural-card group relative"
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
+        style={faceStyle}
+      >
+        <div className="services-glass-card-shine pointer-events-none absolute inset-0 overflow-hidden rounded-2xl" aria-hidden />
+        <div className="relative z-[1] flex items-start space-x-6">
+          <div
+            className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ${iconBg}`}
+          >
+            {service.icon}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3
+              id={`services-card-title-${index}`}
+              className="services-cultural-card-title mb-3 text-xl font-bold transition-colors duration-300 group-hover:text-emerald-800"
+            >
+              {service.title}
+            </h3>
+            <p className="services-cultural-card-desc text-sm leading-relaxed lg:text-base">{service.description}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const ServicesSection: React.FC = () => {
   return (
-    <div className="py-24 bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
+    <div className="relative overflow-hidden bg-gradient-to-b from-emerald-50/90 via-green-50 to-emerald-50/80 py-24">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.12),transparent)]" aria-hidden />
+      <HomeSectionRail
+        eyebrow="What we do"
+        containerClassName="relative z-[1] mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"
+      >
         <div className="mb-16">
-          <div className="flex items-center space-x-2 mb-6">
-            <div className="w-5 h-2 bg-yellow-400 rounded"></div>
-            <p className="text-gray-600">What we do</p>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 text-center">
+          <HomeSectionTitle className="mb-4 text-center text-3xl font-bold md:text-4xl">
             Cultural Workshops and Educational Events
-          </h2>
+          </HomeSectionTitle>
         </div>
 
-        {/* 2x2 Grid Layout matching the attached image */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+        <div className="services-cultural-cards grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12">
           {culturalServices.map((service, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all duration-300 ease-in-out group"
-            >
-              <div className="flex items-start space-x-6">
-                {/* Icon on the left */}
-                <div className={`
-                  flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center
-                  ${service.color === 'green' ? 'bg-green-100' : ''}
-                  ${service.color === 'orange' ? 'bg-orange-100' : ''}
-                  ${service.color === 'blue' ? 'bg-blue-100' : ''}
-                  ${service.color === 'yellow' ? 'bg-yellow-100' : ''}
-                  group-hover:scale-110 transition-transform duration-300
-                `}>
-                  {service.icon}
-                </div>
-
-                {/* Content on the right */}
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-300">
-                    {service.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed text-sm lg:text-base">
-                    {service.description}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <CulturalGlassCard key={service.title} service={service} index={index} />
           ))}
         </div>
 
         {/* Call to Action */}
         <div className="mt-16 text-center">
-          <div className="inline-flex items-center space-x-2 bg-blue-50 text-blue-700 px-6 py-3 rounded-full text-sm font-medium">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center space-x-2 rounded-full bg-blue-50/90 px-6 py-3 text-sm font-medium text-blue-700 shadow-sm backdrop-blur-sm">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>Join our cultural community and preserve Kerala's rich heritage</span>
           </div>
         </div>
-      </div>
+      </HomeSectionRail>
     </div>
   );
 };

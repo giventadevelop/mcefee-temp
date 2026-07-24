@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiBaseUrl } from '@/lib/env';
 
 /**
  * Clerk User Sync API Route
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     console.log('[Clerk Sync] Syncing user to backend:', { email, tenantId });
 
     // Call backend sync endpoint
-    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    const backendUrl = getApiBaseUrl() || 'http://localhost:8080';
     const response = await fetch(`${backendUrl}/api/clerk/sync-user`, {
       method: 'POST',
       headers: {

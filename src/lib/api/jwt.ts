@@ -1,5 +1,4 @@
-import jwt from 'jsonwebtoken';
-import { getApiJwtUser, getApiJwtPass } from '../env';
+import { getApiJwtUser, getApiJwtPass, getApiBaseUrl } from '../env';
 
 /**
  * Generates a JWT token for API authentication using env credentials.
@@ -10,7 +9,7 @@ export async function generateApiJwt() {
   const userHelper = getApiJwtUser();
   const passHelper = getApiJwtPass();
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const API_BASE_URL = getApiBaseUrl();
 
   // Debug logging to see what we're getting
   console.log('[JWT DEBUG] Helper getApiJwtUser():', userHelper ? 'SET' : 'UNDEFINED');
@@ -75,7 +74,19 @@ export async function generateApiJwt() {
     return data.id_token;
   } catch (error) {
     console.error('[JWT DEBUG] Error during fetch:', error);
-    throw new Error('Error fetching JWT from backend');
+
+    // Provide more specific error message based on error type
+    if (error instanceof TypeError && error.message === 'fetch failed') {
+      console.error('[JWT DEBUG] Network error - unable to reach authentication server');
+      throw new Error('Network error: Unable to reach authentication server. Please check your connection and try again.');
+    }
+
+    // Re-throw the original error if it's already a detailed one
+    if (error instanceof Error && error.message.includes('Failed to fetch JWT')) {
+      throw error;
+    }
+
+    throw new Error(`Authentication error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
   }
 }
 

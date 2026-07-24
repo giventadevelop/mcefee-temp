@@ -1,4 +1,5 @@
 {
     "workbench.activityBar.location": "top",
-    "workbench.layoutControl.type": "toggles"
+    "workbench.layoutControl.type": "toggles",
+    "liveServer.settings.port": 5503
 }

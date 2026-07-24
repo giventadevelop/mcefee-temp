@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs'
+import { auth } from '@clerk/nextjs/server'
 import { TaskList } from '@/components/task-list'
 import Link from 'next/link'
 import { Pagination } from '@/components/Pagination'
@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 20;
 
 async function checkSubscriptionStatus(userId: string, isReturnFromStripe: boolean = false) {
   // Placeholder: always return true

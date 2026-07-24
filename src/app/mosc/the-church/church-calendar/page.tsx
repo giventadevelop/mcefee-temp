@@ -1,13 +1,22 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import SyroPageBanner from '../../components/SyroPageBanner';
+import TheChurchSidebar from '../TheChurchSidebar';
 
 export const metadata = {
   title: 'Church Calendar',
   description: 'Feast days, fasts, and liturgical seasons.',
 };
 
-const ChurchCalendarPage = () => {
+export default async function ChurchCalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const params = await searchParams;
+  const breadcrumbFrom = params.from === 'the-church' ? 'the-church' : 'home';
+
   const liturgicalSeasons = [
     {
       name: 'Nativity Fast',
@@ -87,57 +96,42 @@ const ChurchCalendarPage = () => {
   ];
 
   return (
-    <div className="bg-background">
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-background to-muted">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-primary rounded-lg flex items-center justify-center mx-auto mb-6 sacred-shadow-lg">
-              <span className="text-primary-foreground text-4xl font-bold" role="img" aria-label="Church Calendar">📅</span>
-            </div>
-            <h1 className="font-heading font-semibold text-4xl text-foreground mb-4">
-              Church Calendar
-            </h1>
-            <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Feast days, fasts, and liturgical seasons.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="bg-syro-bg-gray">
+      <SyroPageBanner title="Church Calendar" breadcrumbFrom={breadcrumbFrom} />
 
       {/* Main Content */}
-      <section className="py-16 bg-card">
+      <section className="py-16 bg-syro-bg-gray">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Main Content */}
-            <div className="lg:col-span-3">
-              <div className="bg-background rounded-lg sacred-shadow p-8">
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-[rgba(50,50,93,0.25)_0px_6px_12px_-2px,rgba(0,0,0,0.3)_0px_3px_7px_-3px] p-8">
                 {/* Featured Image */}
-                <div className="mb-8">
+                <div className="mb-8 flex justify-center">
                   <Image
                     src="/images/church/church-calendar.jpg"
                     alt="Church Calendar"
-                    width={500}
-                    height={300}
-                    className="rounded-lg sacred-shadow w-full h-auto"
+                    width={125}
+                    height={125}
+                    className="rounded-lg w-full max-w-[125px] max-h-[125px] object-contain"
                     priority
                   />
                 </div>
 
                 {/* Content */}
                 <div className="prose prose-lg max-w-none">
-                  <h2 className="font-heading font-semibold text-2xl text-foreground mb-6">
+                  <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-6">
                     The Liturgical Year
                   </h2>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-8">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-8">
                     The Orthodox Church follows a liturgical calendar that organizes the year around 
                     the life of Christ and the major events of salvation history. This calendar 
                     includes feast days, fasts, and liturgical seasons that help us to live out 
                     our faith throughout the year, participating in the eternal mysteries of God.
                   </p>
 
-                  <h3 className="font-heading font-semibold text-xl text-foreground mb-6">
+                  <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-6">
                     Liturgical Seasons
                   </h3>
 
@@ -145,34 +139,34 @@ const ChurchCalendarPage = () => {
                     {liturgicalSeasons.map((season, index) => (
                       <div key={index} className={`rounded-lg border-2 p-4 ${season.color}`}>
                         <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-heading font-semibold text-lg text-foreground">
+                          <h4 className="font-syro-display font-semibold text-lg text-syro-blue">
                             {season.name}
                           </h4>
-                          <span className="font-body text-sm text-muted-foreground bg-white px-2 py-1 rounded">
+                          <span className="font-syro-primary text-sm text-syro-dark-gray bg-white px-2 py-1 rounded">
                             {season.period}
                           </span>
                         </div>
-                        <p className="font-body text-muted-foreground text-sm leading-relaxed">
+                        <p className="font-syro-primary text-syro-dark-gray text-sm leading-relaxed">
                           {season.description}
                         </p>
                       </div>
                     ))}
                   </div>
 
-                  <h3 className="font-heading font-semibold text-xl text-foreground mb-6">
+                  <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-6">
                     Major Feast Days
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     {majorFeasts.map((feast, index) => (
-                      <div key={index} className="bg-muted/30 rounded-lg p-4 hover:bg-muted/50 reverent-transition">
+                      <div key={index} className="bg-syro-bg-gray rounded-lg p-4 hover:bg-syro-bg-gray/50 transition-all duration-300">
                         <div className="flex items-center space-x-3">
                           <span className="text-2xl" role="img" aria-label={feast.name}>{feast.icon}</span>
                           <div>
-                            <h4 className="font-heading font-medium text-foreground">
+                            <h4 className="font-syro-display font-medium text-syro-blue">
                               {feast.name}
                             </h4>
-                            <p className="font-body text-sm text-muted-foreground">
+                            <p className="font-syro-primary text-sm text-syro-dark-gray">
                               {feast.date}
                             </p>
                           </div>
@@ -181,11 +175,11 @@ const ChurchCalendarPage = () => {
                     ))}
                   </div>
 
-                  <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
+                  <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-4">
                     The Purpose of the Liturgical Calendar
                   </h3>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
                     The liturgical calendar serves several important purposes in Orthodox Christian life. 
                     It helps us to remember and celebrate the great events of salvation history, 
                     particularly the life, death, and resurrection of our Lord Jesus Christ. Through 
@@ -193,7 +187,7 @@ const ChurchCalendarPage = () => {
                     anew each year as we grow in faith and understanding.
                   </p>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
                     The calendar also provides structure to our spiritual life, with periods of fasting 
                     and feasting that help us to develop discipline and joy in our relationship with 
                     God. The fasts prepare us for the feasts, teaching us to hunger for God and to 
@@ -201,11 +195,11 @@ const ChurchCalendarPage = () => {
                     filling us with joy and gratitude.
                   </p>
 
-                  <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
+                  <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-4">
                     Fasting and Feasting
                   </h3>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
                     The Orthodox calendar alternates between periods of fasting and feasting. The 
                     four major fasting periods are: the Nativity Fast (Advent), Great Lent, the 
                     Apostles' Fast, and the Dormition Fast. These periods of fasting are not merely 
@@ -213,18 +207,18 @@ const ChurchCalendarPage = () => {
                     and spiritual discipline.
                   </p>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
                     The feast days, on the other hand, are times of celebration and joy. They remind 
                     us of God's great love for us and the wonderful works He has done for our salvation. 
                     On feast days, we break our fasts and celebrate with special foods, music, and 
                     fellowship, giving thanks to God for His blessings.
                   </p>
 
-                  <div className="bg-primary/5 rounded-lg p-6 mt-8">
-                    <h4 className="font-heading font-semibold text-lg text-foreground mb-4">
+                  <div className="bg-syro-red/5 rounded-lg p-6 mt-8">
+                    <h4 className="font-syro-display font-semibold text-lg text-syro-blue mb-4">
                       Living the Liturgical Year
                     </h4>
-                    <p className="font-body text-muted-foreground leading-relaxed">
+                    <p className="font-syro-primary text-syro-dark-gray leading-relaxed">
                       The liturgical calendar is not just a schedule of events, but a way of life. 
                       It teaches us to live in harmony with God's plan for our salvation, participating 
                       in the eternal mysteries of Christ through the rhythm of the Church year. 
@@ -237,121 +231,79 @@ const ChurchCalendarPage = () => {
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-background rounded-lg sacred-shadow p-6 mb-6">
-                <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
-                  The Church
-                </h3>
-                <nav className="space-y-2">
-                  <Link 
-                    href="/mosc/the-church/what-do-we-believe" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    What Do We Believe
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/church-history" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Church History
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/orthodox-faith" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Orthodox Faith
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/liturgy-worship" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Liturgy & Worship
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/sacraments" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Sacraments
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/church-calendar" 
-                    className="block px-3 py-2 bg-primary text-primary-foreground rounded-md font-body text-sm reverent-transition"
-                  >
-                    Church Calendar
-                  </Link>
-                </nav>
-              </div>
+            {/* Sidebar - The Church (all subpages, like mosc.in) */}
+            <div className="space-y-6 lg:col-span-1">
+              <TheChurchSidebar />
 
               {/* Quick Links */}
-              <div className="bg-background rounded-lg sacred-shadow p-6">
-                <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
+              <div className="bg-syro-bg-gray rounded-lg shadow-syro-card p-6">
+                <h3 className="font-syro-display font-semibold text-lg text-syro-blue mb-4">
                   Quick Links
                 </h3>
                 <nav className="space-y-2">
                   <Link 
                     href="/mosc/downloads/kalpana" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Kalpana
                   </Link>
                   <Link 
                     href="/mosc/downloads" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Downloads
                   </Link>
                   <Link 
                     href="/mosc/institutions" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Institutions
                   </Link>
                   <Link 
                     href="/mosc/training" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Training
                   </Link>
                   <Link 
                     href="/mosc/publications" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Publications
                   </Link>
                   <Link 
                     href="/mosc/spiritual" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Spiritual Organisations
                   </Link>
                   <Link 
                     href="/mosc/theological" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Theological Seminaries
                   </Link>
                   <Link 
                     href="/mosc/lectionary" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Lectionary
                   </Link>
                   <Link 
-                    href="/mosc/photo-gallery" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    href="/mosc/gallery" 
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Gallery
                   </Link>
                   <Link 
                     href="/mosc/contact-info" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Contact Info
                   </Link>
                   <Link 
                     href="/mosc/faqs" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     FAQs
                   </Link>
@@ -365,4 +317,3 @@ const ChurchCalendarPage = () => {
   );
 };
 
-export default ChurchCalendarPage;

@@ -3,215 +3,132 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import QuickLinks from '../components/QuickLinks';
+import SyroPageBanner from '../components/SyroPageBanner';
+
+const downloadItems: { title: string; link: string; image?: string }[] = [
+  { title: 'local body Election winners award ceremony – Photos', link: '#', image: '/images/downloads/local_body_election.png' },
+  { title: 'Catholicate Day Book Cover, Brochure', link: '#', image: '/images/downloads/catholictae_day.png' },
+  { title: 'Panjangom', link: '#', image: '/images/downloads/panchangom.png' },
+  { title: 'Download Photos', link: '/mosc/downloads/photos', image: '/images/downloads/download-photos.png' },
+  { title: 'Medical Insurance', link: '#', image: '/images/downloads/medical_insurance.png' },
+  { title: 'Kalpana', link: '/mosc/downloads/kalpana', image: '/images/downloads/kalpana.png' },
+  { title: 'Covering Note to be submitted along with financial statements', link: '#' },
+  { title: 'Church Financial Statements format for the year ended 31March 2025 of MOSC', link: '#', image: '/images/downloads/church_finance.png' },
+  { title: 'Merit Evening 2025 Photos', link: '#', image: '/images/downloads/merit_evening.png' },
+  { title: 'MALANKARA SABHA MAGAZINE', link: '#', image: '/images/downloads/malankara_magazine.jpg' },
+  { title: 'EDUCATIONAL SPECIAL SCHOLARSHIP', link: '#' },
+  { title: 'Merit Awards 2025', link: '#' },
+  { title: 'Marriage Marga Nirdesha Form', link: '#' },
+  { title: 'Budget format 2025-26', link: '#' },
+  { title: 'GST', link: '#' },
+  { title: 'Tenders', link: '#', image: '/images/downloads/tender.png' },
+  { title: 'Merit Evening 2024 PHOTOS', link: '#', image: '/images/downloads/merit_evening_2024.png' },
+  { title: 'Mega Quiz qualified list', link: '#', image: '/images/downloads/mega_quiz.png' },
+  { title: 'Charge handing over/taking over Report for new Trustees and Secretary of the Parish', link: '#' },
+  { title: 'Account Statement Format', link: '#', image: '/images/downloads/account_statement.png' },
+  { title: 'അഖിലമലങ്കര മാർത്തോമൻ . പൈതൃക കലാസാഹിത്യ വൈജ്ഞാനിക മത്സരങ്ങൾ', link: '#', image: '/images/downloads/akhila_malankara_marthoman.jpg' },
+  { title: 'Malankara Association (2022 – 2027)', link: '#', image: '/images/downloads/malankara_association.png' },
+  { title: 'Panjangom 2023', link: '#', image: '/images/downloads/panjagom_2023.jpg' },
+  { title: 'Panjangom 2022', link: '#', image: '/images/downloads/panjagom_2022.jpg' },
+  { title: 'ASSOCIATION SECRETARY ELECTION', link: '#', image: '/images/logos/Current_Edits/MOSC-Logo-only.png' },
+  { title: 'Catholicate Day 2022', link: '#', image: '/images/downloads/catholictae_day.png' },
+  { title: 'Malankara Association 2022', link: '#', image: '/images/downloads/malankara_association.png' },
+  { title: 'Application Forms', link: '/mosc/downloads/application-forms', image: '/images/downloads/application_forms.jpg' },
+  { title: 'Malankara Association 2021', link: '#', image: '/images/downloads/malankara_association.png' },
+  { title: 'prayer', link: '#', image: '/images/downloads/prayer.jpg' },
+  { title: 'Advertisement', link: '#' },
+  { title: 'FCRA Statements', link: '#', image: '/images/downloads/FCRA_statements.jpg' },
+  { title: 'Pratheeshetha Prameyam', link: '#' },
+  { title: 'Church Accounts Manual', link: '#', image: '/images/downloads/church_account_manual.jpg' },
+  { title: 'Pdfs', link: '/mosc/downloads/pdfs', image: '/images/downloads/pdfs.jpg' },
+  { title: 'Supreme Court Judgement, July 3, 2017', link: '#', image: '/images/downloads/supreme_court_judgement.jpg' },
+  { title: 'Priest Directory', link: '#', image: '/images/downloads/priest_directory.jpg' },
+  { title: 'Malankara Association : Association Secretary Election Final list 2017', link: '#', image: '/images/downloads/malankara_association.png' },
+  { title: 'Malankara Association 2017 – Agenda & Nominated Members List', link: '#', image: '/images/downloads/malankara_association.png' },
+  { title: 'Malankara Association Candidates Final List 2017', link: '#', image: '/images/downloads/malankara_association.png' },
+  { title: 'Malankara Association Final list 2017', link: '#', image: '/images/downloads/malankara_association.png' },
+  { title: 'Ministry of Human Empowernment', link: '#', image: '/images/downloads/ministry_human_empowerment.jpg' },
+  { title: 'Guidelines for Preparing Church Accounts', link: '#', image: '/images/downloads/Guidelines_preparing_church_account.jpg' },
+  { title: 'Prayer Books', link: '/mosc/downloads/prayer-books', image: '/images/downloads/prayer_books.jpg' },
+  { title: 'Foreign Contributions', link: '#' },
+  { title: 'Online Resourses', link: '#', image: '/images/downloads/online_resources.jpg' },
+  { title: 'Photos', link: '/mosc/downloads/photos', image: '/images/downloads/photos.jpg' },
+];
+
+const BANNER_DESCRIPTION =
+  'Church resources, forms, publications, and documents available for download.';
 
 export default function DownloadsPage() {
-  const downloadCategories = [
-    {
-      id: 'kalpana',
-      title: 'Kalpana',
-      description: 'The official annual calendar and directory of the Malankara Orthodox Syrian Church. View and download editions from previous years.',
-      image: '/images/downloads/kalpana.jpg',
-      link: '/mosc/downloads/kalpana',
-      featured: true,
-    },
-    {
-      id: 'catholicate-day',
-      title: 'Catholicate Day Book Cover, Brochure',
-      description: 'Official materials for Catholicate Day celebrations.',
-      image: '/images/downloads/cdc-thump.png',
-      link: '#', // PDF download link
-    },
-    {
-      id: 'prayer-books',
-      title: 'Prayer Books',
-      description: 'Orthodox prayer books, liturgical texts, and devotional materials for daily prayer and worship.',
-      link: '/mosc/downloads/prayer-books',
-    },
-    {
-      id: 'photos',
-      title: 'Photos',
-      description: 'Official photographs of bishops, saints, and church leaders for reference and veneration.',
-      link: '/mosc/downloads/photos',
-    },
-    {
-      id: 'application-forms',
-      title: 'Application Forms',
-      description: 'Official forms for various church services, certificates, and administrative purposes.',
-      link: '/mosc/downloads/application-forms',
-    },
-    {
-      id: 'pdfs',
-      title: 'PDFs & Documents',
-      description: 'Church circulars, announcements, guidelines, and official documents.',
-      link: '/mosc/downloads/pdfs',
-    },
-    {
-      id: 'financial',
-      title: 'Financial Forms & Guidelines',
-      description: 'Budget formats, account statements, church accounts manual, and financial guidelines for parishes and institutions.',
-      link: '#', // Will list multiple forms
-    },
-    {
-      id: 'malankara-association',
-      title: 'Malankara Association Documents',
-      description: 'Agendas, member lists, candidate lists, and official documents from Malankara Association meetings.',
-      link: '#',
-    },
-    {
-      id: 'merit-awards',
-      title: 'Merit Awards & Scholarship',
-      description: 'Information about educational merit awards, scholarships, and academic excellence programs.',
-      link: '#',
-    },
-    {
-      id: 'medical-insurance',
-      title: 'Medical Insurance',
-      description: 'Information and forms related to medical insurance schemes for church members.',
-      link: '#',
-    },
-    {
-      id: 'marriage-assistance',
-      title: 'Marriage Marga Nirdesha Form',
-      description: 'Forms and guidelines for marriage assistance and counseling services.',
-      link: '#',
-    },
-    {
-      id: 'priest-directory',
-      title: 'Priest Directory',
-      description: 'Directory of priests serving in various parishes and dioceses.',
-      link: '#',
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-background to-muted py-16 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center sacred-shadow">
-                <svg className="w-6 h-6 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                </svg>
-              </div>
-            </div>
-            <h1 className="font-heading font-semibold text-4xl lg:text-5xl text-foreground mb-4">
-              Downloads
-            </h1>
-            <p className="font-body text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto">
-              Access official church documents, prayer books, forms, and resources of the Malankara Orthodox Syrian Church.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="bg-syro-bg-gray">
+      <SyroPageBanner
+        title="Downloads"
+        breadcrumbFrom="home"
+        description={BANNER_DESCRIPTION}
+      />
 
-      {/* Downloads Grid Section */}
-      <section className="py-16 bg-card">
+      <section className="py-16 bg-syro-bg-gray">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {downloadCategories.map((category) => (
-              <Link
-                key={category.id}
-                href={category.link}
-                className={`group bg-card rounded-lg sacred-shadow hover:sacred-shadow-lg reverent-transition overflow-hidden ${category.link === '#' ? 'opacity-75 cursor-not-allowed' : ''}`}
-                onClick={(e) => {
-                  if (category.link === '#') {
-                    e.preventDefault();
-                    alert('This resource will be available soon. Please check back later.');
-                  }
-                }}
-              >
-                {category.image && (
-                  <div className="relative w-full h-48">
-                    <Image
-                      src={category.image}
-                      alt={category.title}
-                      fill
-                      className="object-cover group-hover:scale-105 reverent-transition"
-                    />
-                  </div>
-                )}
-                <div className={`p-6 ${!category.image ? 'h-full flex flex-col justify-center' : ''}`}>
-                  <h2 className="font-heading font-semibold text-xl text-foreground mb-3 group-hover:text-primary reverent-transition">
-                    {category.title}
-                  </h2>
-                  <p className="font-body text-muted-foreground leading-relaxed mb-4 line-clamp-3">
-                    {category.description}
-                  </p>
-                  <span className="inline-flex items-center font-body text-primary font-medium group-hover:gap-2 reverent-transition">
-                    {category.link === '#' ? 'Coming Soon' : 'View & Download'}
-                    {category.link !== '#' && (
-                      <svg 
-                        className="w-5 h-5 ml-1 group-hover:ml-2 reverent-transition" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+          {/* Section title - left red bar (matches administration .admin-section-title) */}
+          <h3 className="text-2xl font-light text-[#798daf] mb-10 pl-8 border-l-[7px] border-syro-red">
+            Church Resources
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {downloadItems.map((item, index) => {
+              const isPlaceholder = item.link === '#';
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-lg shadow-[rgba(50,50,93,0.25)_0px_6px_12px_-2px,rgba(0,0,0,0.3)_0px_3px_7px_-3px] hover:shadow-[rgba(0,0,0,0.35)_0px_5px_15px] transition-shadow duration-300 p-8 flex flex-col h-full"
+                >
+                  <div className="mb-5 flex justify-center pt-8">
+                    {item.image ? (
+                      <div className="relative w-full max-w-[280px] aspect-[280/168] rounded-lg overflow-hidden flex items-center justify-center">
+                        <Image
+                          src={item.image}
+                          alt=""
+                          fill
+                          className="object-contain rounded-lg"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full max-w-[280px] aspect-[280/168] rounded-lg flex items-center justify-center">
+                        <svg className="w-10 h-10 text-syro-red" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
                     )}
-                  </span>
+                  </div>
+                  <h3 className="font-syro-display text-xl font-semibold text-syro-blue mb-2 line-clamp-2">
+                    {item.title}
+                  </h3>
+                  <div className="flex-1 min-h-[24px]" aria-hidden="true" />
+                  <Link
+                    href={item.link}
+                    className="syro-primary-button inline-flex items-center gap-2 w-fit"
+                    onClick={(e) => {
+                      if (isPlaceholder) {
+                        e.preventDefault();
+                        alert('This resource will be available for download soon. Please check back later.');
+                      }
+                    }}
+                  >
+                    Download
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
-        </div>
-      </section>
 
-      {/* Information Section */}
-      <section className="py-16 bg-muted">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-heading font-semibold text-3xl text-foreground mb-6">
-              Resources for the Faithful
-            </h2>
-            <p className="font-body text-lg text-muted-foreground leading-relaxed mb-6">
-              The downloads section provides access to essential church resources including liturgical texts, administrative forms, directories, and official documents. These resources support the spiritual life and administration of our church community.
-            </p>
-            <p className="font-body text-lg text-muted-foreground leading-relaxed">
-              For additional resources or if you cannot find what you're looking for, please contact the Catholicate office or your diocesan administration.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured - Kalpana */}
-      <section className="py-16 bg-primary/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <div>
-              <div className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-body font-medium mb-4">
-                Featured Resource
-              </div>
-              <h2 className="font-heading font-semibold text-3xl text-foreground mb-4">
-                Kalpana - Church Calendar
-              </h2>
-              <p className="font-body text-lg text-muted-foreground leading-relaxed mb-6">
-                The Kalpana is the official annual calendar and directory of the Malankara Orthodox Syrian Church, containing important dates, feasts, fasts, and church information for the year.
-              </p>
-              <Link
-                href="/mosc/downloads/kalpana"
-                className="inline-flex items-center px-8 py-3 bg-primary text-primary-foreground font-body font-medium rounded-lg hover:bg-primary/90 reverent-transition sacred-shadow hover:sacred-shadow-lg"
-              >
-                View Kalpana Editions
-                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-            <div className="relative h-96 rounded-lg overflow-hidden sacred-shadow-lg">
-              <Image
-                src="/images/downloads/kalpana.jpg"
-                alt="Kalpana"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </div>
+          <QuickLinks />
         </div>
       </section>
     </div>
   );
 }
-

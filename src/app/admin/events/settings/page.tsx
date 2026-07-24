@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import AdminNavigation from '@/components/AdminNavigation';
 import { FaCog, FaEnvelope, FaUsers, FaCalendarAlt, FaSave } from 'react-icons/fa';
 
@@ -23,7 +23,7 @@ function LoadingSkeleton() {
 }
 
 export default async function AdminEventsSettingsPage() {
-  const { userId } = await auth();
+  const { userId } = await safeAuth();
 
   if (!userId) {
     notFound();

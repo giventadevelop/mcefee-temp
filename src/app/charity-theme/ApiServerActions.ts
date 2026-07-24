@@ -1,6 +1,8 @@
 "use server";
 
-import { getAppUrl } from '@/lib/env';
+import { fetchWithJwtRetry } from '@/lib/proxyHandler';
+import { getApiBaseUrl, getTenantId } from '@/lib/env';
+import { parseExecutiveCommitteeTeamMembersResponse } from '@/lib/parseExecutiveCommitteeTeamMembersResponse';
 import type { ExecutiveCommitteeTeamMemberDTO } from '@/types';
 
 /**
@@ -9,17 +11,15 @@ import type { ExecutiveCommitteeTeamMemberDTO } from '@/types';
  */
 export async function fetchExecutiveTeamMembersServer(): Promise<ExecutiveCommitteeTeamMemberDTO[]> {
   try {
-    const baseUrl = getAppUrl();
-    const response = await fetch(
-      `${baseUrl}/api/proxy/executive-committee-team-members?isActive.equals=true&sort=priorityOrder,asc`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store', // Always fetch fresh data for team members
-      }
-    );
+    const params = new URLSearchParams({
+      'isActive.equals': 'true',
+      sort: 'priorityOrder,asc',
+      'tenantId.equals': getTenantId(),
+    });
+    const url = `${getApiBaseUrl()}/api/executive-committee-team-members?${params.toString()}`;
+    const response = await fetchWithJwtRetry(url, {
+      cache: 'no-store',
+    });
 
     if (!response.ok) {
       console.error('Failed to fetch executive team members:', response.statusText);
@@ -27,10 +27,9 @@ export async function fetchExecutiveTeamMembersServer(): Promise<ExecutiveCommit
     }
 
     const data = await response.json();
-    return Array.isArray(data) ? data : [];
+    return parseExecutiveCommitteeTeamMembersResponse(data);
   } catch (error) {
     console.error('Error fetching executive team members:', error);
     return [];
   }
 }
-

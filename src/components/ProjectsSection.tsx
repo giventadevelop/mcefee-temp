@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { HomeSectionRail } from '@/components/HomeSectionRail';
+import { HomeSectionTitle } from '@/components/HomeSectionTitle';
 
 const projects = [
   {
@@ -35,19 +37,14 @@ const projects = [
 
 const ProjectsSection: React.FC = () => {
   return (
-    <div className="py-24 bg-gray-800 text-white relative overflow-hidden">
+    <div className="home-projects-section py-24 bg-gray-800 text-white relative overflow-hidden">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <HomeSectionRail eyebrow="Projects" containerClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="mb-16">
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="w-5 h-2 bg-yellow-400 rounded"></div>
-            <p className="text-white/70">Projects</p>
-          </div>
-
-          <h2 className="text-4xl md:text-6xl font-normal leading-tight tracking-tight max-w-4xl">
+        <div className="mb-16 text-center">
+          <HomeSectionTitle className="text-4xl md:text-6xl font-normal leading-tight tracking-tight max-w-4xl mx-auto">
             Our latest projects around the world
-          </h2>
+          </HomeSectionTitle>
         </div>
 
         {/* Projects Grid */}
@@ -84,7 +81,7 @@ const ProjectsSection: React.FC = () => {
             </div>
           ))}
         </div>
-      </div>
+      </HomeSectionRail>
     </div>
   );
 };

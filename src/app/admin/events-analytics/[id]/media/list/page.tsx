@@ -1,7 +1,8 @@
 "use client";
 import React, { useRef, useState, useEffect, useCallback, useTransition } from "react";
 import { EventMediaDTO, EventDetailsDTO } from "@/types";
-import { FaEdit, FaTrashAlt, FaUsers, FaPhotoVideo, FaCalendarAlt, FaSave, FaTimes, FaChevronLeft, FaChevronRight, FaTicketAlt, FaUpload, FaBan, FaTags, FaHome } from 'react-icons/fa';
+import { FaEdit, FaTrashAlt, FaUsers, FaPhotoVideo, FaCalendarAlt, FaSave, FaTimes, FaChevronLeft, FaChevronRight, FaTicketAlt, FaUpload, FaBan, FaTags, FaHome, FaPercent } from 'react-icons/fa';
+import AdminListSearchCombobox from '@/components/admin/AdminListSearchCombobox';
 import { deleteMediaServer, editMediaServer, fetchMediaFilteredServer } from '../ApiServerActions';
 import { fetchEventDetailsServer } from '@/app/admin/ApiServerActions';
 import { createPortal } from "react-dom";
@@ -408,23 +409,27 @@ function EditMediaModal({ media, onClose, onSave, loading }: EditMediaModalProps
           </div>
         </div>
 
-        <div className="flex justify-end space-x-4 pt-4">
+        <div className="flex flex-wrap justify-end items-center gap-3 pt-4">
           <button
             type="button"
             onClick={onClose}
-            className="bg-teal-100 hover:bg-teal-200 text-teal-800 px-4 py-2 rounded-md flex items-center gap-2"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 text-base font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
+            title="Cancel"
+            aria-label="Cancel"
           >
-            <FaBan />
+            <FaBan className="mr-2" />
             Cancel
           </button>
           <button
             type="button"
             onClick={(e) => handleSubmit(e)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white text-base font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
+            title={loading ? 'Saving...' : 'Save Changes'}
+            aria-label={loading ? 'Saving...' : 'Save Changes'}
           >
-            <FaSave />
+            <FaSave className="mr-2" />
             {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
@@ -449,7 +454,7 @@ export default function EventMediaListPage() {
   const [isPending, startTransition] = useTransition();
 
   const [page, setPage] = useState(0);
-  const [pageSize] = useState(12);
+  const [pageSize] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [eventFlyerOnly, setEventFlyerOnly] = useState(false);
@@ -650,34 +655,90 @@ export default function EventMediaListPage() {
 
   return (
     <div ref={pageTopRef} className="w-[80%] mx-auto py-8" style={{ paddingTop: '118px' }}>
-      <div className="mb-8">
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 justify-items-center mx-auto max-w-6xl">
-            <Link href="/admin" className="w-full max-w-xs flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-800 rounded-lg shadow-sm hover:shadow-md p-3 sm:p-4 text-xs sm:text-sm transition-all duration-200">
-              <FaHome className="text-lg sm:text-xl mb-2" />
-              <span className="font-semibold text-center leading-tight">Admin Home</span>
-            </Link>
-            <Link href="/admin/manage-usage" className="w-full max-w-xs flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg shadow-sm hover:shadow-md p-3 sm:p-4 text-xs sm:text-sm transition-all duration-200">
-              <FaUsers className="text-lg sm:text-xl mb-2" />
-              <span className="font-semibold text-center leading-tight">Manage Users [Usage]</span>
-            </Link>
-            <Link href="/admin" className="w-full max-w-xs flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 text-green-800 rounded-lg shadow-sm hover:shadow-md p-3 sm:p-4 text-xs sm:text-sm transition-all duration-200">
-              <FaCalendarAlt className="text-lg sm:text-xl mb-2" />
-              <span className="font-semibold text-center leading-tight">Manage Events</span>
-            </Link>
-            {eventDetails?.admissionType === 'ticketed' && (
-              <>
-                <Link href={`/admin/events/${eventId}/ticket-types/list`} className="w-full max-w-xs flex flex-col items-center justify-center bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-lg shadow-sm hover:shadow-md p-3 sm:p-4 text-xs sm:text-sm transition-all duration-200">
-                  <FaTags className="text-lg sm:text-xl mb-2" />
-                  <span className="font-semibold text-center leading-tight">Manage Ticket Types</span>
-                </Link>
-                <Link href={`/admin/events/${eventId}/tickets/list`} className="w-full max-w-xs flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-lg shadow-sm hover:shadow-md p-3 sm:p-4 text-xs sm:text-sm transition-all duration-200">
-                  <FaTicketAlt className="text-lg sm:text-xl mb-2" />
-                  <span className="font-semibold text-center leading-tight">Manage Tickets</span>
-                </Link>
-              </>
-            )}
-          </div>
+      {/* Responsive Button Group */}
+      <div className="w-full mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <Link
+            href="/admin"
+            className="flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Admin Home"
+            aria-label="Admin Home"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaHome className="w-10 h-10 text-gray-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Admin Home</span>
+          </Link>
+          <Link
+            href="/admin/manage-usage"
+            className="flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Usage"
+            aria-label="Manage Usage"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaUsers className="w-10 h-10 text-blue-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Usage</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/media/list`}
+            className="flex flex-col items-center justify-center bg-yellow-50 hover:bg-yellow-100 text-yellow-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Media Files"
+            aria-label="Manage Media Files"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-yellow-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaPhotoVideo className="w-10 h-10 text-yellow-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Media Files</span>
+          </Link>
+          <Link
+            href="/admin/manage-events"
+            className="flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 text-green-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Events"
+            aria-label="Manage Events"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaCalendarAlt className="w-10 h-10 text-green-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Events</span>
+          </Link>
+          {eventDetails?.admissionType === 'ticketed' && (
+            <>
+              <Link
+                href={`/admin/events/${eventId}/ticket-types/list`}
+                className="flex flex-col items-center justify-center bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Manage Ticket Types"
+                aria-label="Manage Ticket Types"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaTags className="w-10 h-10 text-purple-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Manage Ticket Types</span>
+              </Link>
+              <Link
+                href={`/admin/events/${eventId}/tickets/list`}
+                className="flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+                title="Manage Tickets"
+                aria-label="Manage Tickets"
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-teal-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <FaTicketAlt className="w-10 h-10 text-teal-500" />
+                </div>
+                <span className="font-semibold text-center leading-tight">Manage Tickets</span>
+              </Link>
+            </>
+          )}
+          <Link
+            href={`/admin/events/${eventId}/discount-codes/list`}
+            className="flex flex-col items-center justify-center bg-pink-50 hover:bg-pink-100 text-pink-800 rounded-lg shadow-md p-4 text-xs transition-all group"
+            title="Manage Discount Codes"
+            aria-label="Manage Discount Codes"
+          >
+            <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-pink-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+              <FaPercent className="w-10 h-10 text-pink-500" />
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Discount Codes</span>
+          </Link>
         </div>
       </div>
       <div className="flex justify-between items-center mb-8">
@@ -701,13 +762,17 @@ export default function EventMediaListPage() {
             <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 mb-1">
               Search by Title
             </label>
-            <input
-              id="search-input"
-              type="text"
+            <AdminListSearchCombobox
+              items={media}
+              committedValue={searchTerm}
+              onCommit={setSearchTerm}
+              getSearchFields={(m) => [m.title, m.id, m.eventMediaType]}
+              getCommitValue={(m) => m.title || String(m.id ?? '')}
+              formatPrimary={(m) => m.title || `Media #${m.id}`}
+              formatSecondary={(m) => m.eventMediaType || undefined}
               placeholder="Enter media title to search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              inputId="search-input"
+              inputClassName="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 

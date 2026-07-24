@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
 import { TaskForm } from '@/components/task-form';
+import { getApiBaseUrl } from '@/lib/env';
 
 interface EditTaskPageProps {
   params: Promise<{ id: string }> | { id: string }
@@ -20,7 +21,7 @@ export default async function EditTaskPage(props: EditTaskPageProps) {
   // Fetch the task from the API
   let task = null;
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user-tasks/${resolvedParams.id}`, {
+    const res = await fetch(`${getApiBaseUrl()}/api/user-tasks/${resolvedParams.id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',

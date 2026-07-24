@@ -1,9 +1,12 @@
 'use server';
 
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
-import { getTenantId } from '@/lib/env';
+import { getTenantId, getApiBaseUrl } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
 export interface CalendarEventDTO {
   id: number;
@@ -20,19 +23,19 @@ export interface CalendarEventDTO {
 }
 
 export async function fetchEventsForMonthServer(year: number, month: number, focusGroupSlug?: string) {
-  if (!API_BASE_URL) return [];
+  if (!getApiBase()) return [];
   const tenantId = getTenantId();
   const start = new Date(Date.UTC(year, month - 1, 1));
   const end = new Date(Date.UTC(year, month, 0));
   const startDate = start.toISOString().slice(0, 10);
   const endDate = end.toISOString().slice(0, 10);
 
-  let url = `${API_BASE_URL}/api/event-details?`
+  let url = `${getApiBase()}/api/event-details?`
     + `startDate.greaterThanOrEqual=${startDate}&`
     + `endDate.lessThanOrEqual=${endDate}&`
     + `isActive.equals=true&`
     + `tenantId.equals=${encodeURIComponent(tenantId)}&`
-    + `sort=startDate,asc&page=0&size=200`;
+    + `sort=startDate,asc&page=0&size=100`;
   if (focusGroupSlug) {
     // backend to resolve slug→id; if not available, a proxy convenience can handle this
     url += `&focusGroupSlug.equals=${encodeURIComponent(focusGroupSlug)}`;
@@ -49,14 +52,14 @@ export async function fetchEventsForMonthServer(year: number, month: number, foc
 }
 
 export async function fetchEventsForRangeServer(startDate: string, endDate: string) {
-  if (!API_BASE_URL) return [];
+  if (!getApiBase()) return [];
   const tenantId = getTenantId();
-  const url = `${API_BASE_URL}/api/event-details?`
+  const url = `${getApiBase()}/api/event-details?`
     + `startDate.greaterThanOrEqual=${startDate}&`
     + `endDate.lessThanOrEqual=${endDate}&`
     + `isActive.equals=true&`
     + `tenantId.equals=${encodeURIComponent(tenantId)}&`
-    + `sort=startDate,asc&page=0&size=200`;
+    + `sort=startDate,asc&page=0&size=100`;
   try {
     const res = await fetchWithJwtRetry(url, { cache: 'no-store' }, 'calendar-fetch-range');
     if (!res.ok) return [];

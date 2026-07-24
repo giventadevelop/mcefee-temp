@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
 import { withTenantId } from '@/lib/withTenantId';
-import { getTenantId } from '@/lib/env';
+import { getTenantId, getApiBaseUrl } from '@/lib/env';
 import { getRawBody } from '@/lib/getRawBody';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const API_BASE_URL = getApiBaseUrl();
     if (!API_BASE_URL) {
       res.status(500).json({ error: 'API base URL not configured' });
       return;

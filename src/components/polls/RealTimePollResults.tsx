@@ -1,107 +1,120 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { BarChart3, Users, RefreshCw, TrendingUp } from 'lucide-react';
+import { BarChart3, Users } from 'lucide-react';
 import type { EventPollDTO, EventPollOptionDTO, EventPollResponseDTO } from '@/types';
 import { fetchEventPollResponsesServer } from '@/app/admin/polls/ApiServerActions';
 
 interface RealTimePollResultsProps {
   poll: EventPollDTO;
   options: EventPollOptionDTO[];
-  refreshInterval?: number; // in milliseconds, default 5000 (5 seconds)
-  onRefresh?: () => void;
+  refreshInterval?: number; // Deprecated - no longer used
+  onRefresh?: () => void; // Deprecated - no longer used
 }
 
 interface OptionStats {
   option: EventPollOptionDTO;
   count: number;
   percentage: number;
-  trend: 'up' | 'down' | 'stable';
-  previousCount: number;
 }
 
 export function RealTimePollResults({ 
   poll, 
-  options, 
-  refreshInterval = 5000,
-  onRefresh 
+  options
 }: RealTimePollResultsProps) {
   const [responses, setResponses] = useState<EventPollResponseDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [isAutoRefresh, setIsAutoRefresh] = useState(true);
-  const [previousCounts, setPreviousCounts] = useState<Record<number, number>>({});
+  
+  // Use refs to prevent infinite loops and duplicate fetches
+  const isFetchingRef = useRef(false);
+  const fetchedPollIdRef = useRef<number | null>(null);
 
-  const loadResponses = useCallback(async () => {
+
+  // Only fetch on initial mount or when poll.id changes
+  useEffect(() => {
+    // Only fetch if we haven't fetched this poll ID yet
+    if (fetchedPollIdRef.current === poll.id) {
+      return;
+    }
+
+    // Prevent duplicate simultaneous fetches
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    // Reset state when poll.id changes
+    if (fetchedPollIdRef.current !== null && fetchedPollIdRef.current !== poll.id) {
+      setResponses([]);
+      setIsLoading(true);
+    }
+
+    // Fetch responses
+    const fetchData = async () => {
+      isFetchingRef.current = true;
+      fetchedPollIdRef.current = poll.id;
+
+      try {
+        setIsLoading(true);
+        const pollResponses = await fetchEventPollResponsesServer({
+          'pollId.equals': poll.id
+        });
+        
+        // Only update if we're still on the same poll
+        if (fetchedPollIdRef.current === poll.id) {
+          setResponses(pollResponses);
+          setLastUpdated(new Date());
+        }
+      } catch (error) {
+        console.error('Error loading poll responses:', error);
+      } finally {
+        if (fetchedPollIdRef.current === poll.id) {
+          setIsLoading(false);
+        }
+        isFetchingRef.current = false;
+      }
+    };
+
+    fetchData();
+  }, [poll.id]); // Only depend on poll.id - this ensures we only fetch once per poll.id
+
+  // Manual refresh handler (allows re-fetching)
+  const handleManualRefresh = async () => {
+    // Prevent duplicate simultaneous fetches
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+
     try {
+      setIsLoading(true);
       const pollResponses = await fetchEventPollResponsesServer({
         'pollId.equals': poll.id
       });
       
-      // Calculate trends
-      const newCounts: Record<number, number> = {};
-      pollResponses.forEach(response => {
-        if (response.pollOptionId) {
-          newCounts[response.pollOptionId] = (newCounts[response.pollOptionId] || 0) + 1;
-        }
-      });
-
-      setPreviousCounts(prev => {
-        const trends: Record<number, 'up' | 'down' | 'stable'> = {};
-        Object.keys(newCounts).forEach(optionId => {
-          const id = parseInt(optionId);
-          const current = newCounts[id];
-          const previous = prev[id] || 0;
-          
-          if (current > previous) trends[id] = 'up';
-          else if (current < previous) trends[id] = 'down';
-          else trends[id] = 'stable';
-        });
-        
-        return newCounts;
-      });
-      
       setResponses(pollResponses);
       setLastUpdated(new Date());
-      onRefresh?.();
     } catch (error) {
       console.error('Error loading poll responses:', error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [poll.id, onRefresh]);
-
-  useEffect(() => {
-    loadResponses();
-  }, [loadResponses]);
-
-  useEffect(() => {
-    if (!isAutoRefresh) return;
-
-    const interval = setInterval(loadResponses, refreshInterval);
-    return () => clearInterval(interval);
-  }, [isAutoRefresh, refreshInterval, loadResponses]);
+  };
 
   const getOptionStats = (): OptionStats[] => {
     const optionStats = options.map(option => {
       const optionResponses = responses.filter(response => response.pollOptionId === option.id);
       const count = optionResponses.length;
       const percentage = responses.length > 0 ? (count / responses.length) * 100 : 0;
-      const previousCount = previousCounts[option.id!] || 0;
-      
-      let trend: 'up' | 'down' | 'stable' = 'stable';
-      if (count > previousCount) trend = 'up';
-      else if (count < previousCount) trend = 'down';
 
       return {
         option,
         count,
         percentage,
-        trend,
-        previousCount,
       };
     });
 
@@ -117,28 +130,6 @@ export function RealTimePollResults({
       minute: '2-digit',
       second: '2-digit',
     });
-  };
-
-  const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
-    switch (trend) {
-      case 'up':
-        return <TrendingUp className="h-3 w-3 text-green-500" />;
-      case 'down':
-        return <TrendingUp className="h-3 w-3 text-red-500 rotate-180" />;
-      default:
-        return <div className="h-3 w-3" />;
-    }
-  };
-
-  const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
-    switch (trend) {
-      case 'up':
-        return 'text-green-600';
-      case 'down':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
   };
 
   if (isLoading) {
@@ -170,28 +161,30 @@ export function RealTimePollResults({
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center">
             <BarChart3 className="h-5 w-5 mr-2" />
-            Live Poll Results
+            Poll Results
           </CardTitle>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsAutoRefresh(!isAutoRefresh)}
-              className={isAutoRefresh ? 'bg-green-50 border-green-200' : ''}
-            >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isAutoRefresh ? 'animate-spin' : ''}`} />
-              {isAutoRefresh ? 'Auto' : 'Manual'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={loadResponses}
-              disabled={isLoading}
-            >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Refresh
-            </Button>
-          </div>
+          <button
+            onClick={handleManualRefresh}
+            disabled={isLoading}
+            className="flex-shrink-0 h-14 rounded-xl bg-orange-100 hover:bg-orange-200 flex items-center justify-center gap-0 sm:gap-3 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 px-4 sm:px-6"
+            title={isLoading ? 'Refreshing...' : 'Refresh Results'}
+            aria-label={isLoading ? 'Refreshing...' : 'Refresh Results'}
+            type="button"
+          >
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-200 flex items-center justify-center">
+              {isLoading ? (
+                <svg className="animate-spin w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              )}
+            </div>
+            <span className="font-semibold text-orange-700 hidden sm:inline">{isLoading ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
         </div>
         <CardDescription>
           Last updated: {formatTime(lastUpdated)} • {totalResponses} total response{totalResponses !== 1 ? 's' : ''}
@@ -199,13 +192,10 @@ export function RealTimePollResults({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {optionStats.map((stat, index) => (
+          {optionStats.map((stat) => (
             <div key={stat.option.id} className="space-y-2">
               <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">{stat.option.optionText}</span>
-                  {getTrendIcon(stat.trend)}
-                </div>
+                <span className="font-medium">{stat.option.optionText}</span>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-500">
                     {stat.count} vote{stat.count !== 1 ? 's' : ''}
@@ -213,11 +203,6 @@ export function RealTimePollResults({
                   <Badge variant="outline">
                     {stat.percentage.toFixed(1)}%
                   </Badge>
-                  {stat.trend !== 'stable' && (
-                    <span className={`text-xs ${getTrendColor(stat.trend)}`}>
-                      {stat.trend === 'up' ? '+' : ''}{stat.count - stat.previousCount}
-                    </span>
-                  )}
                 </div>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
@@ -240,7 +225,7 @@ export function RealTimePollResults({
         <div className="mt-6 pt-4 border-t">
           <div className="flex justify-between items-center text-sm text-gray-600">
             <span>
-              {isAutoRefresh ? 'Auto-refreshing every ' + (refreshInterval / 1000) + 's' : 'Manual refresh only'}
+              Click Refresh to update results
             </span>
             <span>
               Poll {poll.isActive ? 'is active' : 'is inactive'}

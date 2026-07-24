@@ -26,8 +26,6 @@ export async function uploadMediaClient(params: {
   }
 
   // Get app URL from environment variable (available on client)
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
   // Create FormData for the upload
   const formData = new FormData();
 
@@ -66,9 +64,7 @@ export async function uploadMediaClient(params: {
   }
 
   // Use the proxy endpoint directly from client
-  const url = `${appUrl}/api/proxy/event-medias/upload-multiple`;
-
-  const res = await fetch(url, {
+  const res = await fetch('/api/proxy/event-medias/upload-multiple', {
     method: 'POST',
     body: formData,
   });

@@ -5,6 +5,7 @@ import { fetchTenantSettingsByTenantId } from '@/app/admin/tenant-management/set
 import Link from 'next/link';
 import { FaArrowLeft, FaEdit, FaTrash, FaCog, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { TenantOrganizationDTO, TenantSettingsDTO } from '@/app/admin/tenant-management/types';
+import { formatAddressBlock } from '@/lib/formatAddress';
 
 interface PageProps {
   params: { id: string };
@@ -45,7 +46,7 @@ export default async function TenantOrganizationViewPage({ params }: PageProps) 
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ paddingTop: '120px' }}>
         <div className="mb-8">
           <Link
             href="/admin/tenant-management/organizations"
@@ -86,7 +87,7 @@ export default async function TenantOrganizationViewPage({ params }: PageProps) 
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ paddingTop: '120px' }}>
       {/* Breadcrumb Navigation */}
       <nav className="flex mb-8" aria-label="Breadcrumb">
         <ol className="inline-flex items-center space-x-1 md:space-x-3">
@@ -160,25 +161,33 @@ export default async function TenantOrganizationViewPage({ params }: PageProps) 
                 {organization?.isActive ? 'Active' : 'Inactive'}
               </span>
             </div>
-            <p className="text-sm text-gray-600">
-              {organization?.description || 'No description provided'}
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">
+              {organization?.description?.trim() || 'No description provided'}
             </p>
           </div>
           <div className="flex gap-3">
             <Link
               href={`/admin/tenant-management/organizations/${id}/edit`}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+              title="Edit Organization"
+              aria-label="Edit Organization"
             >
-              <FaEdit />
-              Edit Organization
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                <FaEdit className="w-6 h-6 text-blue-600" />
+              </div>
+              <span className="font-semibold text-blue-700">Edit Organization</span>
             </Link>
             {settings && (
               <Link
                 href={`/admin/tenant-management/settings/${settings.id}`}
-                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                className="flex-shrink-0 h-14 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                title="View Settings"
+                aria-label="View Settings"
               >
-                <FaCog />
-                View Settings
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                  <FaCog className="w-6 h-6 text-gray-600" />
+                </div>
+                <span className="font-semibold text-gray-700">View Settings</span>
               </Link>
             )}
           </div>
@@ -233,26 +242,33 @@ export default async function TenantOrganizationViewPage({ params }: PageProps) 
                     Website
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">
-                    {organization?.website ? (
+                    {organization?.websiteUrl ? (
                       <a
-                        href={organization.website}
+                        href={organization.websiteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-500"
                       >
-                        {organization.website}
+                        {organization.websiteUrl}
                       </a>
                     ) : (
                       'Not provided'
                     )}
                   </dd>
                 </div>
-                <div>
+                <div className="sm:col-span-2">
                   <dt className="text-sm font-medium text-gray-500">
                     Address
                   </dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {organization?.address || 'Not provided'}
+                  <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
+                    {formatAddressBlock({
+                      addressLine1: organization?.addressLine1,
+                      addressLine2: organization?.addressLine2,
+                      city: organization?.city,
+                      stateProvince: organization?.stateProvince,
+                      zipCode: organization?.zipCode,
+                      country: organization?.country,
+                    }) || 'Not provided'}
                   </dd>
                 </div>
                 <div>
@@ -370,26 +386,38 @@ export default async function TenantOrganizationViewPage({ params }: PageProps) 
             <div className="px-6 py-4 space-y-3">
               <Link
                 href={`/admin/tenant-management/organizations/${id}/edit`}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2"
+                className="w-full flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105"
+                title="Edit Organization"
+                aria-label="Edit Organization"
               >
-                <FaEdit />
-                Edit Organization
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                  <FaEdit className="w-6 h-6 text-blue-600" />
+                </div>
+                <span className="font-semibold text-blue-700">Edit Organization</span>
               </Link>
               {settings ? (
                 <Link
                   href={`/admin/tenant-management/settings/${settings.id}`}
-                  className="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2"
+                  className="w-full flex-shrink-0 h-14 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105"
+                  title="Manage Settings"
+                  aria-label="Manage Settings"
                 >
-                  <FaCog />
-                  Manage Settings
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <FaCog className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <span className="font-semibold text-gray-700">Manage Settings</span>
                 </Link>
               ) : (
                 <Link
                   href={`/admin/tenant-management/settings/new?tenantId=${organization?.tenantId}`}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2"
+                  className="w-full flex-shrink-0 h-14 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105"
+                  title="Create Settings"
+                  aria-label="Create Settings"
                 >
-                  <FaCog />
-                  Create Settings
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center">
+                    <FaCog className="w-6 h-6 text-green-600" />
+                  </div>
+                  <span className="font-semibold text-green-700">Create Settings</span>
                 </Link>
               )}
             </div>

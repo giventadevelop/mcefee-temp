@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import QuickLinks from '../components/QuickLinks';
+import SyroPageBanner from '../components/SyroPageBanner';
 
 export const metadata = {
   title: 'Spiritual Organizations | MOSC',
@@ -56,38 +58,42 @@ const SpiritualOrganizationsPage = () => {
       title: 'Ardra Charitable Society',
       description: 'Ardra aims to work for the educational, social, cultural, spiritual and economic advancement of the marginalised people of India, irrespective of caste, creed or community. Etymologically derived from the Sanskrit...',
       href: '/mosc/spiritual-organizations/ardra-charitable-trust',
-      image: '/images/spiritual/ardra.jpg',
+      image: '/images/spiritual/ARDRA.png',
       icon: '🤝'
     },
     {
       title: 'Akhila Malankara Prayer Group Association',
       description: 'The Akhila Malankara Prayer Group Association has been constituted to monitor and streamline the prayer and reading habits of congregations in different prayer groups functioning in the various parishes under...',
       href: '/mosc/spiritual-organizations/akhila-malankara-prayer-group-association',
+      image: '/images/logos/Current_Edits/MOSC-Logo-only.png',
       icon: '🙏'
     },
     {
       title: 'Akhila Malankara Orthodox Shusrushaka Sangham (AMOSS)',
       description: 'AMOSS is a movement working on the following objectives: To give instructions to the altar boys of all parishes in the Malankara Church to make uniformity in the worship of the...',
       href: '/mosc/spiritual-organizations/akhila-malankara-orthodox-shusrushaka-sangham-amoss',
+      image: '/images/logos/Current_Edits/MOSC-Logo-only.png',
       icon: '⛪'
     },
     {
       title: 'Mission Board and Mission Society',
       description: 'Orthodox Church which has been existing in India for the last two thousand years has started the mission society and mission board to fulfil its mission in India and hence...',
       href: '/mosc/spiritual-organizations/mission-board',
+      image: '/images/logos/Current_Edits/MOSC-Logo-only.png',
       icon: '🌍'
     },
     {
       title: 'Ministry of Human Empowerment',
       description: 'MOHE is a Department of Malankara Orthodox Syrian Church. It aims to explore ,enlighten and empower the human potential of the society  through various awareness campaigns. The main thrust of...',
       href: '/mosc/spiritual-organizations/ministry-of-human-empowerment',
+      image: '/images/logos/Current_Edits/MOSC-Logo-only.png',
       icon: '💪'
     },
     {
       title: 'Akhila Malankara Balasamajam',
       description: 'AKHILA MALANKARA BALASAMAJAM is the student portion of the Malankara Orthodox Syrian Church. Balasamajam aims at the integrated personal development of the youth in the Church. The main objectives are worship, study and virtuous...',
       href: '/mosc/spiritual-organizations/akhila-malankara-bala-samajam',
-      image: '/images/spiritual/balasamajam.jpg',
+      image: '/images/spiritual/BALASAMAJAM.png',
       icon: '👶'
     },
     {
@@ -101,7 +107,7 @@ const SpiritualOrganizationsPage = () => {
       title: "Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India)",
       description: "A Brief History Marth Mariam Vanitha Samajam is the Women's wing of the Malankara Orthodox Church of India. It is one of the major spiritual organization of the church combining...",
       href: '/mosc/spiritual-organizations/marth-mariam-vanitha-samajam-womens-wing-of-orthodox-church-of-india',
-      image: '/images/spiritual/moms.jpg',
+      image: '/images/spiritual/MMVS.png',
       icon: '👩'
     },
     {
@@ -115,7 +121,7 @@ const SpiritualOrganizationsPage = () => {
       title: 'The Orthodox Christian Youth Movement',
       description: 'The Orthodox Christian Youth Movement (OCYM), the Youth-wing of the Malankara Orthodox Syrian Church is in its 77th year of active leadership and Christian witness in the Church and society....',
       href: '/mosc/spiritual-organizations/the-orthodox-christian-youth-movement',
-      image: '/images/spiritual/OCYM-ahmedabad.jpg',
+      image: '/images/spiritual/OCYM-ahmedabad.png',
       icon: '🌟'
     },
     {
@@ -127,139 +133,160 @@ const SpiritualOrganizationsPage = () => {
   ];
 
   return (
-    <div className="bg-background">
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-background to-muted">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-primary rounded-lg flex items-center justify-center mx-auto mb-6 sacred-shadow-lg">
-              <span className="text-primary-foreground text-4xl font-bold" role="img" aria-label="Spiritual Organizations">⛪</span>
-            </div>
-            <h1 className="font-heading font-semibold text-4xl text-foreground mb-4">
-              Spiritual Organizations
-            </h1>
-            <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Discover the various spiritual organizations, ministries, and associations that serve the 
-              Malankara Orthodox Syrian Church and contribute to the spiritual growth of our community.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="bg-syro-bg-gray">
+      <SyroPageBanner
+        title="Spiritual Organizations"
+        breadcrumbFrom="home"
+        description="Each organization plays a vital role in nurturing faith, providing education, and serving the community through various ministries and programs."
+      />
 
-      {/* Organizations Grid */}
-      <section className="py-16 bg-card">
+      {/* Content - same layout and style as administration */}
+      <section className="py-16 bg-syro-bg-gray">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="font-heading font-semibold text-3xl text-foreground mb-4">
-              Our Spiritual Organizations
-            </h2>
-            <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto">
-              Each organization plays a vital role in nurturing faith, providing education, 
-              and serving the community through various ministries and programs.
-            </p>
-          </div>
+          {/* Section title - left red bar (matches administration .admin-section-title) */}
+          <h3 className="text-2xl font-light text-[#798daf] mb-10 pl-8 border-l-[7px] border-syro-red">
+            Spiritual Organizations &amp; Ministries
+          </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Cards grid (matches administration .admin-card) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {organizations.map((org, index) => (
-              <Link
+              <div
                 key={index}
-                href={org.href}
-                className="bg-background rounded-lg sacred-shadow p-6 hover:sacred-shadow-lg reverent-transition group"
+                className="bg-white rounded-lg shadow-[rgba(50,50,93,0.25)_0px_6px_12px_-2px,rgba(0,0,0,0.3)_0px_3px_7px_-3px] hover:shadow-[rgba(0,0,0,0.35)_0px_5px_15px] transition-shadow duration-300 overflow-hidden flex flex-col h-full"
               >
-                <div className="text-center mb-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 reverent-transition">
-                    <span className="text-3xl" role="img" aria-label={org.title}>{org.icon}</span>
-                  </div>
-                  <h3 className="font-heading font-semibold text-lg text-foreground mb-3 group-hover:text-primary reverent-transition leading-tight">
+                <div className="relative w-full h-48 bg-syro-bg-gray shrink-0 flex items-center justify-center p-4">
+                  {index === 0 ? (
+                    <div className="relative w-full h-full min-h-0">
+                      <Image
+                        src="/images/spiritual/OSSSAE.png"
+                        alt={org.title}
+                        fill
+                        className="object-contain object-center"
+                        style={{ backgroundColor: 'transparent' }}
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      />
+                    </div>
+                  ) : index >= 8 && index <= 11 ? (
+                    <div className="relative w-28 h-28 flex-shrink-0">
+                      <Image
+                        src={org.image!}
+                        alt={org.title}
+                        fill
+                        className="object-contain object-center"
+                        style={{ backgroundColor: 'transparent' }}
+                        sizes="112px"
+                      />
+                    </div>
+                  ) : org.image ? (
+                    <div className="relative w-full h-full min-h-0">
+                      <Image
+                        src={org.image}
+                        alt={org.title}
+                        fill
+                        className="object-contain object-center"
+                        style={{ backgroundColor: 'transparent' }}
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-syro-red/10 rounded-full flex items-center justify-center">
+                      <span className="text-3xl" role="img" aria-label={org.title}>{org.icon}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="p-8 flex flex-col flex-1">
+                  <h3 className="font-syro-display text-xl font-semibold text-syro-blue mb-4 leading-snug">
                     {org.title}
                   </h3>
-                  <p className="font-body text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                  <p className="font-syro-primary text-base text-syro-dark-gray flex-1 mb-5 leading-relaxed line-clamp-4">
                     {org.description}
                   </p>
+                  <Link
+                    href={org.href}
+                    className="syro-primary-button inline-flex items-center gap-2 mt-auto w-fit"
+                  >
+                    <span>Read More</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
                 </div>
-                <div className="mt-4 text-center">
-                  <span className="inline-flex items-center text-primary hover:text-primary/80 font-medium text-sm reverent-transition">
-                    Learn More
-                    <span className="ml-1" role="img" aria-label="Arrow">→</span>
-                  </span>
-                </div>
-              </Link>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* About Spiritual Organizations */}
-      <section className="py-16 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* About Spiritual Organizations - extra content kept */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
             <div>
-              <h2 className="font-heading font-semibold text-3xl text-foreground mb-6">
+              <h2 className="font-syro-display font-semibold text-3xl text-syro-blue mb-6">
                 The Role of Spiritual Organizations
               </h2>
-              <div className="space-y-4 font-body text-muted-foreground leading-relaxed">
+              <div className="space-y-4 font-syro-primary text-syro-dark-gray leading-relaxed">
                 <p>
-                  Spiritual organizations within the Malankara Orthodox Syrian Church serve as vital 
-                  instruments of faith, education, and community service. Each organization is dedicated 
+                  Spiritual organizations within the Malankara Orthodox Syrian Church serve as vital
+                  instruments of faith, education, and community service. Each organization is dedicated
                   to specific aspects of spiritual growth and social welfare.
                 </p>
                 <p>
-                  These organizations provide structured programs for different age groups and interests, 
-                  from children's ministries to adult education, from charitable work to theological 
-                  training. They help maintain the rich traditions of our Orthodox faith while adapting 
+                  These organizations provide structured programs for different age groups and interests,
+                  from children's ministries to adult education, from charitable work to theological
+                  training. They help maintain the rich traditions of our Orthodox faith while adapting
                   to contemporary needs.
                 </p>
                 <p>
-                  Through their various activities, these organizations strengthen the bonds within 
-                  our community and extend the love of Christ to those in need, both within and 
+                  Through their various activities, these organizations strengthen the bonds within
+                  our community and extend the love of Christ to those in need, both within and
                   outside our church family.
                 </p>
               </div>
             </div>
 
-            <div className="bg-background rounded-lg sacred-shadow p-6">
-              <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
+            <div className="bg-white rounded-lg shadow-[rgba(50,50,93,0.25)_0px_6px_12px_-2px,rgba(0,0,0,0.3)_0px_3px_7px_-3px] p-6">
+              <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-4">
                 Key Areas of Ministry
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
-                  <span className="text-primary text-xl" role="img" aria-label="Education">📚</span>
+                  <span className="text-syro-red text-xl" role="img" aria-label="Education">📚</span>
                   <div>
-                    <h4 className="font-heading font-medium text-foreground">Education & Formation</h4>
-                    <p className="font-body text-muted-foreground text-sm">Sunday schools, theological training, and spiritual education</p>
+                    <h4 className="font-syro-display font-medium text-syro-blue">Education & Formation</h4>
+                    <p className="font-syro-primary text-syro-dark-gray text-sm">Sunday schools, theological training, and spiritual education</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <span className="text-primary text-xl" role="img" aria-label="Youth">🌟</span>
+                  <span className="text-syro-red text-xl" role="img" aria-label="Youth">🌟</span>
                   <div>
-                    <h4 className="font-heading font-medium text-foreground">Youth & Student Ministries</h4>
-                    <p className="font-body text-muted-foreground text-sm">Programs for young people and students</p>
+                    <h4 className="font-syro-display font-medium text-syro-blue">Youth & Student Ministries</h4>
+                    <p className="font-syro-primary text-syro-dark-gray text-sm">Programs for young people and students</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <span className="text-primary text-xl" role="img" aria-label="Women">👩</span>
+                  <span className="text-syro-red text-xl" role="img" aria-label="Women">👩</span>
                   <div>
-                    <h4 className="font-heading font-medium text-foreground">Women's Ministries</h4>
-                    <p className="font-body text-muted-foreground text-sm">Organizations supporting women's spiritual growth</p>
+                    <h4 className="font-syro-display font-medium text-syro-blue">Women's Ministries</h4>
+                    <p className="font-syro-primary text-syro-dark-gray text-sm">Organizations supporting women's spiritual growth</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <span className="text-primary text-xl" role="img" aria-label="Charity">🤝</span>
+                  <span className="text-syro-red text-xl" role="img" aria-label="Charity">🤝</span>
                   <div>
-                    <h4 className="font-heading font-medium text-foreground">Charitable Work</h4>
-                    <p className="font-body text-muted-foreground text-sm">Serving the community and those in need</p>
+                    <h4 className="font-syro-display font-medium text-syro-blue">Charitable Work</h4>
+                    <p className="font-syro-primary text-syro-dark-gray text-sm">Serving the community and those in need</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <span className="text-primary text-xl" role="img" aria-label="Mission">🌍</span>
+                  <span className="text-syro-red text-xl" role="img" aria-label="Mission">🌍</span>
                   <div>
-                    <h4 className="font-heading font-medium text-foreground">Mission & Outreach</h4>
-                    <p className="font-body text-muted-foreground text-sm">Spreading the Gospel and serving globally</p>
+                    <h4 className="font-syro-display font-medium text-syro-blue">Mission & Outreach</h4>
+                    <p className="font-syro-primary text-syro-dark-gray text-sm">Spreading the Gospel and serving globally</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <QuickLinks />
         </div>
       </section>
     </div>

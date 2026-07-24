@@ -1,3 +1,5 @@
+import type { TenantSiteType } from '@/types/profileSite';
+
 /**
  * DTO for tenant organization details.
  * Matches backend OpenAPI schema.
@@ -18,6 +20,20 @@ export interface TenantOrganizationDTO {
   subscriptionEndDate?: string;   // YYYY-MM-DD
   monthlyFeeUsd?: number;
   stripeCustomerId?: string;
+  /** Stripe subscription id for the tenant platform subscription (gas station billing) */
+  stripeSubscriptionId?: string;
+  description?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  stateProvince?: string;
+  zipCode?: string;
+  country?: string;
+  websiteUrl?: string;
+  /** Product archetype: EVENT_ORG | SPORTS_TEAM | MUSIC_BAND | CHURCH_ORG | PERSONAL_PROFILE | HYBRID | GAS_STATION */
+  siteType?: TenantSiteType;
+  /** Optional theme/template variant within a siteType */
+  siteTemplateVersion?: string;
   isActive?: boolean;
   createdAt: string; // ISO date-time
   updatedAt: string; // ISO date-time
@@ -47,6 +63,7 @@ export interface TenantSettingsDTO {
   showEventsSectionInHomePage?: boolean;
   showTeamMembersSectionInHomePage?: boolean;
   showSponsorsSectionInHomePage?: boolean;
+  isMembershipSubscriptionEnabled?: boolean;
   // Enhanced WhatsApp Integration Fields
   whatsappPhoneNumber?: string;
   twilioAccountSid?: string;
@@ -58,6 +75,64 @@ export interface TenantSettingsDTO {
   whatsappRateLimit?: number;
   whatsappWebhookUrl?: string;
   whatsappWebhookToken?: string;
+  emailFooterHtmlUrl?: string; // S3 URL for email footer HTML file
+  emailHeaderImageUrl?: string; // S3 URL for email header image
+  logoImageUrl?: string; // S3 URL for tenant logo image
+  /** JSON array of HTTPS URLs for tenant default homepage hero slideshow */
+  defaultHeroImageUrlsJson?: string;
+  /** slideshow | random | single */
+  defaultHeroDisplayMode?: 'slideshow' | 'random' | 'single';
+  /** When true, append tenant default slides after upcoming event hero images */
+  defaultHeroIncludeWithEvents?: boolean;
+  /** Max active slides shown on homepage rotation (1–20, default 6) */
+  defaultHeroMaxDisplayCount?: number;
+  /** When true, show event hero images in the homepage hero section */
+  displayEventHeroImages?: boolean;
+  /** When true, render Google AdSense regions on public satellite pages */
+  enableGoogleAdsense?: boolean;
+  /** AdSense publisher ID (ca-pub-...) */
+  googleAdsensePublisherId?: string;
+  /** JSON map of layout region id → ad slot id */
+  googleAdsensePlacementsJson?: string;
+  // Personal profile homepage section flags (PERSONAL_PROFILE / HYBRID site types)
+  showPublicProfileHeroSection?: boolean;
+  showProfileWritingsSection?: boolean;
+  showProfileAchievementsSection?: boolean;
+  showProfileAffiliationsSection?: boolean;
+  showProfileMediaDownloadsSection?: boolean;
+  showProfileContactSection?: boolean;
+  showProfileProjectsSection?: boolean;
+  // Gas station COO module (GAS_STATION site type)
+  enableGasStationModule?: boolean;
+  gasAiEngineBaseUrl?: string;
+  gasAiEngineApiKeyRef?: string;
+  gasAiEngineWebhookToken?: string;
+  gasDailyBriefHourLocal?: number;
+  // Homepage edge cache version (cache-busting; bump to refresh CDN cache)
+  homepageCacheVersion?: number;
+  /** @deprecated v2.0 — canonical source is tenant_organization.description */
+  description?: string;
+  /** @deprecated v2.0 — use tenant_organization.addressLine1 */
+  addressLine1?: string;
+  /** @deprecated v2.0 — use tenant_organization.addressLine2 */
+  addressLine2?: string;
+  /** @deprecated v2.0 — use tenant_organization.city */
+  city?: string;
+  phoneNumber?: string;
+  /** @deprecated v2.0 — use tenant_organization.zipCode */
+  zipCode?: string;
+  /** @deprecated v2.0 — use tenant_organization.country */
+  country?: string;
+  /** @deprecated v2.0 — use tenant_organization.stateProvince */
+  stateProvince?: string;
+  email?: string;
+  // Social media URLs (Follow our journey / organization links)
+  facebookUrl?: string;
+  instagramUrl?: string;
+  twitterUrl?: string;
+  linkedinUrl?: string;
+  youtubeUrl?: string;
+  tiktokUrl?: string;
   createdAt: string; // ISO date-time
   updatedAt: string; // ISO date-time
   tenantOrganization?: TenantOrganizationDTO;

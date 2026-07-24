@@ -1,8 +1,11 @@
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
-import { getAppUrl } from '@/lib/env';
-import type { EventAttendeeDTO, EventAttendeeGuestDTO, EventDetailsDTO } from '@/types';
+import { getAppUrl, getApiBaseUrl } from '@/lib/env';
+import type { EventAttendeeAttachmentDTO, EventAttendeeDTO, EventAttendeeGuestDTO, EventDetailsDTO } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
 export interface RegistrationManagementData {
   attendees: EventAttendeeDTO[];
@@ -24,12 +27,56 @@ export async function fetchRegistrationManagementData(
   search: string,
   searchType: string,
   status: string,
-  page: number
+  page: number,
+  eventName?: string,
+  startDate?: string,
+  endDate?: string
 ): Promise<RegistrationManagementData | null> {
   try {
-    const baseUrl = getAppUrl();
     const pageSize = 20;
     const offset = (page - 1) * pageSize;
+
+    // Fetch events for filter dropdown (limit to 50) - Always fetch regardless of eventId
+    const eventsParams = new URLSearchParams();
+    eventsParams.append('sort', 'startDate,desc');
+    eventsParams.append('size', '50');
+
+    const eventsResponse = await fetchWithJwtRetry(
+      `${getApiBase()}/api/event-details?${eventsParams.toString()}`,
+      {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      },
+      'fetchEventsForDropdown'
+    );
+
+    let events: EventDetailsDTO[] = [];
+    if (eventsResponse.ok) {
+      const eventsData = await eventsResponse.json();
+      // Handle paged response (Spring Data REST: { content: [...], totalElements })
+      if (eventsData && typeof eventsData === 'object' && 'content' in eventsData && Array.isArray(eventsData.content)) {
+        events = eventsData.content;
+      } else {
+        events = Array.isArray(eventsData) ? eventsData : [];
+      }
+    }
+
+    // Only fetch attendees if eventId is provided
+    if (!eventId) {
+      // Return empty data structure when no event is selected, but include events for dropdown
+      return {
+        attendees: [],
+        totalCount: 0,
+        currentPage: 1,
+        totalPages: 0,
+        events: events,
+        selectedEvent: null,
+        searchTerm: search,
+        searchType: searchType,
+        statusFilter: status,
+      };
+    }
 
     // Build query parameters
     const params = new URLSearchParams();
@@ -37,9 +84,7 @@ export async function fetchRegistrationManagementData(
     params.append('page', (offset / pageSize).toString());
     params.append('sort', 'registrationDate,desc');
 
-    if (eventId) {
-      params.append('eventId.equals', eventId.toString());
-    }
+    params.append('eventId.equals', eventId.toString());
 
     if (search) {
       if (searchType === 'name') {
@@ -56,59 +101,70 @@ export async function fetchRegistrationManagementData(
       params.append('registrationStatus.equals', status);
     }
 
-    // Fetch attendees
-    const attendeesResponse = await fetch(`${baseUrl}/api/proxy/event-attendees?${params.toString()}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
+    // Fetch attendees using fetchWithJwtRetry
+    const attendeesResponse = await fetchWithJwtRetry(
+      `${getApiBase()}/api/event-attendees?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      },
+      'fetchAttendees'
+    );
 
     if (!attendeesResponse.ok) {
       throw new Error(`Failed to fetch attendees: ${attendeesResponse.status}`);
     }
 
-    const attendees = await attendeesResponse.json();
-    const attendeesArray = Array.isArray(attendees) ? attendees : [];
-
-    // Get total count for pagination
-    const countParams = new URLSearchParams(params);
-    countParams.delete('size');
-    countParams.delete('page');
-    countParams.append('size', '1');
-
-    const countResponse = await fetch(`${baseUrl}/api/proxy/event-attendees?${countParams.toString()}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
-
-    let totalCount = 0;
-    if (countResponse.ok) {
-      const countData = await countResponse.json();
-      totalCount = countData.totalElements || attendeesArray.length;
+    const attendeesData = await attendeesResponse.json();
+    // Handle paged response (Spring Data REST: { content: [...], totalElements })
+    let attendeesArray: EventAttendeeDTO[];
+    let totalCountFromAttendees: number | undefined;
+    if (attendeesData && typeof attendeesData === 'object' && 'content' in attendeesData && Array.isArray(attendeesData.content)) {
+      attendeesArray = attendeesData.content;
+      totalCountFromAttendees = typeof attendeesData.totalElements === 'number' ? attendeesData.totalElements : undefined;
+    } else {
+      attendeesArray = Array.isArray(attendeesData) ? attendeesData : [];
     }
 
-    // Fetch events for filter dropdown
-    const eventsResponse = await fetch(`${baseUrl}/api/proxy/event-details?sort=startDate,desc&size=100`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
+    // Get total count for pagination (use paged response totalElements when available, else fallback to count request)
+    let totalCount = totalCountFromAttendees ?? 0;
+    if (totalCount === 0) {
+      const countParams = new URLSearchParams(params);
+      countParams.delete('size');
+      countParams.delete('page');
+      countParams.append('size', '1');
 
-    let events: EventDetailsDTO[] = [];
-    if (eventsResponse.ok) {
-      const eventsData = await eventsResponse.json();
-      events = Array.isArray(eventsData) ? eventsData : [];
+      const countResponse = await fetchWithJwtRetry(
+        `${getApiBase()}/api/event-attendees?${countParams.toString()}`,
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        },
+        'fetchAttendeesCount'
+      );
+
+      if (countResponse.ok) {
+        const countData = await countResponse.json();
+        totalCount = countData.totalElements ?? attendeesArray.length;
+      } else {
+        totalCount = attendeesArray.length;
+      }
     }
 
     // Fetch selected event details if eventId is provided
     let selectedEvent: EventDetailsDTO | null = null;
     if (eventId) {
-      const eventResponse = await fetch(`${baseUrl}/api/proxy/event-details/${eventId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
-      });
+      const eventResponse = await fetchWithJwtRetry(
+        `${getApiBase()}/api/event-details/${eventId}`,
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        },
+        'fetchSelectedEvent'
+      );
 
       if (eventResponse.ok) {
         selectedEvent = await eventResponse.json();
@@ -131,6 +187,58 @@ export async function fetchRegistrationManagementData(
   } catch (error) {
     console.error('Error fetching registration management data:', error);
     return null;
+  }
+}
+
+/**
+ * Search events by name, ID, or date range
+ */
+export async function searchEvents(
+  eventName?: string,
+  eventId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<EventDetailsDTO[]> {
+  try {
+    const params = new URLSearchParams();
+    params.append('sort', 'startDate,desc');
+    params.append('size', '50'); // Limit to 50 events
+
+    if (eventId) {
+      params.append('id.equals', eventId);
+    }
+
+    if (eventName) {
+      params.append('title.contains', eventName);
+    }
+
+    if (startDate) {
+      params.append('startDate.greaterThanOrEqual', startDate);
+    }
+
+    if (endDate) {
+      params.append('endDate.lessThanOrEqual', endDate);
+    }
+
+    const eventsResponse = await fetchWithJwtRetry(
+      `${getApiBase()}/api/event-details?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      },
+      'searchEvents'
+    );
+
+    if (!eventsResponse.ok) {
+      throw new Error(`Failed to search events: ${eventsResponse.status}`);
+    }
+
+    const eventsData = await eventsResponse.json();
+    return Array.isArray(eventsData) ? eventsData : [];
+  } catch (error) {
+    console.error('Error searching events:', error);
+    return [];
   }
 }
 
@@ -201,7 +309,8 @@ export async function exportRegistrationsToCSV(
       'Accessibility Needs',
       'Emergency Contact Name',
       'Emergency Contact Phone',
-      'Emergency Contact Relationship'
+      'Emergency Contact Relationship',
+      'Admin Notes'
     ];
 
     const csvRows = attendeesArray.map(attendee => [
@@ -220,7 +329,8 @@ export async function exportRegistrationsToCSV(
       attendee.accessibilityNeeds || '',
       attendee.emergencyContactName || '',
       attendee.emergencyContactPhone || '',
-      attendee.emergencyContactRelationship || ''
+      attendee.emergencyContactRelationship || '',
+      attendee.adminNotes ?? attendee.admin_notes ?? ''
     ]);
 
     const csvContent = [csvHeaders, ...csvRows]
@@ -235,6 +345,36 @@ export async function exportRegistrationsToCSV(
 }
 
 /**
+ * Fetch attendee attachments for view/edit dialogs.
+ */
+export async function fetchAttendeeAttachments(attendeeId: number): Promise<EventAttendeeAttachmentDTO[]> {
+  try {
+    const baseUrl = getAppUrl();
+    const params = new URLSearchParams();
+    params.append('attendeeId.equals', attendeeId.toString());
+    params.append('sort', 'createdAt,desc');
+
+    const response = await fetch(`${baseUrl}/api/proxy/event-attendee-attachments?${params.toString()}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch attendee attachments: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray(data.content)) return data.content;
+    return [];
+  } catch (error) {
+    console.error('Error fetching attendee attachments:', error);
+    return [];
+  }
+}
+
+/**
  * Update attendee registration status
  */
 export async function updateAttendeeStatus(
@@ -243,9 +383,12 @@ export async function updateAttendeeStatus(
 ): Promise<boolean> {
   try {
     const { fetchWithJwtRetry } = await import('@/lib/proxyHandler');
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
-    if (!API_BASE_URL) {
+    if (!getApiBase()) {
       console.error('API_BASE_URL is not configured');
       return false;
     }
@@ -257,7 +400,7 @@ export async function updateAttendeeStatus(
     };
 
     const response = await fetchWithJwtRetry(
-      `${API_BASE_URL}/api/event-attendees/${attendeeId}`,
+      `${getApiBase()}/api/event-attendees/${attendeeId}`,
       {
         method: 'PATCH',
         headers: {
@@ -284,9 +427,12 @@ export async function updateAttendeeRegistration(
 ): Promise<boolean> {
   try {
     const { fetchWithJwtRetry } = await import('@/lib/proxyHandler');
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    // Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
-    if (!API_BASE_URL) {
+    if (!getApiBase()) {
       console.error('API_BASE_URL is not configured');
       return false;
     }
@@ -298,7 +444,7 @@ export async function updateAttendeeRegistration(
     };
 
     const response = await fetchWithJwtRetry(
-      `${API_BASE_URL}/api/event-attendees/${attendeeId}`,
+      `${getApiBase()}/api/event-attendees/${attendeeId}`,
       {
         method: 'PATCH',
         headers: {
@@ -322,15 +468,18 @@ export async function updateAttendeeRegistration(
 export async function deleteAttendeeRegistration(attendeeId: number): Promise<boolean> {
   try {
     const { fetchWithJwtRetry } = await import('@/lib/proxyHandler');
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    // Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
-    if (!API_BASE_URL) {
+    if (!getApiBase()) {
       console.error('API_BASE_URL is not configured');
       return false;
     }
 
     const response = await fetchWithJwtRetry(
-      `${API_BASE_URL}/api/event-attendees/${attendeeId}`,
+      `${getApiBase()}/api/event-attendees/${attendeeId}`,
       {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },

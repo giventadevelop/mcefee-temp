@@ -1,117 +1,134 @@
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import SpiritualOrgSubpageLayout from '../SpiritualOrgSubpageLayout';
 
 export const metadata = {
-  title: `Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India) | MOSC`,
-  description: `A Brief History Marth Mariam Vanitha Samajam is the Women's wing of the Malankara Orthodox Church of India. It is one of the major spiritual organization of the...`,
+  title: "Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India) | MOSC",
+  description: "Marth Mariam Vanitha Samajam is the Women's wing of the Malankara Orthodox Church of India, founded in 1928. President H. G. Dr. Yuhanon Mar Diascoros Metropolitan.",
 };
 
-const MarthMariamVanithaSamajamWomensWingOfOrthodoxChurchOfIndiaPage = () => {
+const MarthMariamVanithaSamajamPage = () => {
   return (
-    <div className="bg-background">
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-background to-muted">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-primary rounded-lg flex items-center justify-center mx-auto mb-6 sacred-shadow-lg">
-              <span className="text-primary-foreground text-4xl font-bold" role="img" aria-label="Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India)">👩</span>
-            </div>
-            <h1 className="font-heading font-semibold text-4xl text-foreground mb-4">
-              Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India)
-            </h1>
-            <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              A Brief History Marth Mariam Vanitha Samajam is the Women's wing of the Malankara Orthodox Church of India. It is one of the major spiritual organization of the church combining...
-            </p>
-          </div>
+    <SpiritualOrgSubpageLayout
+      title="Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India)"
+      currentHref="/mosc/spiritual-organizations/marth-mariam-vanitha-samajam-womens-wing-of-orthodox-church-of-india"
+    >
+      <div className="space-y-6 font-syro-primary text-syro-dark-gray leading-relaxed">
+        <div className="mb-8 flex justify-center">
+          <Image
+            src="/images/spiritual/MMVS.png"
+            alt="Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India)"
+            width={175}
+            height={175}
+            className="rounded-lg object-contain" style={{ width: '175px', height: '175px' }}
+          />
         </div>
-      </section>
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red">
+          A Brief History
+        </h2>
+        <p>
+          Marth Mariam Vanitha Samajam is the Women&apos;s wing of the Malankara Orthodox Church of India. It is one of the major spiritual organization of the church combining all the female members. It is spread throughout the world in all the 30 Dioceses and functioning in all parishes of the church.
+        </p>
+        <p>
+          The organization was founded in 1928 aimed at the spiritual progress of women. The founders named it &quot;Marth Mariam Samajam&quot; after the Blessed Virgin Mary whom they accepted as their interceding saint. It was started under the patronage of the Late Very Rev. M.C. Kuriakose Ramban and with the leadership of K.M. Annamma and co-workers.
+        </p>
 
-      {/* Content Section */}
-      <section className="py-16 bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-              <div className="bg-background rounded-lg sacred-shadow p-8">
-                <h2 className="font-heading font-semibold text-2xl text-foreground mb-6">
-                  About Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India)
-                </h2>
-                <div className="space-y-4 font-body text-muted-foreground leading-relaxed">
-                  <p>A Brief History Marth Mariam Vanitha Samajam is the Women's wing of the Malankara Orthodox Church of India. It is one of the major spiritual organization of the church combining...</p>
-                </div>
-              </div>
-            </div>
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Motto
+        </h2>
+        <p>Prarthikkuka, Pravarthikkuka, Prakasikkuka.</p>
 
-            <div className="space-y-6">
-              {/* Quick Info */}
-              <div className="bg-background rounded-lg sacred-shadow p-6">
-                <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
-                  Quick Information
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-primary text-xl" role="img" aria-label="Organization">👩</span>
-                    <div>
-                      <h4 className="font-heading font-medium text-foreground">Organization Type</h4>
-                      <p className="font-body text-muted-foreground text-sm">Spiritual Organization</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-primary text-xl" role="img" aria-label="Church">⛪</span>
-                    <div>
-                      <h4 className="font-heading font-medium text-foreground">Church Affiliation</h4>
-                      <p className="font-body text-muted-foreground text-sm">Malankara Orthodox Syrian Church</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Administration
+        </h2>
+        <p>
+          There is a central committee with all the 30 Dioceses of the church. H.H. is the Patron. According to the constitution President, Vice President, General Secretary, Joint Secretary and Treasurer, the Secretaries from 30 Dioceses & Diocese Representatives consist of the Central Committee. Central Committee is the deciding body of Marth Mariam Vanitha Samajam. The Diocesan Metropolitan is the President of diocesan committee, Vice President is a priest from that Diocese and the vicars that of the branches. Each Diocesan Samajam has a secretary, elected from the committee members who in their turn represents the group or districts into which each diocese is subdivided. The Group secretaries encourage the branch samajams and make members ever more loyal to the faith and practices of the church. The diocesan and the organizing secretaries are expected to visit the branches at times. Retreats, Bible Classes, Competitions etc are held on Parish, Group, Diocese & Akhila Malankara levels.
+        </p>
+        <p>
+          There is a Leadership Training Camp held annually for 2 days. Annual examinations are conducted based on prescribed text books of church faith, Bible portions and liturgical hymns. Examination is conducted inside & outside India in October.
+        </p>
 
-              {/* Related Organizations */}
-              <div className="bg-background rounded-lg sacred-shadow p-6">
-                <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
-                  Related Organizations
-                </h3>
-                <div className="space-y-3">
-                  <Link
-                    href="/mosc/spiritual-organizations"
-                    className="block text-primary hover:text-primary/80 font-medium reverent-transition"
-                  >
-                    ← All Spiritual Organizations
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Present Concerns and Future Prospects
+        </h2>
+        <ol className="list-decimal list-inside space-y-2 pl-2">
+          <li>Preparing women to have theological training. Hundreds of women are now undergoing the Divyabodhanam course of the Orthodox Seminary, Kottayam.</li>
+          <li>Training women to have social awareness, participation in political activities, decision-making at every level.</li>
+          <li>Conscientization program for women who are generally denied basic human hood in the family.</li>
+          <li>Attempts to find out women&apos;s potentials to a greater extent.</li>
+          <li>Training women to conduct Women&apos;s prayer groups, to lead prayer, Bible classes, fellowship meetings and to preach the gospel.</li>
+          <li>Preparing cell to solve the problems of working women.</li>
+          <li>Seek solidarity with women&apos;s action groups on local and national level. Encouraging more participation in ecumenical gatherings.</li>
+          <li>To enhance spiritual practices observing lent, and other religious practices, bringing up children etc.</li>
+          <li>Attempts to find out more Sunday school teachers with a commitment to Christ.</li>
+          <li>We are continuing the struggle against dowry system and other social evils and to persuade the authorities that woman should be provided with equal opportunities and recognition.</li>
+          <li>Also efforts are done to get participation for women in the administration of the church various aspects of Managing committee, Working Committee, Advisory committee etc.</li>
+        </ol>
 
-      {/* Call to Action */}
-      <section className="py-16 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="font-heading font-semibold text-3xl text-foreground mb-4">
-            Get Involved
-          </h2>
-          <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto mb-8">
-            Learn more about how you can participate in the activities and programs of Marth Mariam Vanitha Samajam (Women's Wing of Orthodox Church of India).
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/mosc/spiritual-organizations"
-              className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 reverent-transition"
-            >
-              Explore All Organizations
-            </Link>
-            <Link
-              href="/mosc"
-              className="inline-flex items-center justify-center px-6 py-3 bg-background text-foreground border border-border rounded-lg hover:bg-muted reverent-transition"
-            >
-              Learn About MOSC
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          &apos;Snehasparsam&apos; Project
+        </h2>
+        <p>
+          This is the helping hand for the needy. Samajam is providing marriage aid, sick aid, education aid & providing for construction of houses for widows.
+        </p>
+
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          &apos;Vanitha Deepthi&apos;
+        </h2>
+        <p>This is the trimagazine released by Marth Mariam Vanitha Samajam from 2012.</p>
+
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Navajyoti MOMS Charitable Society & Chaithanya Samskarika Koottayma
+        </h2>
+        <p>These are two projects under Marth Mariam Vanitha Samajam for the upliftment of women.</p>
+
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Marth Mariam Vanitha Samajam Kendra Mandiram
+        </h2>
+        <p>
+          In Kanjikuzhy Kottayam Marth Mariam Vanitha Samajam had a building with office constructed in 1987. It is renovated & the first floor of the building is completed in 2014. The Koodasa of the new construction was on 26th August 2014. Every 2nd Wednesday there is Holy Qurbana & Bible Class in the Chapel of Kendra Mandiram.
+        </p>
+
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Achievements
+        </h2>
+        <p>
+          The Samajam was in the fore-front of the struggle to achieve equal ancestral property right for Christian women of Kerala.
+        </p>
+        <p>
+          Besides the central administrative office at Kottayam, almost all the Dioceses have their own headquarters and conference centers. There are vocational guidance centers, Nursery schools and self-employment projects, school for specially abled, Balika Bhavan.
+        </p>
+        <p>
+          Recently many changes occurred in the life of the Church with the humble persuasion of this Samajam. During Baptism, the Girls are also permitted to enter the sanctuary and kiss the altar. The tradition that only boys are baptized just after the feast of Epiphany is now changed. Females are allowed to read the Bible during liturgy. Nuns are allowed to serve at the altar during the worship services and Holy Liturgy in the convents. Women are now elected as members and office-bearers in the administration in Parishes. Marth Mariam Vanitha Samajam activities are conducted in Gulf, America, U.K.-Europe.
+        </p>
+
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Office Bearers
+        </h2>
+        <p><strong className="text-syro-blue">President:</strong> H. G. Dr. Yuhanon Mar Diascoros Metropolitan</p>
+        <p><strong className="text-syro-blue">Vice President:</strong> Fr. Philip Tharakan Thevalakara – 9633519075, 9447061819</p>
+        <p><strong className="text-syro-blue">General Secretary:</strong> Prof. Mary Mathew – 9447145064</p>
+        <p><strong className="text-syro-blue">Treasurer:</strong> Alice Koshy, Ph: +91 8369582238</p>
+        <p><strong className="text-syro-blue">Office Secretary:</strong> Molly Varghese – 9961742164</p>
+
+        <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-4 pl-4 border-l-4 border-syro-red mt-10">
+          Head Quarters
+        </h2>
+        <p>
+          Marth Mariam Vanitha Samajam Central Office<br />
+          Muttambalam P.O. Kanjikuzhy, Kottayam 4<br />
+          Kerala State, India
+        </p>
+        <p>Phone: 0481-2571840</p>
+        <p>
+          Email:{' '}
+          <a href="mailto:momsglobal@yahoo.in" className="text-syro-red hover:underline">
+            momsglobal@yahoo.in
+          </a>
+        </p>
+      </div>
+    </SpiritualOrgSubpageLayout>
   );
 };
 
-export default MarthMariamVanithaSamajamWomensWingOfOrthodoxChurchOfIndiaPage;
+export default MarthMariamVanithaSamajamPage;

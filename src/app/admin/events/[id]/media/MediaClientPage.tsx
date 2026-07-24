@@ -1,10 +1,12 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
 import { EventMediaDTO, EventDetailsDTO } from "@/types";
-import { FaEdit, FaTrashAlt, FaUpload, FaFolderOpen, FaSpinner, FaUsers, FaPhotoVideo, FaCalendarAlt, FaBan, FaTicketAlt, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaTrashAlt, FaUpload, FaFolderOpen, FaSpinner, FaBan, FaTimes, FaCheckCircle, FaPhotoVideo } from 'react-icons/fa';
 import { deleteMediaServer, editMediaServer } from './ApiServerActions';
+import { notifyHomepageCacheInvalidate } from '@/lib/homepageCacheKeys';
 import { createPortal } from "react-dom";
 import Link from 'next/link';
+import { ConfirmModal } from '@/components/ui/Modal';
 
 interface MediaClientPageProps {
   eventId: string;
@@ -12,6 +14,8 @@ interface MediaClientPageProps {
   eventDetails: EventDetailsDTO | null;
   officialDocsList: EventMediaDTO[];
   userProfileId: number | null;
+  /** Options for optional focus group on upload (association id -> name) */
+  focusGroupOptions?: { id: number; name: string }[];
 }
 
 // Tooltip component (matches /admin/manage-usage)
@@ -79,7 +83,7 @@ function MediaDetailsTooltip({ media, anchorRect, onClose, onTooltipMouseEnter, 
   );
 }
 
-export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDetails, officialDocsList: initialOfficialDocsList, userProfileId }: MediaClientPageProps) {
+export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDetails, officialDocsList: initialOfficialDocsList, userProfileId, focusGroupOptions = [] }: MediaClientPageProps) {
   const [files, setFiles] = useState<FileList | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -88,7 +92,7 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   const [message, setMessage] = useState<string | null>(null);
   const [mediaList, setMediaList] = useState<EventMediaDTO[]>(initialMediaList);
   const [mediaPage, setMediaPage] = useState(0);
-  const mediaPageSize = 10;
+  const mediaPageSize = 20;
   const [showOnlyEventFlyers, setShowOnlyEventFlyers] = useState(false);
   const filteredMediaList = showOnlyEventFlyers ? mediaList.filter(m => m.eventFlyer) : mediaList;
   const pagedMedia = filteredMediaList.slice(mediaPage * mediaPageSize, (mediaPage + 1) * mediaPageSize);
@@ -97,7 +101,7 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   const [isEventManagementOfficialDocument, setIsEventManagementOfficialDocument] = useState(false);
   const [officialDocsList, setOfficialDocsList] = useState<EventMediaDTO[]>(initialOfficialDocsList);
   const [officialDocsPage, setOfficialDocsPage] = useState(0);
-  const officialDocsPageSize = 10;
+  const officialDocsPageSize = 20;
   const pagedOfficialDocs = officialDocsList.slice(officialDocsPage * officialDocsPageSize, (officialDocsPage + 1) * officialDocsPageSize);
   const hasNextOfficialDocsPage = (officialDocsPage + 1) * officialDocsPageSize < officialDocsList.length;
   const [hoveredOfficialDocId, setHoveredOfficialDocId] = useState<string | number | null>(null);
@@ -109,14 +113,20 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   const [popoverUploadedMediaAnchor, setPopoverUploadedMediaAnchor] = useState<DOMRect | null>(null);
   const [popoverUploadedMediaMedia, setPopoverUploadedMediaMedia] = useState<EventMediaDTO | null>(null);
   const [isHeroImage, setIsHeroImage] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<EventMediaDTO | null>(null);
   const [isActiveHeroImage, setIsActiveHeroImage] = useState(false);
   const [isFeaturedEventImage, setIsFeaturedEventImage] = useState(false);
   const [isLiveEventImage, setIsLiveEventImage] = useState(false);
   const [isHomePageHeroImage, setIsHomePageHeroImage] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
   const [altText, setAltText] = useState("");
+  const [eventFocusGroupId, setEventFocusGroupId] = useState<number | null>(null);
   const [displayOrder, setDisplayOrder] = useState<number | undefined>(undefined);
   const [startDisplayingFromDate, setStartDisplayingFromDate] = useState("");
+  // Home page hero display duration (minutes and seconds)
+  const [heroDisplayDurationMinutes, setHeroDisplayDurationMinutes] = useState<number | ''>('');
+  const [heroDisplayDurationSeconds, setHeroDisplayDurationSeconds] = useState<number | ''>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadFormDivRef = useRef<HTMLDivElement>(null);
   const tooltipTimer = useRef<NodeJS.Timeout | null>(null);
@@ -136,6 +146,7 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   const [tooltipType, setTooltipType] = useState<'officialDocs' | 'uploadedMedia' | null>(null);
   const uploadedMediaSectionRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
   // Helper to infer eventMediaType from file extension
@@ -151,7 +162,31 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFiles(e.target.files);
+    if (e.target.files && e.target.files.length > 0) {
+      setFiles(e.target.files);
+      // Also update the main file input if it's a folder input
+      if (fileInputRef.current && e.target !== fileInputRef.current) {
+        const dataTransfer = new DataTransfer();
+        Array.from(e.target.files).forEach(file => {
+          dataTransfer.items.add(file);
+        });
+        fileInputRef.current.files = dataTransfer.files;
+      }
+    }
+  };
+
+  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFiles(e.target.files);
+      // Also update the main file input
+      if (fileInputRef.current) {
+        const dataTransfer = new DataTransfer();
+        Array.from(e.target.files).forEach(file => {
+          dataTransfer.items.add(file);
+        });
+        fileInputRef.current.files = dataTransfer.files;
+      }
+    }
   };
 
   // Drag and drop handlers
@@ -224,9 +259,6 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
         throw new Error('NEXT_PUBLIC_TENANT_ID is not set in environment variables');
       }
 
-      // Get app URL from environment variable (available on client)
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
       // Append other parameters as form data
       formData.append('eventId', eventId);
       formData.append('eventFlyer', String(eventFlyer));
@@ -262,21 +294,81 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
         formData.append('startDisplayingFromDate', startDisplayingFromDate);
       }
 
-      // Use the proxy endpoint directly from client
-      const url = `${appUrl}/api/proxy/event-medias/upload-multiple`;
-
-      const res = await fetch(url, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(err);
+      if (eventFocusGroupId != null) {
+        formData.append('eventFocusGroupId', String(eventFocusGroupId));
       }
 
-      const result = await res.json();
-      setMessage("Upload successful!");
+      // Home page hero display duration (convert minutes + seconds to total seconds)
+      if (isHomePageHeroImage) {
+        const minutes = typeof heroDisplayDurationMinutes === 'number' ? heroDisplayDurationMinutes : 0;
+        const seconds = typeof heroDisplayDurationSeconds === 'number' ? heroDisplayDurationSeconds : 0;
+        const totalSeconds = minutes * 60 + seconds;
+        // Only append if value is provided and valid (1-600 seconds)
+        if (totalSeconds > 0 && totalSeconds <= 600) {
+          formData.append('homePageHeroDisplayDurationSeconds', String(totalSeconds));
+        }
+      }
+
+      const uploadController = new AbortController();
+      const uploadTimeoutMs = 120_000;
+      const uploadTimeoutId = window.setTimeout(() => uploadController.abort(), uploadTimeoutMs);
+
+      let res: Response;
+      try {
+        // Same-origin relative URL — avoids wrong port when NEXT_PUBLIC_APP_URL is unset (e.g. dev on :3001)
+        res = await fetch('/api/proxy/event-medias/upload-multiple', {
+          method: 'POST',
+          body: formData,
+          signal: uploadController.signal,
+        });
+      } finally {
+        window.clearTimeout(uploadTimeoutId);
+      }
+
+      const responseText = await res.text();
+
+      if (!res.ok) {
+        let errMsg = responseText;
+        try {
+          const json = JSON.parse(responseText) as { details?: string; message?: string; error?: string };
+          errMsg = json.details?.trim() || json.message || json.error || responseText;
+        } catch {
+          /* not JSON */
+        }
+        if (res.status === 413) {
+          errMsg = 'File is too large. Use images under 10MB each, or upload one file at a time.';
+        }
+        throw new Error(errMsg || `Upload failed (HTTP ${res.status})`);
+      }
+
+      let result: EventMediaDTO[] | null = null;
+      if (responseText.trim()) {
+        try {
+          const parsed = JSON.parse(responseText) as unknown;
+          if (Array.isArray(parsed)) {
+            result = parsed as EventMediaDTO[];
+          }
+        } catch {
+          /* empty or non-JSON success body */
+        }
+      }
+
+      if (result && result.length > 0) {
+        setMediaList((prev) => {
+          const newIds = new Set(result!.map((m) => m.id).filter((id): id is number => id != null));
+          const rest = prev.filter((m) => m.id == null || !newIds.has(m.id));
+          return [...result!, ...rest];
+        });
+      }
+
+      if (isHomePageHeroImage || isHeroImage) {
+        notifyHomepageCacheInvalidate();
+      }
+
+      // Show success dialog
+      setShowSuccessDialog(true);
+
+      // Clear form
       setFiles(null);
       setTitle("");
       setDescription("");
@@ -286,26 +378,49 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
       setIsLiveEventImage(false);
       setIsHomePageHeroImage(false);
       setStartDisplayingFromDate("");
+      setHeroDisplayDurationMinutes('');
+      setHeroDisplayDurationSeconds('');
+      setEventFocusGroupId(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      // Refresh the page after upload
-      setTimeout(() => window.location.reload(), 1200);
-    } catch (err: any) {
-      setMessage(`Upload error: ${err.message}`);
+
+      setTimeout(() => {
+        setShowSuccessDialog(false);
+      }, 3000);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error && err.name === 'AbortError'
+          ? 'Upload timed out. The file may still have uploaded — refresh the page to check.'
+          : err instanceof Error
+            ? err.message
+            : 'Upload failed';
+      setMessage(`Upload error: ${message}`);
     } finally {
       setUploading(false);
       setProgress(100);
     }
   };
 
-  const handleDelete = async (mediaId: number | string) => {
+  const handleDelete = (mediaId: number | string) => {
     if (!mediaId) return;
-    if (!confirm('Are you sure you want to delete this media?')) return;
+    const media = mediaList.find((m) => m.id === mediaId);
+    if (media) {
+      setSelectedMedia(media);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedMedia || !selectedMedia.id) return;
     try {
-      await deleteMediaServer(mediaId);
-      setMediaList((prev) => prev.filter((m) => m.id !== mediaId));
+      await deleteMediaServer(selectedMedia.id);
+      setMediaList((prev) => prev.filter((m) => m.id !== selectedMedia.id));
       setMessage('Media deleted successfully.');
+      setIsDeleteModalOpen(false);
+      setSelectedMedia(null);
     } catch (err: any) {
       setMessage(`Delete error: ${err.message}`);
+      setIsDeleteModalOpen(false);
+      setSelectedMedia(null);
     }
   };
 
@@ -368,6 +483,14 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
       setOfficialDocsList((prev) =>
         prev.map((m) => (m.id === editMedia.id ? { ...m, ...updated } : m))
       );
+      if (
+        updated.isHomePageHeroImage === true ||
+        updated.isHeroImage === true ||
+        editMedia.isHomePageHeroImage ||
+        editMedia.isHeroImage
+      ) {
+        notifyHomepageCacheInvalidate();
+      }
       setEditMedia(null); // Close modal on success
       setMessage('Media updated successfully.');
     } catch (err: any) {
@@ -382,6 +505,18 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
     onClose: () => void,
     onSave: (updated: Partial<EventMediaDTO>) => void,
   }) {
+    // Helper to convert total seconds to minutes and seconds
+    const secondsToMinutesAndSeconds = (totalSeconds: number | null | undefined): { minutes: number | ''; seconds: number | '' } => {
+      if (!totalSeconds || totalSeconds <= 0) return { minutes: '', seconds: '' };
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return { minutes, seconds };
+    };
+
+    const initialDuration = secondsToMinutesAndSeconds(media.homePageHeroDisplayDurationSeconds);
+    const [heroDisplayDurationMinutes, setHeroDisplayDurationMinutes] = useState<number | ''>(initialDuration.minutes);
+    const [heroDisplayDurationSeconds, setHeroDisplayDurationSeconds] = useState<number | ''>(initialDuration.seconds);
+
     const [formData, setFormData] = useState<Partial<EventMediaDTO>>({
       title: media.title || '',
       description: media.description || '',
@@ -397,10 +532,14 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
       isFeaturedVideo: media.isFeaturedVideo || false,
       featuredVideoUrl: media.featuredVideoUrl || '',
       startDisplayingFromDate: media.startDisplayingFromDate || '',
+      homePageHeroDisplayDurationSeconds: media.homePageHeroDisplayDurationSeconds || undefined,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
+      const duration = secondsToMinutesAndSeconds(media.homePageHeroDisplayDurationSeconds);
+      setHeroDisplayDurationMinutes(duration.minutes);
+      setHeroDisplayDurationSeconds(duration.seconds);
       setFormData({
         title: media.title || '',
         description: media.description || '',
@@ -416,6 +555,7 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
         isFeaturedVideo: media.isFeaturedVideo || false,
         featuredVideoUrl: media.featuredVideoUrl || '',
         startDisplayingFromDate: media.startDisplayingFromDate || '',
+        homePageHeroDisplayDurationSeconds: media.homePageHeroDisplayDurationSeconds || undefined,
         // Include required fields for backend validation
         eventMediaType: media.eventMediaType || 'gallery',
         storageType: media.storageType || 's3',
@@ -434,7 +574,17 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
     const handleSaveClick = async () => {
       setIsSubmitting(true);
       try {
-        await onSave(formData);
+        // Convert minutes + seconds to total seconds for homePageHeroDisplayDurationSeconds
+        const minutes = typeof heroDisplayDurationMinutes === 'number' ? heroDisplayDurationMinutes : 0;
+        const seconds = typeof heroDisplayDurationSeconds === 'number' ? heroDisplayDurationSeconds : 0;
+        const totalSeconds = minutes * 60 + seconds;
+        
+        const payload = {
+          ...formData,
+          homePageHeroDisplayDurationSeconds: totalSeconds > 0 && totalSeconds <= 600 ? totalSeconds : (formData.isHomePageHeroImage ? null : undefined),
+        };
+        
+        await onSave(payload);
       } catch (error) {
         // Handle error if onSave throws
         console.error("Failed to save media:", error);
@@ -543,6 +693,73 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
               <p className="text-sm text-gray-500 mt-1">When should this media start being displayed?</p>
             </div>
 
+            {/* Home Page Hero Display Duration (shown only when isHomePageHeroImage is checked) */}
+            {formData.isHomePageHeroImage && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Home Page Hero Display Duration</label>
+                <p className="text-xs text-gray-600 mb-3">
+                  How long should this image be displayed in the homepage hero slider? Leave empty to use default (8 seconds).
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label htmlFor="editHeroDisplayDurationMinutes" className="block text-xs font-medium text-gray-600 mb-1">
+                      Minutes
+                    </label>
+                    <input
+                      type="number"
+                      id="editHeroDisplayDurationMinutes"
+                      name="editHeroDisplayDurationMinutes"
+                      min="0"
+                      max="10"
+                      value={heroDisplayDurationMinutes}
+                      onChange={e => {
+                        const val = e.target.value === '' ? '' : Math.max(0, Math.min(10, parseInt(e.target.value, 10) || 0));
+                        setHeroDisplayDurationMinutes(val);
+                      }}
+                      className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label htmlFor="editHeroDisplayDurationSeconds" className="block text-xs font-medium text-gray-600 mb-1">
+                      Seconds
+                    </label>
+                    <input
+                      type="number"
+                      id="editHeroDisplayDurationSeconds"
+                      name="editHeroDisplayDurationSeconds"
+                      min="0"
+                      max="59"
+                      value={heroDisplayDurationSeconds}
+                      onChange={e => {
+                        const val = e.target.value === '' ? '' : Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0));
+                        setHeroDisplayDurationSeconds(val);
+                      }}
+                      className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Valid range: 1 second to 10 minutes (600 seconds). Example: 1 min 20 secs = 80 seconds total.
+                </p>
+                {(typeof heroDisplayDurationMinutes === 'number' && heroDisplayDurationMinutes > 0) || (typeof heroDisplayDurationSeconds === 'number' && heroDisplayDurationSeconds > 0) ? (
+                  <div className="mt-2 text-sm text-blue-700 font-medium">
+                    Total: {(() => {
+                      const min = typeof heroDisplayDurationMinutes === 'number' ? heroDisplayDurationMinutes : 0;
+                      const sec = typeof heroDisplayDurationSeconds === 'number' ? heroDisplayDurationSeconds : 0;
+                      const total = min * 60 + sec;
+                      if (total === 0) return '0 seconds (will use default)';
+                      if (total < 60) return `${total} secs`;
+                      const m = Math.floor(total / 60);
+                      const s = total % 60;
+                      return s === 0 ? `${m} min` : `${m} min ${s} secs`;
+                    })()}
+                  </div>
+                ) : null}
+              </div>
+            )}
+
             {/* Checkboxes - Using proper UI style guide implementation */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-4">Media Options</label>
@@ -579,20 +796,39 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
               <button
                 type="button"
                 onClick={onClose}
-                className="bg-teal-100 hover:bg-teal-200 text-teal-800 px-4 py-2 rounded-md flex items-center gap-2"
+                className="flex-1 flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 disabled={isSubmitting}
+                title="Cancel"
+                aria-label="Cancel"
               >
-                <FaBan />
-                Cancel
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <span className="font-semibold text-blue-700">Cancel</span>
               </button>
               <button
                 type="button"
                 onClick={handleSaveClick}
                 disabled={isSubmitting}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2"
+                className="flex-1 flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                title={isSubmitting ? 'Saving...' : 'Save Changes'}
+                aria-label={isSubmitting ? 'Saving...' : 'Save Changes'}
               >
-                {isSubmitting ? <FaSpinner className="animate-spin" /> : <FaFolderOpen />}
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                  {isSubmitting ? (
+                    <svg className="animate-spin w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span className="font-semibold text-blue-700">{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
               </button>
             </div>
           </div>
@@ -603,48 +839,132 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto bg-white rounded shadow" style={{ paddingTop: '118px' }}>
-      <div className="mb-8">
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/admin/manage-usage" className="flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg p-4 transition duration-300 font-semibold">
-              <FaUsers className="text-3xl mb-2" />
-              <span>Manage Users [Usage]</span>
-            </Link>
-            <Link href="/admin" className="flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 text-green-800 rounded-lg p-4 transition duration-300 font-semibold">
-              <FaCalendarAlt className="text-3xl mb-2" />
-              <span>Manage Events</span>
-            </Link>
-            <Link href={`/admin/events/${eventId}/ticket-types/list`} className="flex flex-col items-center justify-center bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-lg p-4 transition duration-300 font-semibold">
-              <FaTicketAlt className="text-3xl mb-2" />
-              <span>Manage Ticket Types</span>
-            </Link>
-            <Link href={`/admin/events/${eventId}/media/list`} className="flex flex-col items-center justify-center bg-orange-50 hover:bg-orange-100 text-orange-800 rounded-lg p-4 transition duration-300 font-semibold">
-              <FaPhotoVideo className="text-3xl mb-2" />
-              <span>Manage Media Files</span>
-            </Link>
-          </div>
+    <div className="p-8 max-w-4xl mx-auto bg-white rounded shadow" style={{ paddingTop: '180px' }}>
+      {/* Responsive Button Group — 180px clears fixed header (8rem) + breathing room */}
+      <div className="w-full mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <Link
+            href="/admin"
+            className="flex flex-col items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg shadow-md p-3 text-xs transition-all group"
+            title="Admin Home"
+            aria-label="Admin Home"
+          >
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <span className="font-semibold text-center leading-tight">Admin Home</span>
+          </Link>
+          <Link
+            href="/admin/manage-usage"
+            className="flex flex-col items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded-lg shadow-md p-3 text-xs transition-all group"
+            title="Manage Usage"
+            aria-label="Manage Usage"
+          >
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-indigo-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Usage</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/media/list`}
+            className="flex flex-col items-center justify-center bg-yellow-50 hover:bg-yellow-100 text-yellow-800 rounded-lg shadow-md p-3 text-xs transition-all group"
+            title="Manage Media Files"
+            aria-label="Manage Media Files"
+          >
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-yellow-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Media Files</span>
+          </Link>
+          <Link
+            href="/admin/manage-events"
+            className="flex flex-col items-center justify-center bg-green-50 hover:bg-green-100 text-green-800 rounded-lg shadow-md p-3 text-xs transition-all group"
+            title="Manage Events"
+            aria-label="Manage Events"
+          >
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Events</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/ticket-types/list`}
+            className="flex flex-col items-center justify-center bg-purple-50 hover:bg-purple-100 text-purple-800 rounded-lg shadow-md p-3 text-xs transition-all group"
+            title="Manage Ticket Types"
+            aria-label="Manage Ticket Types"
+          >
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Ticket Types</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/tickets/list`}
+            className="flex flex-col items-center justify-center bg-teal-50 hover:bg-teal-100 text-teal-800 rounded-lg shadow-md p-3 text-xs transition-all group"
+            title="Manage Tickets"
+            aria-label="Manage Tickets"
+          >
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-teal-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4v-3a2 2 0 00-2-2H5z" />
+              </svg>
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Tickets</span>
+          </Link>
+          <Link
+            href={`/admin/events/${eventId}/discount-codes/list`}
+            className="flex flex-col items-center justify-center bg-pink-50 hover:bg-pink-100 text-pink-800 rounded-lg shadow-md p-3 text-xs transition-all group"
+            title="Manage Discount Codes"
+            aria-label="Manage Discount Codes"
+          >
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-pink-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
+              <svg className="w-8 h-8 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <span className="font-semibold text-center leading-tight">Manage Discount Codes</span>
+          </Link>
         </div>
       </div>
       {/* Upload Files and Go to Uploaded Media buttons at the top */}
       <div className="flex justify-end mb-4 gap-2">
         <button
           type="button"
-          className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded shadow-sm border border-green-700 transition-colors flex items-center gap-2"
+          className="flex-shrink-0 h-14 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
           onClick={() => uploadFormDivRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          title="Upload Files"
+          aria-label="Upload Files"
         >
-          <FaUpload className="w-5 h-5 mr-1" />
-          Upload Files
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center">
+            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <span className="font-semibold text-green-700">Upload Files</span>
         </button>
         <button
           type="button"
-          className="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold px-4 py-2 rounded shadow-sm border border-yellow-700 transition-colors flex items-center gap-2"
+          className="flex-shrink-0 h-14 rounded-xl bg-yellow-100 hover:bg-yellow-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
           onClick={() => uploadedMediaSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          title="Go to Uploaded Media Files"
+          aria-label="Go to Uploaded Media Files"
         >
-          <FaPhotoVideo className="w-5 h-5 mr-1" />
-          <span className="text-left">
-            Go to / View<br />Uploaded Media Files
-          </span>
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-yellow-200 flex items-center justify-center">
+            <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <span className="font-semibold text-yellow-700">Go to Uploaded Media Files</span>
         </button>
       </div>
       <h1 className="text-2xl font-bold mb-4">
@@ -697,6 +1017,35 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
       <div ref={uploadFormDivRef} className="mt-8 mb-8 p-6 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
         <div className="text-xl font-bold mb-4">Media File Upload Form</div>
 
+        {/* Image Resizing Guidelines */}
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-yellow-800 mb-2">📏 Image Resizing Guidelines</h3>
+              <div className="text-sm text-yellow-700 space-y-2">
+                <p><strong>Need to resize your image before uploading?</strong> You can use the online image resizer tool:</p>
+                <p className="font-medium text-yellow-800">Steps to resize images:</p>
+                <ol className="list-decimal list-inside space-y-1 text-xs ml-2">
+                  <li>Visit <a href="https://imageresizer.com/resize/editor" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline hover:text-blue-800">https://imageresizer.com/resize/editor</a></li>
+                  <li>Upload your image to the tool</li>
+                  <li><strong>Uncheck</strong> the checkbox labeled <strong>'Lock Aspect Ratio'</strong></li>
+                  <li><strong>Uncheck</strong> the checkbox labeled <strong>'Background Fill'</strong></li>
+                  <li>Enter the desired width and height in the text fields</li>
+                  <li>Click <strong>Export</strong> to download the resized image</li>
+                </ol>
+                <p className="text-xs text-yellow-600 mt-2 italic">
+                  <strong>Important:</strong> If you want your image to be displayed as a hero image in the home page Hero section, please make sure to check the <strong>'Home Page Hero Image'</strong> checkbox in the form below after uploading.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Hero Image Specifications Tip */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start space-x-3">
@@ -708,13 +1057,13 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-blue-800 mb-2">📸 Hero Image Specifications</h3>
               <div className="text-sm text-blue-700 space-y-2">
-                <p><strong>For Hero Images:</strong> Use 800×1200px (2:3 aspect ratio) for optimal display in the charity theme hero section.</p>
+                <p><strong>For Hero Images:</strong> Use <strong>1200×800px (3:2 landscape)</strong> for optimal display in the home page hero rotation. Portrait (e.g. 800×1200) will make the hero section excessively tall.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                   <div>
                     <p className="font-medium text-blue-800">Optimal Dimensions:</p>
                     <ul className="text-xs space-y-1 mt-1">
-                      <li>• <strong>Desktop:</strong> 800×1200px (2:3 ratio)</li>
-                      <li>• <strong>Mobile:</strong> 600×900px (2:3 ratio)</li>
+                      <li>• <strong>Desktop:</strong> 1200×800px (3:2 ratio)</li>
+                      <li>• <strong>Mobile:</strong> 900×600px (3:2 ratio)</li>
                       <li>• <strong>Format:</strong> WebP preferred, JPG acceptable</li>
                       <li>• <strong>Quality:</strong> 80-85%</li>
                       <li>• <strong>File Size:</strong> Under 300KB</li>
@@ -723,20 +1072,20 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
                   <div>
                     <p className="font-medium text-blue-800">Content Guidelines:</p>
                     <ul className="text-xs space-y-1 mt-1">
-                      <li>• Main subject in upper 60% of frame</li>
+                      <li>• Main subject in center or upper 60% of frame</li>
                       <li>• Text readable at 50% scale</li>
                       <li>• High contrast for overlay visibility</li>
                       <li>• Professional, culturally relevant style</li>
                     </ul>
                   </div>
                 </div>
-                <p className="text-xs text-blue-600 mt-2 italic">These specifications ensure your hero images look perfect across all devices and maintain the professional appearance of the charity theme page.</p>
+                <p className="text-xs text-blue-600 mt-2 italic">Landscape 3:2 fits the hero display area; portrait images are not recommended.</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Featured Event Image Specifications Tip */}
+        {/* Featured Event Image Specifications Tip - Home page event strip card (see documentation/HOME_PAGE_EVENT_STRIP_IMAGE_SPEC.md) */}
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
@@ -745,31 +1094,30 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-green-800 mb-2">🎯 Featured Event Image Specifications</h3>
+              <h3 className="text-sm font-semibold text-green-800 mb-2">Featured Event Image — Home Page Event Strip</h3>
               <div className="text-sm text-green-700 space-y-2">
-                <p><strong>For Featured Event Images:</strong> Use 1920×1080px (16:9 aspect ratio) for optimal display in the featured events section.</p>
+                <p><strong>Where it appears:</strong> Home page → Live and Featured event strips → left column of each event card (70% width × 200px on desktop; full width × 192px on mobile). Image fills the slot and may be cropped (object-cover).</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                   <div>
-                    <p className="font-medium text-green-800">Optimal Dimensions:</p>
+                    <p className="font-medium text-green-800">Recommended specs:</p>
                     <ul className="text-xs space-y-1 mt-1">
-                      <li>• <strong>Desktop:</strong> 1920×1080px (16:9 ratio)</li>
-                      <li>• <strong>Mobile:</strong> 800×450px (16:9 ratio)</li>
-                      <li>• <strong>Format:</strong> WebP preferred, JPG acceptable</li>
-                      <li>• <strong>Quality:</strong> 85-90%</li>
-                      <li>• <strong>File Size:</strong> Under 500KB</li>
+                      <li>• <strong>Aspect:</strong> Landscape 4∶1 to 2∶1</li>
+                      <li>• <strong>Size:</strong> 1200×600px or 1600×400px (min 1200×400px)</li>
+                      <li>• <strong>Format:</strong> WebP preferred, JPEG acceptable</li>
+                      <li>• <strong>File size:</strong> Under 300 KB</li>
+                      <li>• <strong>Retina:</strong> 2400px on long side if possible</li>
                     </ul>
                   </div>
                   <div>
-                    <p className="font-medium text-green-800">Content Guidelines:</p>
+                    <p className="font-medium text-green-800">Content & safe zone:</p>
                     <ul className="text-xs space-y-1 mt-1">
-                      <li>• Event venue or activity in focus</li>
-                      <li>• Good lighting and vibrant colors</li>
-                      <li>• Horizontal composition preferred</li>
-                      <li>• Professional event photography style</li>
+                      <li>• Keep important content in the <strong>center 60%</strong></li>
+                      <li>• <strong>Top-left</strong> and <strong>bottom-right</strong> can be covered by &quot;Featured Event&quot; badge and Buy Tickets/Donate button</li>
+                      <li>• Event photo, flyer, or promotional graphic; good contrast beside the light right panel</li>
                     </ul>
                   </div>
                 </div>
-                <p className="text-xs text-green-600 mt-2 italic">16:9 aspect ratio ensures your featured event images fill the container perfectly without padding and look great on all screen sizes.</p>
+                <p className="text-xs text-green-600 mt-2 italic">Landscape 2∶1 or 4∶1 ensures the image fills the strip card without heavy cropping; center composition stays visible on all screen sizes.</p>
               </div>
             </div>
           </div>
@@ -843,12 +1191,16 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
               />
             </div>
 
-            {/* Choose Files Button */}
-            <div className="flex justify-center">
+            {/* Choose Files Buttons */}
+            <div className="flex justify-center gap-3 flex-wrap">
               <label className="relative cursor-pointer">
-                <span className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded shadow-sm border border-blue-700 transition-colors inline-block text-center min-w-[160px] flex items-center justify-center gap-2">
-                  <FaFolderOpen className="w-5 h-5" />
-                  Browse Files
+                <span className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                  </div>
+                  <span className="font-semibold text-blue-700">Browse Files</span>
                 </span>
                 <input
                   type="file"
@@ -858,7 +1210,34 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
                   accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.svg"
                 />
               </label>
+
+              <label className="relative cursor-pointer">
+                <span className="flex-shrink-0 h-14 rounded-xl bg-green-100 hover:bg-green-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                  </div>
+                  <span className="font-semibold text-green-700">Upload Folder</span>
+                </span>
+                <input
+                  type="file"
+                  {...({ webkitdirectory: '' } as any)}
+                  onChange={handleFolderChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.svg"
+                />
+              </label>
             </div>
+
+            {/* Info message about folder upload */}
+            {files && files.length > 0 && (
+              <div className="text-center mt-2">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold text-blue-600">{files.length} file{files.length !== 1 ? 's' : ''}</span> selected for upload
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Start Displaying From Date Field */}
@@ -877,6 +1256,26 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
             />
             <p className="text-sm text-gray-500 mt-1">Select the date when this media should start being displayed</p>
           </div>
+
+          {focusGroupOptions.length > 0 && (
+            <div className="mt-4 mb-4">
+              <label htmlFor="upload-focus-group" className="block text-sm font-medium text-gray-700 mb-2">
+                Focus group (optional)
+              </label>
+              <select
+                id="upload-focus-group"
+                value={eventFocusGroupId ?? ''}
+                onChange={e => setEventFocusGroupId(e.target.value === '' ? null : Number(e.target.value))}
+                className="border rounded px-3 py-2 border-gray-300"
+              >
+                <option value="">None</option>
+                {focusGroupOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>{opt.name}</option>
+                ))}
+              </select>
+              <p className="text-sm text-gray-500 mt-1">Associate this media with a focus group for this event</p>
+            </div>
+          )}
 
           <div className="custom-grid-table mt-2 mb-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
             <div className="custom-grid-cell">
@@ -952,6 +1351,11 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
                   </span>
                 </span>
                 <span className="mt-2 text-xs text-center select-none break-words max-w-[6rem]">Featured Event Image</span>
+                {isFeaturedEventImage && (
+                  <p className="mt-1.5 text-[10px] text-green-700 text-center max-w-[6rem] leading-tight" title="Home event strip: Use a landscape image (e.g. 1200×600px). Center important content; corners may be cropped or covered by overlays.">
+                    Tip: Landscape 1200×600px; center content; corners may be covered.
+                  </p>
+                )}
               </label>
             </div>
             <div className="custom-grid-cell">
@@ -1019,11 +1423,24 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
           </div>
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded shadow-sm border border-blue-700 transition-colors flex items-center gap-2 disabled:bg-blue-300 disabled:cursor-not-allowed"
+            className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             disabled={uploading}
+            title={uploading ? 'Uploading...' : 'Upload Images'}
+            aria-label={uploading ? 'Uploading...' : 'Upload Images'}
           >
-            <FaUpload className="w-5 h-5" />
-            {uploading ? 'Uploading...' : 'Upload Images'}
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+              {uploading ? (
+                <svg className="animate-spin w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              )}
+            </div>
+            <span className="font-semibold text-blue-700">{uploading ? 'Uploading...' : 'Upload Images'}</span>
           </button>
           {message && (
             <div className={`mt-4 text-2xl font-extrabold italic drop-shadow-sm tracking-wide ${message.includes('successful') ? 'text-green-600' : 'text-blue-700'}`}
@@ -1034,122 +1451,28 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
         </form>
       </div>
 
-      {/* Official Documents Table */}
-      <div className="mt-8">
-        <div className="mb-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded px-4 py-2">
-          Mouse over the first 2 columns (Title, Type) to see full details about the item. Use the × button to close the tooltip.
-        </div>
-        <h2 className="text-lg font-semibold mb-2">Official Documents</h2>
-        {officialDocsList.length === 0 ? (
-          <div className="text-gray-500">No official documents uploaded yet.</div>
-        ) : (
-          <div className="mb-8">
-            <table className="w-full border text-sm relative bg-white rounded shadow-md">
-              <thead>
-                <tr className="bg-blue-100 font-bold border-b-2 border-blue-300">
-                  <th className="p-2 border">Title</th>
-                  <th className="p-2 border">Type</th>
-                  <th className="p-2 border">Preview</th>
-                  <th className="p-2 border">Uploaded At</th>
-                  <th className="p-2 border">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pagedOfficialDocs.map((media) => {
-                  let officialDocPosition0 = 'right', officialDocPosition1 = 'right', officialDocPosition2 = 'right';
-                  // Calculate position for each cell
-                  // We'll use a ref and effect, but for simplicity, use mouse event
-                  return (
-                    <tr key={media.id} className="border-b border-gray-300 relative">
-                      <td
-                        className="p-2 border align-middle relative hover:bg-blue-50 cursor-pointer"
-                        onMouseEnter={e => handleCellMouseEnter(media, e, 'officialDocs')}
-                        onMouseLeave={handleCellMouseLeave}
-                      >
-                        {media.title}
-                      </td>
-                      <td
-                        className="p-2 border align-middle relative hover:bg-blue-50 cursor-pointer"
-                        onMouseEnter={e => handleCellMouseEnter(media, e, 'officialDocs')}
-                        onMouseLeave={handleCellMouseLeave}
-                      >
-                        {media.eventMediaType}
-                      </td>
-                      <td
-                        className="p-2 border align-middle text-center relative"
-                      >
-                        {media.fileUrl && media.contentType?.startsWith('image') && (
-                          <a href={media.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <img src={media.fileUrl.startsWith('http') ? media.fileUrl : `https://placehold.co/600x400?text=${media.title}`} alt={media.title || ''} className="w-16 h-16 object-cover rounded mx-auto" />
-                          </a>
-                        )}
-                        {media.fileUrl && media.contentType?.startsWith('video') && (
-                          <a href={media.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <video src={media.fileUrl.startsWith('http') ? media.fileUrl : `https://placehold.co/600x400?text=${media.title}`} controls className="w-24 h-16 rounded mx-auto" />
-                          </a>
-                        )}
-                        {media.fileUrl && !media.contentType?.startsWith('image') && !media.contentType?.startsWith('video') && (
-                          <a href={media.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
-                            {media.title || media.fileUrl}
-                          </a>
-                        )}
-                      </td>
-                      <td className="p-2 border align-middle">{media.createdAt ? new Date(media.createdAt).toLocaleString() : ''}</td>
-                      <td className="p-2 border align-middle flex gap-2 items-center justify-center">
-                        <button
-                          className="icon-btn icon-btn-edit flex flex-col items-center"
-                          title="Edit"
-                          onClick={() => {
-                            console.log('Edit icon clicked', media);
-                            setEditMedia(media);
-                          }}
-                        >
-                          <FaEdit />
-                          <span className="text-[10px] text-gray-600 mt-1">Edit</span>
-                        </button>
-                        <button
-                          className="icon-btn icon-btn-delete flex flex-col items-center"
-                          onClick={() => handleDelete(media.id!)}
-                          title="Delete"
-                        >
-                          <FaTrashAlt />
-                          <span className="text-[10px] text-gray-600 mt-1">Delete</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {/* Pagination for official docs */}
-            <div className="flex justify-between items-center mt-2">
-              <button
-                className="px-3 py-1 rounded bg-blue-100 border border-blue-300 text-blue-700 disabled:opacity-50"
-                onClick={() => setOfficialDocsPage(p => Math.max(0, p - 1))}
-                disabled={officialDocsPage === 0}
-              >
-                Previous
-              </button>
-              <span>Page {officialDocsPage + 1}</span>
-              <button
-                className="px-3 py-1 rounded bg-blue-100 border border-blue-300 text-blue-700 disabled:opacity-50"
-                onClick={() => setOfficialDocsPage(p => p + 1)}
-                disabled={!hasNextOfficialDocsPage}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Uploaded Media Table */}
       <div ref={uploadedMediaSectionRef} className="mt-8">
         <div className="mb-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded px-4 py-2">
           Mouse over the first 2 columns (Title, Type) to see full details about the item. Use the × button to close the tooltip.
         </div>
         <div className="mb-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Uploaded Media Files</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold text-gray-900">Uploaded Media Files</h2>
+            <Link
+              href={`/admin/events/${eventId}/media/list`}
+              className="flex-shrink-0 h-14 rounded-xl bg-yellow-100 hover:bg-yellow-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+              title="View Full Files List"
+              aria-label="View Full Files List"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-yellow-200 flex items-center justify-center">
+                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span className="font-semibold text-yellow-700">View Full Files List</span>
+            </Link>
+          </div>
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2">
               <input
@@ -1207,23 +1530,29 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
                         </div>
                       </div>
                     </div>
-                    <div className="p-4 pt-0 flex justify-end space-x-2">
+                    <div className="p-4 pt-0 flex justify-end gap-2">
                       <button
                         onClick={() => {
                           console.log('Edit icon clicked', media);
                           setEditMedia(media);
                         }}
-                        className="text-blue-500 hover:text-blue-700 p-2 rounded-full"
+                        className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center transition-all duration-300 hover:scale-110"
                         title="Edit Media"
+                        aria-label="Edit Media"
                       >
-                        <FaEdit size={20} />
+                        <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleDelete(media.id!)}
-                        className="text-red-500 hover:text-red-700 p-2 rounded-full"
+                        className="flex-shrink-0 w-14 h-14 rounded-xl bg-red-100 hover:bg-red-200 flex items-center justify-center transition-all duration-300 hover:scale-110"
                         title="Delete Media"
+                        aria-label="Delete Media"
                       >
-                        <FaTrashAlt size={20} />
+                        <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -1231,26 +1560,79 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
               })}
             </div>
 
-            {/* Pagination */}
-            <div className="flex justify-between items-center mt-8">
+            {/* Pagination Controls - Always visible, matching admin page style */}
+            {(() => {
+              const totalCount = filteredMediaList.length;
+              const totalPages = Math.ceil(totalCount / mediaPageSize) || 1;
+              const displayPage = mediaPage + 1; // Convert 0-based to 1-based for display
+              const currentPageZeroBased = mediaPage;
+              const startItem = totalCount > 0 ? currentPageZeroBased * mediaPageSize + 1 : 0;
+              const endItem = totalCount > 0 ? currentPageZeroBased * mediaPageSize + Math.min(mediaPageSize, totalCount - currentPageZeroBased * mediaPageSize) : 0;
+              const isPrevDisabled = currentPageZeroBased === 0;
+              const isNextDisabled = currentPageZeroBased >= totalPages - 1;
+
+              return (
+                <div className="mt-8">
+                  <div className="flex justify-between items-center">
+                    {/* Previous Button */}
               <button
                 onClick={() => setMediaPage(p => Math.max(0, p - 1))}
-                disabled={mediaPage === 0}
-                className="px-4 py-2 bg-blue-600 text-white font-semibold rounded shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      disabled={isPrevDisabled}
+                      className="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+                      title="Previous Page"
+                      aria-label="Previous Page"
+                      type="button"
               >
-                ← Previous
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span>Previous</span>
               </button>
-              <span className="text-sm font-semibold text-gray-700">
-                Page {mediaPage + 1} of {Math.ceil(filteredMediaList.length / mediaPageSize)}
+
+                    {/* Page Info */}
+                    <div className="px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
+                      <span className="text-sm font-bold text-blue-700">
+                        Page <span className="text-blue-600">{displayPage}</span> of <span className="text-blue-600">{totalPages}</span>
               </span>
+                    </div>
+
+                    {/* Next Button */}
               <button
                 onClick={() => setMediaPage(p => p + 1)}
-                disabled={!hasNextMediaPage}
-                className="px-4 py-2 bg-blue-600 text-white font-semibold rounded shadow hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      disabled={isNextDisabled}
+                      className="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md"
+                      title="Next Page"
+                      aria-label="Next Page"
+                      type="button"
               >
-                Next →
+                      <span>Next</span>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                      </svg>
               </button>
             </div>
+
+                  {/* Item Count Text */}
+                  <div className="text-center mt-3">
+                    {totalCount > 0 ? (
+                      <div className="inline-flex items-center px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
+                        <span className="text-sm text-gray-700">
+                          Showing <span className="font-bold text-blue-600">{startItem}</span> to <span className="font-bold text-blue-600">{endItem}</span> of <span className="font-bold text-blue-600">{totalCount}</span> media items
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 border-2 border-orange-300 rounded-lg shadow-sm">
+                        <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-sm font-medium text-orange-700">No media found</span>
+                        <span className="text-sm text-orange-600">[No media items match your criteria]</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -1271,6 +1653,66 @@ export function MediaClientPage({ eventId, mediaList: initialMediaList, eventDet
           onSave={handleEditSave}
         />
       )}
+      {/* Success Dialog */}
+      {showSuccessDialog && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
+          <div
+            className="bg-white rounded-lg shadow-xl p-8 min-w-[400px] max-w-md w-full mx-4 relative bg-green-50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setShowSuccessDialog(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+            >
+              <FaTimes className="w-5 h-5" />
+            </button>
+
+            {/* Content */}
+            <div className="flex flex-col items-center text-center space-y-4">
+              {/* Icon */}
+              <div className="bg-green-100 rounded-full p-4 flex items-center justify-center">
+                <FaCheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-xl font-semibold text-green-800">
+                Upload Successful!
+              </h3>
+
+              {/* Message */}
+              <div className="text-sm text-green-800 leading-relaxed">
+                <p>Your media files have been uploaded successfully.</p>
+                <p className="mt-2">New files appear in the list below.</p>
+              </div>
+
+              {/* OK Button */}
+              <button
+                onClick={() => setShowSuccessDialog(false)}
+                className="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedMedia(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Media"
+        message={`Are you sure you want to delete "${selectedMedia?.title || 'this media item'}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

@@ -1,0 +1,32 @@
+# Gas Station AI COO — Site Type Documentation
+
+Feasibility assessment and database design for onboarding gas-station / convenience-store clients (the "AI Gas Station COO" concept from `E:\Categories\Categories\Software_Projects\Gas_Station_AI`) as `GAS_STATION` tenants in this platform.
+
+| Document | Contents |
+|---|---|
+| [`gas_station_site_feasibility.md`](gas_station_site_feasibility.md) | Verdict, architecture split (platform vs external AI engine), two-layer site-type mapping, schema summary, **multi-station (chain) design** (section 4.4), backend/frontend plan, iterative loops, risks |
+| [`migrations/001_gas_station_site.sql`](migrations/001_gas_station_site.sql) | Incremental DDL against `Latest_Schema_Post__Blob_Claude_12.sql`: `GAS_STATION` in `site_type` enum, `tenant_settings` engine-config columns, and 4 new tables (`gas_station_location`, `gas_station_integration`, `gas_station_daily_metrics`, `gas_station_recommendation`) |
+| [`gas_station_subscription_billing.md`](gas_station_subscription_billing.md) | Per-location subscription requirement (graduated volume tiers, location selection), Stripe vs Zoho/Chargebee/Paddle analysis, ACH support, billing dashboard spec |
+| [`gas_station_ai_engine_prd.html`](gas_station_ai_engine_prd.html) | **External AI engine PRD** — connectors, ML training, LLM agent, service JWT write-back, implementation phases & effort estimates |
+| [`gas_station_ai_engine_workflow.excalidraw`](gas_station_ai_engine_workflow.excalidraw) | High-level Excalidraw diagram: store systems → AI engine → platform API → owner dashboard |
+| [`migrations/002_gas_station_billing.sql`](migrations/002_gas_station_billing.sql) | `tenant_organization.stripe_subscription_id` + `gas_station_location.included_in_subscription` |
+| [`videos/`](videos/) | **HeyGen video package** — start at [`gas_station_video_package_overview.html`](videos/gas_station_video_package_overview.html) |
+| [`videos/generated/decks/gas-station-coo-developer-architecture.pptx`](videos/generated/decks/gas-station-coo-developer-architecture.pptx) | **Developer architecture PowerPoint** (platform ↔ REST API ↔ UI). Regenerate: `python scripts/heygen/create-developer-architecture-pptx.py` |
+| [`videos/generated/decks/gas-station-coo-ai-engine-implementation.pptx`](videos/generated/decks/gas-station-coo-ai-engine-implementation.pptx) | **AI engine implementation PowerPoint** (components, training, deployment, **LLM/Bedrock/RAG/MCP**, scale, **+ Excalidraw diagram slides**). Regenerate: `python scripts/heygen/create-ai-engine-pptx.py` |
+| [`videos/generated/diagrams/`](videos/generated/diagrams/) | **Simplified Excalidraw diagrams** (13 scenarios). **Connectivity:** `12-platform-engine-bedrock-connectivity`, `13-engine-bedrock-io-multicall`. Regenerate: `python scripts/heygen/ai_engine_excalidraw_diagrams.py` |
+| [`videos/gas_station_video_production_guide.html`](videos/gas_station_video_production_guide.html) | Tool choice, pilot vendors, episode map, asset checklist |
+| [`videos/gas_station_video_scripts_investor.html`](videos/gas_station_video_scripts_investor.html) | Investor scripts — full ~30 min + 6-episode series |
+| [`videos/gas_station_video_scripts_developer.html`](videos/gas_station_video_scripts_developer.html) | Developer scripts — full ~35 min + 8-episode series |
+
+**Core decision:** client management, subscription billing, and the daily dashboard UI live in this platform; data connectors, forecasting models, and the LLM run in a separately deployed AI engine that writes curated results back through the tenant-scoped REST API.
+
+## Implementation status (2026-07-03)
+
+| Layer | Status |
+|---|---|
+| Canonical schema (`Latest_Schema_Post__Blob_Claude_12.sql`) | ✅ site_type incl. GAS_STATION, tenant_settings gas + profile columns, 4 gas tables + 5 profile tables, sequences + setvals folded in |
+| Backend (`event-site-manager-service`) | ✅ SiteType enum, TenantSettings gas fields, 4 vertical slices (entity/repo/service/criteria/queryService/DTO/mapper/resource), Liquibase `20260703130000_gas_station_module.xml` |
+| Frontend types + proxy | ✅ `src/types/gasStation.ts`, GAS_STATION in `TenantSiteType`, 4 proxy route pairs under `src/pages/api/proxy/gas-station-*` |
+| Tenant-management UI | ✅ Site Type dropdown on org form (presets auto-applied on change), profile section toggles + Gas Station AI Engine config in settings form |
+| Admin module `/admin/gas-station` | ✅ Daily brief dashboard (date + station switcher with All-stations rollup, chain-level recs first, Accept/Dismiss/Done + feedback), Stations CRUD, Integrations registry, Compare view; hub tile gated by `enableGasStationModule` |
+| External AI engine | ⬜ Separate project — writes back via `/api/gas-station-daily-metrics` and `/api/gas-station-recommendations` with a service JWT |

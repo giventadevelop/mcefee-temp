@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { FaSave, FaBan, FaUpload, FaEye } from 'react-icons/fa';
 import type { TenantOrganizationDTO, TenantOrganizationFormDTO } from '@/app/admin/tenant-management/types';
+import { normalizeWebsiteUrl } from '@/lib/formatAddress';
 
 interface TenantOrganizationFormProps {
   initialData?: TenantOrganizationDTO;
@@ -40,6 +41,15 @@ export default function TenantOrganizationForm({
       logoUrl: initialData?.logoUrl || '',
       contactEmail: initialData?.contactEmail || '',
       contactPhone: initialData?.contactPhone || '',
+      description: initialData?.description || '',
+      addressLine1: initialData?.addressLine1 || '',
+      addressLine2: initialData?.addressLine2 || '',
+      city: initialData?.city || '',
+      stateProvince: initialData?.stateProvince || '',
+      zipCode: initialData?.zipCode || '',
+      country: initialData?.country || '',
+      websiteUrl: initialData?.websiteUrl || '',
+      siteType: initialData?.siteType || 'EVENT_ORG',
       subscriptionPlan: initialData?.subscriptionPlan || '',
       subscriptionStatus: initialData?.subscriptionStatus || '',
       subscriptionStartDate: initialData?.subscriptionStartDate || '',
@@ -52,6 +62,7 @@ export default function TenantOrganizationForm({
 
   // Watch form values for real-time updates
   const watchedValues = watch();
+  const descriptionValue = watch('description') || '';
 
   // Set logo preview when initial data changes
   useEffect(() => {
@@ -80,7 +91,8 @@ export default function TenantOrganizationForm({
       // For now, we'll just use the existing logoUrl or empty string
       const formData = {
         ...data,
-        logoUrl: logoPreview || data.logoUrl || ''
+        logoUrl: logoPreview || data.logoUrl || '',
+        websiteUrl: data.websiteUrl ? normalizeWebsiteUrl(data.websiteUrl) : '',
       };
 
       await onSubmit(formData);
@@ -233,6 +245,174 @@ export default function TenantOrganizationForm({
                 <p className="mt-1 text-sm text-red-600">{errors.contactPhone.message}</p>
               )}
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Site Type
+              </label>
+              <select
+                {...register('siteType')}
+                className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+              >
+                <option value="EVENT_ORG">Event Organization</option>
+                <option value="SPORTS_TEAM">Sports Team</option>
+                <option value="MUSIC_BAND">Music Band</option>
+                <option value="CHURCH_ORG">Church Organization</option>
+                <option value="PERSONAL_PROFILE">Personal Profile</option>
+                <option value="HYBRID">Hybrid (Profile + Events)</option>
+                <option value="GAS_STATION">Gas Station (AI COO)</option>
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Changing the site type re-applies the matching homepage section presets to tenant settings
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="border-b border-gray-200 pb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Description</h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Organization Description
+            </label>
+            <textarea
+              {...register('description', {
+                maxLength: {
+                  value: 1000,
+                  message: 'Description must be 1000 characters or less',
+                },
+              })}
+              rows={5}
+              maxLength={1000}
+              className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+              placeholder="Brief about the organization (shown on About pages and admin reference)"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              {descriptionValue.length}/1000 characters
+            </p>
+            {errors.description && (
+              <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Address Information */}
+        <div className="border-b border-gray-200 pb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Address Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address Line 1
+              </label>
+              <input
+                type="text"
+                {...register('addressLine1', {
+                  maxLength: { value: 255, message: 'Address line 1 must be 255 characters or less' },
+                })}
+                className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                placeholder="123 Main Street"
+              />
+              {errors.addressLine1 && (
+                <p className="mt-1 text-sm text-red-600">{errors.addressLine1.message}</p>
+              )}
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address Line 2
+              </label>
+              <input
+                type="text"
+                {...register('addressLine2', {
+                  maxLength: { value: 255, message: 'Address line 2 must be 255 characters or less' },
+                })}
+                className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                placeholder="Suite 100 (optional)"
+              />
+              {errors.addressLine2 && (
+                <p className="mt-1 text-sm text-red-600">{errors.addressLine2.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+              <input
+                type="text"
+                {...register('city', {
+                  maxLength: { value: 255, message: 'City must be 255 characters or less' },
+                })}
+                className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                placeholder="Dallas"
+              />
+              {errors.city && (
+                <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                State / Province
+              </label>
+              <input
+                type="text"
+                {...register('stateProvince', {
+                  maxLength: { value: 255, message: 'State/Province must be 255 characters or less' },
+                })}
+                className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                placeholder="TX"
+              />
+              {errors.stateProvince && (
+                <p className="mt-1 text-sm text-red-600">{errors.stateProvince.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                ZIP / Postal Code
+              </label>
+              <input
+                type="text"
+                {...register('zipCode', {
+                  maxLength: { value: 20, message: 'ZIP code must be 20 characters or less' },
+                })}
+                className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                placeholder="75201"
+              />
+              {errors.zipCode && (
+                <p className="mt-1 text-sm text-red-600">{errors.zipCode.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+              <input
+                type="text"
+                {...register('country', {
+                  maxLength: { value: 100, message: 'Country must be 100 characters or less' },
+                })}
+                className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                placeholder="United States"
+              />
+              {errors.country && (
+                <p className="mt-1 text-sm text-red-600">{errors.country.message}</p>
+              )}
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Website URL</label>
+              <input
+                type="text"
+                {...register('websiteUrl', {
+                  maxLength: { value: 1024, message: 'Website URL must be 1024 characters or less' },
+                })}
+                onBlur={(e) => {
+                  const normalized = normalizeWebsiteUrl(e.target.value);
+                  if (normalized !== e.target.value) {
+                    setValue('websiteUrl', normalized);
+                  }
+                }}
+                className="mt-1 block w-full border border-gray-400 rounded-xl focus:border-blue-500 focus:ring-blue-500 px-4 py-3 text-base"
+                placeholder="https://www.example.org"
+              />
+              {errors.websiteUrl && (
+                <p className="mt-1 text-sm text-red-600">{errors.websiteUrl.message}</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -270,10 +450,14 @@ export default function TenantOrganizationForm({
               />
               <label
                 htmlFor="logo-upload"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2 cursor-pointer"
+                className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 cursor-pointer"
+                title="Upload Logo"
+                aria-label="Upload Logo"
               >
-                <FaUpload />
-                Upload Logo
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                  <FaUpload className="w-6 h-6 text-blue-600" />
+                </div>
+                <span className="font-semibold text-blue-700">Upload Logo</span>
               </label>
               {logoPreview && (
                 <div className="flex items-center gap-2">
@@ -420,18 +604,32 @@ export default function TenantOrganizationForm({
           <button
             type="button"
             onClick={onCancel}
-            className="bg-teal-100 hover:bg-teal-200 text-teal-800 px-4 py-2 rounded-md flex items-center gap-2"
+            className="flex-shrink-0 h-14 rounded-xl bg-red-100 hover:bg-red-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+            title="Cancel"
+            aria-label="Cancel"
           >
-            <FaBan />
-            Cancel
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-200 flex items-center justify-center">
+              <FaBan className="w-6 h-6 text-red-600" />
+            </div>
+            <span className="font-semibold text-red-700">Cancel</span>
           </button>
           <button
             type="submit"
             disabled={isSubmitting || loading}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6 disabled:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            title={isSubmitting || loading ? 'Saving...' : mode === 'create' ? 'Create Organization' : 'Update Organization'}
+            aria-label={isSubmitting || loading ? 'Saving...' : mode === 'create' ? 'Create Organization' : 'Update Organization'}
           >
-            <FaSave />
-            {isSubmitting || loading ? 'Saving...' : mode === 'create' ? 'Create Organization' : 'Update Organization'}
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+              {isSubmitting || loading ? (
+                <FaSave className="w-6 h-6 text-blue-600 animate-spin" />
+              ) : (
+                <FaSave className="w-6 h-6 text-blue-600" />
+              )}
+            </div>
+            <span className="font-semibold text-blue-700">
+              {isSubmitting || loading ? 'Saving...' : mode === 'create' ? 'Create Organization' : 'Update Organization'}
+            </span>
           </button>
         </div>
       </form>

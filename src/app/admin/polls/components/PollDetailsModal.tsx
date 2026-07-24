@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, BarChart3, Users, MessageSquare, Calendar, Settings } from 'lucide-react';
+import { BarChart3, Users, MessageSquare, Calendar, Settings } from 'lucide-react';
 import type { EventPollDTO, EventPollOptionDTO, EventPollResponseDTO } from '@/types';
 import { fetchEventPollResponsesServer } from '../ApiServerActions';
 
@@ -84,19 +83,14 @@ export function PollDetailsModal({ poll, options, onClose }: PollDetailsModalPro
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">{poll.title}</h2>
-              <div className="flex items-center space-x-2 mt-2">
-                {getStatusBadge()}
-                <span className="text-sm text-gray-500">
-                  {responses.length} response{responses.length !== 1 ? 's' : ''}
-                </span>
-              </div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold">{poll.title}</h2>
+            <div className="flex items-center space-x-2 mt-2">
+              {getStatusBadge()}
+              <span className="text-sm text-gray-500">
+                {responses.length} response{responses.length !== 1 ? 's' : ''}
+              </span>
             </div>
-            <Button variant="outline" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -242,9 +236,20 @@ export function PollDetailsModal({ poll, options, onClose }: PollDetailsModalPro
           )}
 
           <div className="flex justify-end mt-6">
-            <Button onClick={onClose}>
-              Close
-            </Button>
+            <button
+              onClick={onClose}
+              className="flex-shrink-0 h-14 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+              title="Close"
+              aria-label="Close"
+              type="button"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <span className="font-semibold text-gray-700">Close</span>
+            </button>
           </div>
         </div>
       </div>

@@ -74,7 +74,9 @@ export default function ImageUpload({
         apiUrl = `/api/proxy/event-medias/upload/${entityType}?eventId=${eventId}&entityId=${entityId}&imageType=${imageType}&title=${imageType}&description=Uploaded image&tenantId=${defaultTenantId}&isPublic=true`;
       } else if (entityType === 'sponsor') {
         // Sponsor uses dedicated proxy endpoint
-        apiUrl = `/api/proxy/event-medias/upload/${entityType}?eventId=${eventId}&entityId=${entityId}&imageType=${imageType}&title=${imageType}&description=Uploaded image&tenantId=${defaultTenantId}&isPublic=true`;
+        // Note: eventId can be 0 for main sponsors page (sponsors not yet associated with events)
+        // The backend should handle eventId=0 gracefully
+        apiUrl = `/api/proxy/event-medias/upload/${entityType}?eventId=${eventId || 0}&entityId=${entityId}&imageType=${imageType}&title=${imageType}&description=Uploaded image&tenantId=${defaultTenantId}&isPublic=true`;
       } else {
         // Fallback for other entity types (if any)
         apiUrl = `/api/proxy/event-medias/upload/${entityType}/${entityId}/${imageType}?eventId=${eventId}&title=${imageType}&description=Uploaded image&tenantId=${defaultTenantId}&isPublic=true`;

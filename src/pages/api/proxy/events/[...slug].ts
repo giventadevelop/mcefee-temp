@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
 import { EventDTO } from '@/types';
-import { getAppUrl } from '@/lib/env';
+import { getAppUrl, getApiBaseUrl } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 async function fetchWithJwtRetry(apiUrl: string, options: any = {}, debugLabel = '') {
   console.log('[fetchWithJwtRetry] Called with:', { apiUrl, debugLabel });

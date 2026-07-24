@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const INPUT_FILE = 'dump-giventa_event_management-202506240024_pre_tenant_id_with_insert_data.sql';
-const OUTPUT_FILE = 'dump-giventa_event_management-202506240024_pre_tenant_id_with_insert_data.ordered.sql';
+// Use path.join to ensure correct path resolution regardless of where script is run from
+const SCRIPT_DIR = __dirname;
+const INPUT_FILE = path.join(SCRIPT_DIR, 'export.sql');
+const OUTPUT_FILE = path.join(SCRIPT_DIR, 'corrected_event_media_inserts.ordered.sql');
 
 const TABLE_ORDER = [
   'event_type_details',
@@ -16,6 +18,12 @@ const TABLE_ORDER = [
   'event_calendar_entry',
   'event_live_update',
   'event_live_update_attachment',
+  'event_sponsors',      // parent of event_media.sponsor_id (fk_event_media_sponsor_id)
+  'event_sponsors_join',
+  'gallery_category', // parent of gallery_album.gallery_category_id (fk_gallery_album_category)
+  'gallery_album',   // parent of event_media.album_id (fk_event_media_album_id)
+  'official_document_category', // parent of event_media.official_document_category_id (fk_event_media_official_document_category_id); see Latest_Schema_Post__Blob_Claude_12.sql
+  'official_document_year_bundle', // parent rows for year bundles; must precede event_media rows that reference bundles
   'event_media',
   'event_organizer',
   'event_poll',
@@ -26,10 +34,22 @@ const TABLE_ORDER = [
   'discount_code',
   'event_ticket_type',
   'event_ticket_transaction',
+  'event_ticket_transaction_item',
   'qr_code_usage',
-  'rel_event_detailsdiscount_codes',
+  'rel_event_details__discount_codes',
   'tenant_organization',
   'tenant_settings',
+  'tenant_email_addresses',
+  'satellite_domain',
+  'public_profile', // FK tenant_organization + user_profile (personal profile site type)
+  'profile_writing',
+  'profile_achievement',
+  'profile_affiliation',
+  'profile_media_asset',
+  'gas_station_location', // FK tenant_organization; parent of the other gas_station_* tables
+  'gas_station_integration',
+  'gas_station_daily_metrics',
+  'gas_station_recommendation',
   'user_payment_transaction',
   'user_subscription',
   'user_task',
@@ -37,17 +57,61 @@ const TABLE_ORDER = [
   'event_emails',
   'event_featured_performers',
   'event_program_directors',
-  'event_sponsors',
-  'event_sponsors_join',
   'executive_committee_team_members',
+  'event_recurrence_series',
+  'focus_group',
+  'focus_group_members',
+  'event_focus_groups',
+  'membership_plan',
+  'membership_subscription',
+  'payment_provider_config',
+  'promotion_email_template',
+  'promotion_email_sent_log',
+  'manual_payment_request',
+  'manual_payment_summary_report',
+  'clerk_organization_role',
+  'batch_job_instance',
+  'batch_job_execution',
+  'batch_job_execution_context',
+  'batch_job_execution_params',
+  'batch_step_execution',
+  'batch_step_execution_context',
+  'batch_job_execution_log',
   'bulk_operation_log',
   'databasechangelog',
   'databasechangeloglock',
 ];
 
 function main() {
-  // Read the input file
-  const sql = fs.readFileSync(INPUT_FILE, 'utf8');
+  // Check if input file exists
+  if (!fs.existsSync(INPUT_FILE)) {
+    console.error(`❌ Error: Input file not found: ${INPUT_FILE}`);
+    console.error(`   Please ensure the file exists in the same directory as this script.`);
+    process.exit(1);
+  }
+
+  console.log(`📁 Reading input file: ${INPUT_FILE}`);
+
+  // Read the file as buffer first to detect encoding
+  const buffer = fs.readFileSync(INPUT_FILE);
+
+  // Check for UTF-16 LE BOM (FF FE)
+  let sql;
+  if (buffer.length >= 2 && buffer[0] === 0xFF && buffer[1] === 0xFE) {
+    // UTF-16 LE encoding
+    sql = buffer.toString('utf16le').slice(1); // Remove BOM
+  } else if (buffer.length >= 3 && buffer[0] === 0xEF && buffer[1] === 0xBB && buffer[2] === 0xBF) {
+    // UTF-8 BOM
+    sql = buffer.toString('utf8').slice(1);
+  } else {
+    // Try UTF-8 first, fallback to UTF-16 LE if it looks like UTF-16
+    sql = buffer.toString('utf8');
+    // Check if it looks like UTF-16 (every other byte is 0)
+    if (sql.length > 0 && sql.charCodeAt(0) === 0 && sql.charCodeAt(1) !== 0) {
+      sql = buffer.toString('utf16le');
+    }
+  }
+
   const lines = sql.split(/\r?\n/);
 
   // Parse complete INSERT statements (multi-line)
@@ -56,10 +120,12 @@ function main() {
   let inInsertStatement = false;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    // Remove \r characters that might interfere with matching
+    let line = lines[i].replace(/\r/g, '');
 
     // Check if this line starts an INSERT statement
-    if (line.match(/^INSERT INTO public\.([a-zA-Z0-9_]+) /)) {
+    const insertMatch = line.match(/^INSERT INTO public\.([a-zA-Z0-9_]+) /);
+    if (insertMatch) {
       // If we were already building a statement, save it
       if (currentStatement.trim()) {
         insertStatements.push(currentStatement.trim());
@@ -68,6 +134,13 @@ function main() {
       // Start new INSERT statement
       currentStatement = line;
       inInsertStatement = true;
+
+      // Check if this single-line INSERT statement ends with semicolon
+      if (line.trim().endsWith(';')) {
+        insertStatements.push(currentStatement.trim());
+        currentStatement = '';
+        inInsertStatement = false;
+      }
     } else if (inInsertStatement) {
       // Continue building the current INSERT statement
       currentStatement += '\n' + line;
@@ -98,6 +171,26 @@ function main() {
         tableInserts[table] = [];
       }
       tableInserts[table].push(statement);
+    }
+  }
+
+  // Deduplicate by primary key (first value in VALUES) for tables that can have duplicate ids in export
+  const TABLES_DEDUPE_BY_ID = ['satellite_domain'];
+  const valuesIdRegex = /VALUES\s*\(\s*(\d+)/;
+  for (const table of TABLES_DEDUPE_BY_ID) {
+    if (!tableInserts[table] || tableInserts[table].length <= 1) continue;
+    const byId = new Map(); // id -> statement (last occurrence wins)
+    for (const stmt of tableInserts[table]) {
+      const m = stmt.match(valuesIdRegex);
+      const id = m ? m[1] : null;
+      if (id != null) byId.set(id, stmt);
+      else byId.set(stmt, stmt);
+    }
+    const before = tableInserts[table].length;
+    tableInserts[table] = Array.from(byId.values());
+    const after = tableInserts[table].length;
+    if (before > after) {
+      console.log(`   • Deduplicated ${table}: ${before} → ${after} insert(s) by id`);
     }
   }
 
@@ -145,6 +238,12 @@ function main() {
   // Write the reordered SQL to output file
   const outputContent = output.join('\n\n') + '\n';
   fs.writeFileSync(OUTPUT_FILE, outputContent, 'utf8');
+
+  console.log(`✅ Success! Output written to: ${OUTPUT_FILE}`);
+  console.log(`📊 Summary:`);
+  console.log(`   • Total INSERT statements: ${insertStatements.length}`);
+  console.log(`   • Tables found: ${allTables.join(', ')}`);
+  console.log(`   • Extra tables (not in order): ${extraTables.length > 0 ? extraTables.join(', ') : 'none'}`);
 }
 
 // Run the script

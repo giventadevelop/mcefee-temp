@@ -1,33 +1,52 @@
 // Satellite domain - redirect to primary domain for authentication
-// Primary domain - show Clerk component with redirect_url handling
 // For localhost - show Clerk component directly for development
+// For primary domain (event-site-manager.com) - show Clerk SignIn and honor redirect_url for satellite return
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { SignIn } from '@clerk/nextjs';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth, useClerk, useUser } from '@clerk/nextjs';
 import { bootstrapUserProfile } from '@/components/ProfileBootstrapperApiServerActions';
+import { isPrimaryHostname, isSatelliteHostname } from '@/lib/clerkSatellite';
 
 export default function SignInPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const clerk = useClerk();
+  const [shouldRedirect, setShouldRedirect] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return false;
+    if (isPrimaryHostname(hostname)) return false;
+    return isSatelliteHostname(hostname);
+  });
   const [isLocalhost, setIsLocalhost] = useState(false);
-  const [isPrimaryDomain, setIsPrimaryDomain] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { isSignedIn, userId, isLoaded } = useAuth();
   const { user } = useUser();
 
-  // Get redirect_url from query parameters (for satellite domain redirects)
-  const redirectUrl = searchParams?.get('redirect_url') || '/';
+  // redirect_url from query (e.g. https://www.mosc-temp.com when returning to satellite after sign-in)
+  const redirectUrlFromQuery = searchParams?.get('redirect_url') ?? null;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // After sign-in completes locally, bootstrap tenant-scoped profile (upsert)
-    if (isLoaded && isSignedIn && userId) {
-      bootstrapUserProfile({ userId, user }).catch(() => { });
+    if (isLoaded && isSignedIn && userId && user) {
+      bootstrapUserProfile({
+        userId,
+        userData: {
+          email: user.emailAddresses?.[0]?.emailAddress || undefined,
+          firstName: user.firstName || undefined,
+          lastName: user.lastName || undefined,
+          imageUrl: user.imageUrl || undefined,
+        },
+      }).catch(() => { });
     }
 
-    // Check if we're on a satellite domain
+    // Check if we're on a satellite domain (primary domain must always show Clerk SignIn)
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
 
@@ -37,22 +56,21 @@ export default function SignInPage() {
         return;
       }
 
-      // If on satellite domain, redirect to primary domain with return URL
-      if (hostname.includes('mcefee-temp.com')) {
-        setShouldRedirect(true);
-        // Get the current URL to return to after authentication
-        const currentUrl = window.location.origin;
+      if (isPrimaryHostname(hostname)) {
+        return; // Primary domain: do not set shouldRedirect; fall through to render <SignIn />
+      }
 
-        // Redirect to primary domain with redirect_url parameter
-        // Clerk will redirect back to this URL after successful authentication
-        const redirectUrl = `https://www.event-site-manager.com/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`;
-        window.location.href = redirectUrl;
-      } else {
-        // We're on the primary domain (event-site-manager.com)
-        setIsPrimaryDomain(true);
+      if (isSatelliteHostname(hostname)) {
+        setShouldRedirect(true);
+        // Use Clerk's redirectToSignIn — it reads isSatellite/domain/signInUrl from
+        // the ClerkProvider and adds __clerk_satellite_url so the primary returns
+        // here with a __clerk_handshake token that establishes the satellite session.
+        // A plain window.location.href to ?redirect_url=... skips that handshake and
+        // leaves the satellite with __client_uat=0 forever.
+        clerk.redirectToSignIn({ redirectUrl: window.location.origin });
       }
     }
-  }, [isLoaded, isSignedIn, userId, user]);
+  }, [clerk]);
 
   // Show Clerk component for localhost development
   if (isLocalhost) {
@@ -62,7 +80,10 @@ export default function SignInPage() {
           <h1 className="text-4xl font-bold text-center text-gray-900">Sign In</h1>
           <p className="text-sm text-gray-500 text-center mt-2">(Development Mode)</p>
         </div>
-        <SignIn />
+        <SignIn
+          routing="path"
+          path="/sign-in"
+        />
       </main>
     );
   }
@@ -79,20 +100,32 @@ export default function SignInPage() {
     );
   }
 
-  // Show Clerk component for primary domain with redirect URL handling
-  if (isPrimaryDomain) {
-    console.log('[SignInPage] 📍 Primary domain - Redirect URL:', redirectUrl);
+  // Primary domain (e.g. event-site-manager.com): show Clerk SignIn so the page is not blank.
+  // When opened with ?redirect_url=https://www.mosc-temp.com (from satellite), pass it so Clerk redirects back after sign-in.
+  if (!mounted) {
     return (
-      <main className="flex flex-col items-center justify-center flex-1 py-2">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-center text-gray-900">Welcome Back</h1>
-          <p className="mt-2 text-center text-gray-600">Sign in to continue</p>
-        </div>
-        <SignIn redirectUrl={redirectUrl} />
+      <main className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
       </main>
     );
   }
 
-  // Default: show nothing (will determine redirect/component in useEffect)
-  return null;
+  const afterSignInRedirect = redirectUrlFromQuery && redirectUrlFromQuery.startsWith('http') ? redirectUrlFromQuery : '/';
+
+  return (
+    <main className="flex flex-col items-center justify-center flex-1 py-2">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-center text-gray-900">Sign In</h1>
+        {redirectUrlFromQuery && (
+          <p className="text-sm text-gray-500 text-center mt-2">You will be returned to the site after signing in.</p>
+        )}
+      </div>
+      <SignIn
+        routing="path"
+        path="/sign-in"
+        redirectUrl={afterSignInRedirect}
+        signUpUrl={process.env.NEXT_PUBLIC_PRIMARY_DOMAIN ? `https://${process.env.NEXT_PUBLIC_PRIMARY_DOMAIN}/sign-up` : '/sign-up'}
+      />
+    </main>
+  );
 }

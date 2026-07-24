@@ -61,7 +61,7 @@ alwaysApply: true
     ```
 
 - **JWT handling**
-  - Use `fetchWithJwtRetry` for all backend calls, ensuring robust authentication and retry logic
+  - Use `fetchWithJwtRetry` **from `@/lib/proxyHandler`** for all backend calls (it adds **`Authorization`** and **`X-Tenant-ID`**; see **X-Tenant-ID for tenant-scoped backend APIs** below). Older inline examples may omit `X-Tenant-ID` — do not copy them for direct backend URLs.
   - Do not call backend APIs directly with fetch; always use the helper
   - Example:
     ```typescript
@@ -503,29 +503,24 @@ alwaysApply: true
   - See `src/pages/api/proxy/event-ticket-transactions/[...slug].ts` for a working example.
   - See `src/pages/api/proxy/discount-codes/[...slug].ts` for the required fix.
 
-- **Port-Agnostic App URL Configuration**
-  - Use `getAppUrl()` from `@/lib/env` instead of hardcoded URLs for server-side API calls.
-  - This ensures the application works on any port (3000, 3001, etc.) without hardcoding.
-  - **DO:**
-    ```typescript
-    import { getAppUrl } from '@/lib/env';
-    const baseUrl = getAppUrl();
-    const response = await fetch(`${baseUrl}/api/proxy/event-details`);
-    ```
-  - **DON'T:**
-    ```typescript
-    // ❌ DON'T: Hardcode port numbers
-    const baseUrl = 'http://localhost:3000';
-    // ❌ DON'T: Use environment variable with hardcoded fallback
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    ```
-  - **Rationale:**
-    - Makes the application truly port-agnostic
-    - Supports development on any port (3000, 3001, 3002, etc.)
-    - Maintains compatibility with production environment variables
+- **App URL and fetch targets (client vs server) — use the right base**
+  - **Browser / `'use client'` calling `/api/proxy/*` (public data): use same-origin relative URLs**
+    - **DO:** `fetch('/api/proxy/executive-committee-team-members?isActive.equals=true&sort=priorityOrder,asc', { ... })`
+    - **DON'T:** `const baseUrl = getAppUrl(); fetch(\`${baseUrl}/api/proxy/...\`)` from the browser.
+    - **Why:** `getAppUrl()` often resolves to `http://localhost:3000` while the tab may be `http://127.0.0.1:3001` (or another host/port). Browsers treat those as **different origins** → CORS / `TypeError: Failed to fetch` even though the proxy works. Relative paths always hit the current tab’s origin.
+    - **Do NOT add `tenantId.equals` in the query** when calling the proxy; `createProxyHandler` injects it for list GETs (see rule above).
+    - **References:** `src/components/TeamSection.tsx`, `src/components/OurSponsorsSection.tsx`, `src/components/TenantSettingsProvider.tsx`
+  - **Server code calling the backend API directly (server components, server actions, `ApiServerActions.ts`): use `getApiBaseUrl()` + `fetchWithJwtRetry`**
+    - **DO:** `await fetchWithJwtRetry(\`${getApiBaseUrl()}/api/resource?tenantId.equals=${getTenantId()}&...\`, { cache: 'no-store' })` (add `tenantId.equals` when the backend criteria require it; `fetchWithJwtRetry` adds `Authorization` and `X-Tenant-ID`).
+    - **DON'T:** Loop through the Next app with `getAppUrl() + '/api/proxy/...'` from server code unless you have a specific reason (extra hop, wrong port if env is stale).
+    - **References:** `src/app/admin/executive-committee/ApiServerActions.ts`, `src/app/admin/event-sponsors/ApiServerActions.ts`, `src/lib/proxyHandler.ts`
+  - **Server code that must call this Next app (e.g. multipart upload to a Pages API route): prefer request host, then env**
+    - **DO:** `import { headers } from 'next/headers'` → build `proto://host` from `x-forwarded-host` / `host` and `x-forwarded-proto` when possible (matches actual dev port and deployment host).
+    - **Fallback:** `getAppUrl()` from `@/lib/env` when not in a request context — never hardcode `http://localhost:3000` in application code.
+  - **Legacy `getAppUrl()` note**
+    - `getAppUrl()` remains correct for **absolute links**, emails, QR bases, and **server→Next** when `headers()` is unavailable — not for **browser→proxy** fetches.
   - **References:**
-    - See `src/app/page.tsx` for correct usage
-    - See `src/lib/env.ts` for the `getAppUrl()` implementation
+    - See `src/lib/env.ts` for `getAppUrl()` and `getApiBaseUrl()`
 
 - **Graceful API Failure Handling**
   - Always handle API fetch failures gracefully in server components to prevent page crashes.
@@ -570,14 +565,13 @@ alwaysApply: true
   - **Rationale:** Server actions called from client components can trigger `headers()` without awaiting, causing runtime errors in Next.js 15+.
   - **DO:**
     ```typescript
-    // ✅ DO: Use direct fetch to proxy endpoints from client components on public pages
+    // ✅ DO: Same-origin relative URL to /api/proxy/* from client on public pages (no getAppUrl in browser)
     'use client';
     export function TeamSection() {
       useEffect(() => {
         const loadData = async () => {
-          const baseUrl = getAppUrl();
           const response = await fetch(
-            `${baseUrl}/api/proxy/executive-committee-team-members?isActive.equals=true&sort=priorityOrder,asc`,
+            '/api/proxy/executive-committee-team-members?isActive.equals=true&sort=priorityOrder,asc',
             {
               method: 'GET',
               headers: { 'Content-Type': 'application/json' },
@@ -593,6 +587,9 @@ alwaysApply: true
       }, []);
     }
     ```
+  - **Also normalize API shape:** backends may return HAL `_embedded` or Spring `content` instead of a bare array — parse before `setData` (see `src/lib/parseExecutiveCommitteeTeamMembersResponse.ts`).
+  - **Executive committee priority order:** The list is sorted by `priorityOrder` ascending (`sort=priorityOrder,asc`). **Lower number = higher rank** (0 appears first, 10 later). Show this tip in the admin form (tooltip or info above the Priority Order field).
+  - **DON'T (client):** `getAppUrl()` / `NEXT_PUBLIC_APP_URL` + absolute `/api/proxy/...` from the browser — use relative URLs (see **App URL and fetch targets** above).
   - **DON'T:**
     ```typescript
     // ❌ DON'T: Call server actions from client components on public pages
@@ -627,11 +624,12 @@ alwaysApply: true
   - **Rationale**: This ensures consistent authentication, error handling, and prevents `headers()` async context errors in Next.js 15+.
   - **DO:**
     ```typescript
-    // ✅ DO: Use fetchWithJwtRetry for all backend API calls
+    // ✅ DO: Use fetchWithJwtRetry for all backend API calls (prefer getApiBaseUrl() from @/lib/env)
     import { fetchWithJwtRetry } from '@/lib/proxyHandler';
+    import { getApiBaseUrl } from '@/lib/env';
 
     export async function fetchDataServer() {
-      const res = await fetchWithJwtRetry(`${API_BASE_URL}/api/some-endpoint`, {
+      const res = await fetchWithJwtRetry(`${getApiBaseUrl()}/api/some-endpoint`, {
         cache: 'no-store',
       });
       if (!res.ok) return null;
@@ -656,11 +654,26 @@ alwaysApply: true
     const res = await fetch(`${API_BASE_URL}/api/some-endpoint`);
     ```
   - **Exception**: Only use direct `fetch()` for proxy endpoints (e.g., `/api/proxy/...`) that are in the public routes list.
+  - **Exception — raw `fetch` to backend base URL**: Rare (e.g. `ProfileBootstrapperApiServerActions`). If you must call `NEXT_PUBLIC_API_BASE_URL` with `fetch` instead of `fetchWithJwtRetry`, send **`Authorization: Bearer <token>`** and **`X-Tenant-ID: getTenantId()`** on every request. Service JWTs typically have **no** `tenant_id` claim; the backend `TenantContextFilter` / `getUserProfileByUserId` can return **400** (“Tenant context is required…”) if only query params like `tenantId.equals` are present. See **X-Tenant-ID for tenant-scoped backend APIs** below.
   - **Enforcement**: This rule applies to ALL server actions in the codebase. Any server action found using direct `fetch()` to backend APIs will be flagged for immediate correction.
   - **References:**
     - See `src/lib/proxyHandler.ts` for the `fetchWithJwtRetry` implementation
     - See `src/app/admin/events/[id]/media/ApiServerActions.ts` for correct usage
     - See `src/app/admin/ApiServerActions.ts` for correct usage
+
+- **X-Tenant-ID for tenant-scoped backend APIs (user profile by user ID, etc.)**
+  - **Problem**: Backend endpoints that resolve **user profile by Clerk user ID** (`/api/user-profiles/by-user/...` or criteria that map to `getUserProfileByUserId`) require **tenant context** on the HTTP request: **`X-Tenant-ID`** header (value from `getTenantId()`), or an equivalent tenant query/JWT claim **as implemented by your `TenantContextFilter`**. Sending only `tenantId.equals` in the query string may **not** set thread-local tenant for that code path → **HTTP 400** with a message like *“Tenant context is required to load a user profile by user id”*.
+  - **DO — prefer shared helper**: Use **`fetchWithJwtRetry` from `@/lib/proxyHandler`**. It merges **`Authorization`** and **`X-Tenant-ID`** on every call (see `src/lib/proxyHandler.ts`). Use this for server actions and any code that calls the backend REST URL directly.
+  - **DO — raw `fetch` when unavoidable**: Build headers with both `Authorization: Bearer <token>` and **`X-Tenant-ID: <getTenantId()>`** (plus `Content-Type` when needed). Example pattern: `src/components/ProfileBootstrapperApiServerActions.ts` (`tenantAuthHeaders`).
+  - **DO — Pages Router proxies**: **`src/pages/api/proxy/user-profiles/[...slug].ts`** must forward using the **same** `fetchWithJwtRetry` from `@/lib/proxyHandler` (not a local copy that only sets `Authorization`). Local duplicate helpers have caused **by-user** proxy forwards to omit **`X-Tenant-ID`** and fail with 400.
+  - **DON'T**:
+    ```typescript
+    // ❌ DON'T: Backend fetch with JWT only (missing X-Tenant-ID for tenant-scoped by-user APIs)
+    await fetch(`${API_BASE_URL}/api/user-profiles/by-user/${userId}?tenantId.equals=${tenantId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    ```
+  - **References**: `src/lib/proxyHandler.ts` (`fetchWithJwtRetry`), `src/components/ProfileBootstrapperApiServerActions.ts`, `src/pages/api/proxy/user-profiles/[...slug].ts`.
 
 ---
 **Clerk Middleware Public Routes Configuration**
@@ -745,6 +758,264 @@ alwaysApply: true
   - See `src/middleware.ts` for complete implementation
   - See `src/app/layout.tsx` for satellite domain ClerkProvider configuration
   - See ByteRover memory for architectural decision details
+
+---
+**CRITICAL: Clerk Middleware ignoredRoutes Configuration for Mobile Browser Compatibility**
+- **Problem**: Mobile browsers (especially iOS Safari, WhatsApp in-app browser, Chrome Mobile) can fail to make API proxy calls if Clerk middleware processes these requests, even when they're in `publicRoutes`.
+- **Solution**: Use `ignoredRoutes` array in Clerk middleware to **completely bypass** authentication middleware for API proxy routes.
+- **Rationale**:
+  - `publicRoutes` tells Clerk "allow unauthenticated access but still run middleware"
+  - `ignoredRoutes` tells Clerk "don't run middleware at all - completely skip"
+  - Mobile browsers need the latter for reliable API proxy access
+- **Required Configuration** in `src/middleware.ts`:
+  ```typescript
+  import { authMiddleware } from "@clerk/nextjs/server";
+
+  export default authMiddleware({
+    publicRoutes: [
+      '/',
+      '/events(.*)',
+      '/api/proxy(.*)',  // Still needed for some Clerk features
+      // ... other public routes
+    ],
+
+    // CRITICAL: Completely ignore API proxy routes (don't even apply Clerk middleware)
+    ignoredRoutes: [
+      // Ignore Next.js RSC prefetch requests
+      '/(.*)?_rsc=(.*)$',
+      // CRITICAL: Completely bypass Clerk for API routes
+      '/api/webhooks/(.*)',
+      '/api/proxy/(.*)',      // ← KEY for mobile browser compatibility
+      '/api/stripe/(.*)',
+      '/api/payment/(.*)',
+      '/api/billing/(.*)',
+      '/api/checkout/(.*)',
+      '/api/diagnostic(.*)',
+      '/api/logs(.*)',
+    ],
+
+    // ... rest of config
+  });
+  ```
+- **DO:**
+  ```typescript
+  // ✅ DO: Add all API proxy routes to ignoredRoutes
+  ignoredRoutes: [
+    '/api/proxy/(.*)',
+    '/api/webhooks/(.*)',
+    '/api/stripe/(.*)',
+  ]
+  ```
+- **DON'T:**
+  ```typescript
+  // ❌ DON'T: Rely only on publicRoutes for API proxy access
+  publicRoutes: ['/api/proxy(.*)'],  // Not sufficient for mobile browsers
+  ignoredRoutes: [],  // Missing - will cause mobile API failures
+  ```
+- **Symptoms of Missing ignoredRoutes**:
+  - API calls work fine on desktop browsers
+  - API calls fail on mobile browsers (iOS Safari, WhatsApp, Chrome Mobile)
+  - Console shows "Failed to fetch" or CORS errors on mobile
+  - Works in browser dev tools mobile emulation but fails on actual devices
+- **Testing**:
+  - Test on actual mobile devices (not just browser dev tools)
+  - Test with WhatsApp in-app browser (common use case)
+  - Test on both iOS Safari and Android Chrome
+  - Verify API proxy calls succeed without authentication
+- **References:**
+  - Comparison with working `nextjs-template` project
+  - Mobile browser debugging logs in CloudWatch
+  - See `src/middleware.ts:63-75` for implementation
+
+---
+**Proxy Handler CORS Configuration Best Practices**
+- **Problem**: Manually setting CORS headers in Next.js API routes (Pages Router) can cause conflicts and unexpected behavior, especially on mobile browsers.
+- **Solution**: **DO NOT** set CORS headers manually in proxy handlers. Next.js handles CORS automatically for same-origin requests.
+- **Rationale**:
+  - Next.js API routes are same-origin by default (served from same domain as frontend)
+  - Manual CORS headers can conflict with Next.js's built-in handling
+  - Mobile browsers are more strict about CORS and can fail with manual headers
+  - Adds unnecessary complexity and potential for misconfiguration
+- **DO NOT:**
+  ```typescript
+  // ❌ DON'T: Manually set CORS headers in proxy handler
+  export function createProxyHandler({ backendPath }: ProxyHandlerOptions) {
+    return async function handler(req: NextApiRequest, res: NextApiResponse) {
+      // WRONG: Don't set these manually
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+      // WRONG: Don't handle OPTIONS manually
+      if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+      }
+
+      // ... rest of handler
+    };
+  }
+  ```
+- **DO:**
+  ```typescript
+  // ✅ DO: Let Next.js handle CORS automatically
+  export function createProxyHandler({ backendPath }: ProxyHandlerOptions) {
+    return async function handler(req: NextApiRequest, res: NextApiResponse) {
+      // No CORS headers needed - Next.js handles this
+      try {
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+        // ... fetch backend API and return response
+      } catch (err) {
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    };
+  }
+  ```
+- **When You Might Need Manual CORS** (rare cases):
+  - Cross-origin requests from a different domain (not same-origin)
+  - Embedding your app in an iframe from another domain
+  - Public API endpoints that need to be called from external websites
+  - In these cases, use Next.js built-in CORS middleware, not manual headers
+- **Exception - Next.js CORS Middleware** (if truly needed):
+  ```typescript
+  // Only if you need cross-origin access (rare)
+  import Cors from 'cors';
+  import { NextApiRequest, NextApiResponse } from 'next';
+
+  const cors = Cors({
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    origin: ['https://trusted-domain.com'],  // Specific domains, not '*'
+  });
+
+  function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
+    return new Promise((resolve, reject) => {
+      fn(req, res, (result: any) => {
+        if (result instanceof Error) return reject(result);
+        return resolve(result);
+      });
+    });
+  }
+
+  export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    await runMiddleware(req, res, cors);
+    // ... rest of handler
+  }
+  ```
+- **Best Practices**:
+  - Default to no manual CORS configuration
+  - Next.js API routes are same-origin and don't need CORS
+  - If you get CORS errors, first check:
+    1. Is the request truly cross-origin? (different domain/port)
+    2. Is Clerk middleware blocking the request? (use `ignoredRoutes`)
+    3. Is the backend API returning CORS errors? (fix on backend)
+  - Only add CORS configuration after confirming it's truly needed
+  - Always use specific origins, never `'*'` in production
+- **Mobile Browser Considerations**:
+  - Mobile browsers (iOS Safari, Chrome Mobile) are stricter about CORS
+  - Manual CORS headers can cause silent failures on mobile
+  - Always test on actual mobile devices, not just dev tools emulation
+  - Check browser console for CORS errors on mobile (use remote debugging)
+- **References:**
+  - Working `nextjs-template` project has no CORS headers in proxy handler
+  - See `src/lib/proxyHandler.ts:17-19` for clean implementation
+  - Next.js API Routes documentation: https://nextjs.org/docs/api-routes/introduction
+
+---
+**Mobile Browser API Call Debugging Checklist**
+When API calls fail on mobile browsers but work on desktop:
+
+1. **Check Clerk middleware configuration**:
+   - ✅ Is `/api/proxy(.*)` in `ignoredRoutes`? (not just `publicRoutes`)
+   - ✅ Are webhook routes in `ignoredRoutes`?
+   - ✅ Check `src/middleware.ts` configuration
+
+2. **Check CORS configuration**:
+   - ✅ Remove manual CORS headers from proxy handlers
+   - ✅ Let Next.js handle CORS automatically
+   - ✅ Check if backend API has CORS issues
+
+3. **Check client component patterns**:
+   - ✅ Are you using `useParams()` correctly? (memoize with `useMemo`)
+   - ✅ Are you preventing infinite fetch loops? (use `useRef` for fetch guards)
+   - ✅ Are diagnostic/test fetches outside of data fetch useEffect?
+
+4. **Check backend API**:
+   - ✅ Is backend API accessible? (test with curl/Postman)
+   - ✅ Are JWT credentials correct?
+   - ✅ Is tenant ID configured correctly?
+   - ✅ Check `NEXT_PUBLIC_API_BASE_URL` environment variable
+
+5. **Mobile-specific testing**:
+   - ✅ Test on actual devices (not just dev tools)
+   - ✅ Test on iOS Safari, Android Chrome, and WhatsApp in-app browser
+   - ✅ Use remote debugging to check console logs on mobile
+   - ✅ Check CloudFront headers for mobile detection (if using AWS)
+
+6. **Common mobile browser issues**:
+   - `useParams()` proxy causing infinite re-renders
+   - Clerk middleware blocking API routes (missing `ignoredRoutes`)
+   - Manual CORS headers causing conflicts
+   - Fetch loops from poorly managed useEffect dependencies
+   - Session/token handling differences on mobile
+
+7. **Quick fixes to try first**:
+   ```typescript
+   // Fix 1: Memoize useParams() result
+   const eventId = useMemo(() => params?.id, [params?.id]);
+
+   // Fix 2: Add fetch guard (prevent simultaneous fetches)
+   const isFetchingRef = useRef(false);
+   if (isFetchingRef.current) return;
+   isFetchingRef.current = true;
+
+   // Fix 3: Track fetched eventId (prevent re-fetching same ID on mobile re-hydration)
+   const fetchedEventIdRef = useRef<string | string[] | null>(null);
+   if (fetchedEventIdRef.current === eventId) return;
+   // After fetch completes:
+   fetchedEventIdRef.current = eventId;
+
+   // Fix 4: Prevent premature "not found" message
+   if (!data && !loading) return <NotFound />;  // Only show if done loading
+
+   // Fix 5: Add ignoredRoutes to middleware
+   ignoredRoutes: ['/api/proxy/(.*)']
+
+   // Fix 6: Remove manual CORS headers from proxy handler
+   ```
+
+8. **Mobile Browser Re-hydration Issue**:
+   - **Problem**: Mobile browsers (especially iOS Safari) can re-hydrate/re-mount components multiple times during navigation, causing duplicate fetches
+   - **Symptoms**: Page flickers between "loading" and "not found", retries 100+ times, eventually loads
+   - **Root Cause**: `useParams()` returns new proxy object on each render, `useMemo` dependency changes, useEffect re-runs
+   - **Solution**: Track which eventId has been fetched using `useRef`, skip if already fetched
+   - **Example**:
+     ```typescript
+     const fetchedEventIdRef = useRef<string | string[] | null>(null);
+
+     useEffect(() => {
+       async function fetchData() {
+         // Prevent duplicate fetches
+         if (isFetchingRef.current) return;
+         // CRITICAL: Prevent re-fetching same ID (mobile re-hydration)
+         if (fetchedEventIdRef.current === eventId) return;
+
+         isFetchingRef.current = true;
+         try {
+           await fetch(...);
+         } finally {
+           isFetchingRef.current = false;
+           fetchedEventIdRef.current = eventId; // Mark as fetched
+         }
+       }
+       if (eventId) fetchData();
+     }, [eventId]);
+     ```
+
+- **References:**
+  - Mobile browser debugging: Chrome Remote Debugging, Safari Web Inspector
+  - CloudWatch logs for AWS Amplify deployments
+  - See working `nextjs-template` project for comparison
+  - iOS Safari re-hydration: https://webkit.org/blog/7846/
 
 
 

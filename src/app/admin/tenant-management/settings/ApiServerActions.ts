@@ -1,5 +1,18 @@
+'use server';
+
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
 import { withTenantId } from '@/lib/withTenantId';
+import { getApiBaseUrl } from '@/lib/env';
+import {
+  getAppScopedTenantId,
+  isSatelliteTenantSettingsScope,
+} from '@/lib/tenantSettingsScope';
+import { stripDeprecatedSettingsIdentityFields } from '@/lib/resolveTenantOrganizationIdentity';
+import { normalizeDefaultHeroImageUrlsJsonForApi } from '@/lib/hero/defaultHeroImages';
+import {
+  parseJhipsterProblemErrorBody,
+  UserFacingSaveError,
+} from '@/lib/api/userFacingSaveError';
 import type {
   TenantSettingsDTO,
   TenantSettingsFormDTO,
@@ -8,7 +21,10 @@ import type {
   PaginatedResponse
 } from '@/app/admin/tenant-management/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
 /**
  * Fetch paginated list of tenant settings
@@ -28,8 +44,11 @@ export async function fetchTenantSettings(
     if (filters.search) {
       params.append('tenantId.contains', filters.search);
     }
-    if (filters.tenantId) {
-      params.append('tenantId.equals', filters.tenantId);
+    const scopedTenantId = isSatelliteTenantSettingsScope()
+      ? getAppScopedTenantId()
+      : filters.tenantId;
+    if (scopedTenantId) {
+      params.append('tenantId.equals', scopedTenantId);
     }
 
     // Add sorting
@@ -39,7 +58,7 @@ export async function fetchTenantSettings(
     }
 
     const response = await fetchWithJwtRetry(
-      `${API_BASE_URL}/api/tenant-settings?${params.toString()}`,
+      `${getApiBase()}/api/tenant-settings?${params.toString()}`,
       { cache: 'no-store' }
     );
 
@@ -68,8 +87,24 @@ export async function fetchTenantSettings(
  */
 export async function fetchTenantSetting(id: number): Promise<TenantSettingsDTO | null> {
   try {
+    if (isSatelliteTenantSettingsScope()) {
+      const forConfiguredTenant = await fetchTenantSettingsByTenantId(getAppScopedTenantId());
+      if (!forConfiguredTenant?.id) {
+        return null;
+      }
+      if (forConfiguredTenant.id !== id) {
+        console.warn(
+          '[fetchTenantSetting] Satellite scope: ignoring settings id=%s; using id=%s for tenant %s',
+          id,
+          forConfiguredTenant.id,
+          getAppScopedTenantId()
+        );
+      }
+      return forConfiguredTenant;
+    }
+
     const response = await fetchWithJwtRetry(
-      `${API_BASE_URL}/api/tenant-settings/${id}`,
+      `${getApiBase()}/api/tenant-settings/${id}`,
       { cache: 'no-store' }
     );
 
@@ -81,7 +116,8 @@ export async function fetchTenantSetting(id: number): Promise<TenantSettingsDTO 
       throw new Error(`Failed to fetch tenant setting: ${response.statusText}`);
     }
 
-    return await response.json();
+    const setting: TenantSettingsDTO = await response.json();
+    return setting;
   } catch (error) {
     console.error('Error fetching tenant setting:', error);
     throw new Error('Failed to fetch tenant setting');
@@ -97,7 +133,7 @@ export async function fetchTenantSettingsByTenantId(tenantId: string): Promise<T
     params.append('tenantId.equals', tenantId);
 
     const response = await fetchWithJwtRetry(
-      `${API_BASE_URL}/api/tenant-settings?${params.toString()}`,
+      `${getApiBase()}/api/tenant-settings?${params.toString()}`,
       { cache: 'no-store' }
     );
 
@@ -113,18 +149,97 @@ export async function fetchTenantSettingsByTenantId(tenantId: string): Promise<T
   }
 }
 
+function buildTenantSettingsWritePayload(
+  existingSetting: TenantSettingsDTO,
+  data: Partial<TenantSettingsFormDTO>,
+  id: number
+): TenantSettingsDTO {
+  const { tenantOrganization: _org, ...existingRest } = existingSetting;
+  const stripped = stripDeprecatedSettingsIdentityFields(
+    data as Record<string, unknown>
+  ) as Partial<TenantSettingsFormDTO>;
+
+  const merged = stripDeprecatedSettingsIdentityFields({
+    ...existingRest,
+    ...stripped,
+    id,
+    createdAt: existingSetting.createdAt,
+    updatedAt: new Date().toISOString(),
+  }) as TenantSettingsDTO;
+
+  if (
+    'defaultHeroImageUrlsJson' in stripped ||
+    merged.defaultHeroImageUrlsJson !== undefined
+  ) {
+    merged.defaultHeroImageUrlsJson = normalizeDefaultHeroImageUrlsJsonForApi(
+      merged.defaultHeroImageUrlsJson
+    );
+  }
+
+  return merged as TenantSettingsDTO;
+}
+
+function finalizeTenantSettingsWritePayload(
+  payload: TenantSettingsDTO,
+  existingSetting: TenantSettingsDTO
+): TenantSettingsDTO {
+  if (isSatelliteTenantSettingsScope()) {
+    return withTenantId(payload) as TenantSettingsDTO;
+  }
+  return {
+    ...payload,
+    tenantId: existingSetting.tenantId,
+  };
+}
+
+async function resolveTenantSettingsForMutation(
+  id: number
+): Promise<{ targetId: number; existingSetting: TenantSettingsDTO }> {
+  if (isSatelliteTenantSettingsScope()) {
+    const configuredTenantId = getAppScopedTenantId();
+    const existingSetting = await fetchTenantSettingsByTenantId(configuredTenantId);
+    if (!existingSetting?.id) {
+      throw new Error(
+        `No tenant settings found for this app (tenant: ${configuredTenantId}). Create settings for your tenant first.`
+      );
+    }
+    if (existingSetting.tenantId !== configuredTenantId) {
+      throw new Error('Tenant settings do not match this app configuration.');
+    }
+    if (existingSetting.id !== id) {
+      console.warn(
+        '[resolveTenantSettingsForMutation] Satellite: saving id=%s instead of requested id=%s',
+        existingSetting.id,
+        id
+      );
+    }
+    return { targetId: existingSetting.id, existingSetting };
+  }
+
+  const existingSetting = await fetchTenantSetting(id);
+  if (!existingSetting) {
+    throw new Error('Tenant setting not found');
+  }
+  return { targetId: id, existingSetting };
+}
+
+function throwTenantSettingsApiError(errorText: string, action: 'create' | 'update'): never {
+  const { summary, details } = parseJhipsterProblemErrorBody(errorText, action);
+  throw new UserFacingSaveError(summary, details);
+}
+
 /**
  * Create a new tenant setting
  */
 export async function createTenantSetting(data: TenantSettingsFormDTO): Promise<TenantSettingsDTO> {
   try {
     const payload = withTenantId({
-      ...data,
+      ...stripDeprecatedSettingsIdentityFields(data),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
 
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/tenant-settings`, {
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/tenant-settings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -134,13 +249,21 @@ export async function createTenantSetting(data: TenantSettingsFormDTO): Promise<
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to create tenant setting: ${errorText}`);
+      console.error('[createTenantSetting] Backend error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText.slice(0, 2000),
+      });
+      throwTenantSettingsApiError(errorText, 'create');
     }
 
     return await response.json();
   } catch (error) {
     console.error('Error creating tenant setting:', error);
-    throw new Error('Failed to create tenant setting');
+    if (error instanceof Error && error.message !== 'Failed to create tenant settings.') {
+      throw error;
+    }
+    throw new Error('Failed to create tenant settings. Please try again.');
   }
 }
 
@@ -152,60 +275,11 @@ export async function updateTenantSetting(
   data: Partial<TenantSettingsFormDTO>
 ): Promise<TenantSettingsDTO> {
   try {
-    // First fetch the existing tenant setting to preserve fields not in form
-    const existingSetting = await fetchTenantSetting(id);
+    const { targetId, existingSetting } = await resolveTenantSettingsForMutation(id);
+    const merged = buildTenantSettingsWritePayload(existingSetting, data, targetId);
+    const payload = finalizeTenantSettingsWritePayload(merged, existingSetting);
 
-    if (!existingSetting) {
-      throw new Error('Tenant setting not found');
-    }
-
-    // If tenantOrganization is missing or incomplete, try to fetch it by tenantId
-    let tenantOrganization = existingSetting.tenantOrganization;
-    
-    if (!tenantOrganization || !tenantOrganization.id) {
-      console.log('[updateTenantSetting] Missing tenantOrganization, fetching by tenantId:', existingSetting.tenantId);
-      
-      try {
-        // Import the function to fetch tenant organizations
-        const { fetchTenantOrganizations } = await import('@/app/admin/tenant-management/organizations/ApiServerActions');
-        
-        const orgResult = await fetchTenantOrganizations(
-          { page: 0, pageSize: 1 }, 
-          { tenantId: existingSetting.tenantId }
-        );
-        
-        if (orgResult.data && orgResult.data.length > 0) {
-          tenantOrganization = orgResult.data[0];
-          console.log('[updateTenantSetting] Found tenantOrganization:', {
-            id: tenantOrganization.id,
-            organizationName: tenantOrganization.organizationName,
-            tenantId: tenantOrganization.tenantId
-          });
-        } else {
-          console.warn('[updateTenantSetting] No tenant organization found for tenantId:', existingSetting.tenantId);
-        }
-      } catch (orgError) {
-        console.error('[updateTenantSetting] Error fetching tenant organization:', orgError);
-      }
-    }
-
-    const payload = withTenantId({
-      ...data,
-      id,
-      createdAt: existingSetting.createdAt, // Preserve original createdAt
-      updatedAt: new Date().toISOString(),
-      // Include the tenantOrganization relationship (either existing or newly fetched)
-      tenantOrganization: tenantOrganization || null,
-    });
-
-    console.log('[updateTenantSetting] Final payload with tenantOrganization:', {
-      tenantId: payload.tenantId,
-      organizationId: tenantOrganization?.id,
-      organizationName: tenantOrganization?.organizationName,
-      hasOrganization: !!tenantOrganization
-    });
-
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/tenant-settings/${id}`, {
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/tenant-settings/${targetId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -215,77 +289,55 @@ export async function updateTenantSetting(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to update tenant setting: ${errorText}`);
+      console.error('[updateTenantSetting] Backend error:', {
+        status: response.status,
+        body: errorText.slice(0, 2000),
+      });
+      throwTenantSettingsApiError(errorText, 'update');
     }
 
     return await response.json();
   } catch (error) {
     console.error('Error updating tenant setting:', error);
+    if (error instanceof Error) throw error;
     throw new Error('Failed to update tenant setting');
   }
 }
 
 /**
- * Partially update an existing tenant setting
+ * Partially update an existing tenant setting.
+ * Does not parse the response body — callers only need success/failure (avoids large DTO
+ * deserialization hanging server-action round-trips after hero slide saves).
  */
 export async function patchTenantSetting(
   id: number,
   data: Partial<TenantSettingsFormDTO>
-): Promise<TenantSettingsDTO> {
+): Promise<void> {
   try {
-    // For PATCH operations, we should also preserve tenantOrganization if not explicitly provided
-    const existingSetting = await fetchTenantSetting(id);
-    
-    if (!existingSetting) {
-      throw new Error('Tenant setting not found');
-    }
+    const { targetId, existingSetting } = await resolveTenantSettingsForMutation(id);
 
-    // If tenantOrganization is missing or incomplete, try to fetch it by tenantId
-    let tenantOrganization = existingSetting.tenantOrganization;
-    
-    if (!tenantOrganization || !tenantOrganization.id) {
-      console.log('[patchTenantSetting] Missing tenantOrganization, fetching by tenantId:', existingSetting.tenantId);
-      
-      try {
-        // Import the function to fetch tenant organizations
-        const { fetchTenantOrganizations } = await import('@/app/admin/tenant-management/organizations/ApiServerActions');
-        
-        const orgResult = await fetchTenantOrganizations(
-          { page: 0, pageSize: 1 }, 
-          { tenantId: existingSetting.tenantId }
-        );
-        
-        if (orgResult.data && orgResult.data.length > 0) {
-          tenantOrganization = orgResult.data[0];
-          console.log('[patchTenantSetting] Found tenantOrganization:', {
-            id: tenantOrganization.id,
-            organizationName: tenantOrganization.organizationName,
-            tenantId: tenantOrganization.tenantId
-          });
-        } else {
-          console.warn('[patchTenantSetting] No tenant organization found for tenantId:', existingSetting.tenantId);
-        }
-      } catch (orgError) {
-        console.error('[patchTenantSetting] Error fetching tenant organization:', orgError);
-      }
-    }
+    const stripped = stripDeprecatedSettingsIdentityFields(
+      data as Record<string, unknown>
+    ) as Partial<TenantSettingsFormDTO>;
 
-    const payload = withTenantId({
-      ...data,
-      id,
+    const patchPayload: Partial<TenantSettingsFormDTO> & { id: number; updatedAt: string } = {
+      ...stripped,
+      id: targetId,
       updatedAt: new Date().toISOString(),
-      // Include the tenantOrganization relationship (either existing or newly fetched)
-      tenantOrganization: tenantOrganization || null,
-    });
+    };
 
-    console.log('[patchTenantSetting] Final payload with tenantOrganization:', {
-      tenantId: payload.tenantId,
-      organizationId: tenantOrganization?.id,
-      organizationName: tenantOrganization?.organizationName,
-      hasOrganization: !!tenantOrganization
-    });
+    if ('defaultHeroImageUrlsJson' in stripped) {
+      patchPayload.defaultHeroImageUrlsJson = normalizeDefaultHeroImageUrlsJsonForApi(
+        stripped.defaultHeroImageUrlsJson
+      );
+    }
 
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/tenant-settings/${id}`, {
+    const payload = finalizeTenantSettingsWritePayload(
+      patchPayload as TenantSettingsDTO,
+      existingSetting
+    );
+
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/tenant-settings/${targetId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/merge-patch+json',
@@ -295,12 +347,22 @@ export async function patchTenantSetting(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to update tenant setting: ${errorText}`);
+      console.error('[patchTenantSetting] Backend error:', {
+        status: response.status,
+        body: errorText.slice(0, 2000),
+      });
+      throwTenantSettingsApiError(errorText, 'update');
     }
 
-    return await response.json();
+    // Drain body so the connection closes; skip JSON parse (not needed for PATCH callers).
+    try {
+      await response.text();
+    } catch {
+      // ignore drain errors after a successful status
+    }
   } catch (error) {
     console.error('Error patching tenant setting:', error);
+    if (error instanceof Error) throw error;
     throw new Error('Failed to update tenant setting');
   }
 }
@@ -310,7 +372,9 @@ export async function patchTenantSetting(
  */
 export async function deleteTenantSetting(id: number): Promise<void> {
   try {
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/tenant-settings/${id}`, {
+    const { targetId } = await resolveTenantSettingsForMutation(id);
+
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/tenant-settings/${targetId}`, {
       method: 'DELETE',
     });
 

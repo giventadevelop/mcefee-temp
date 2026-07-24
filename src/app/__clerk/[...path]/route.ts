@@ -14,8 +14,9 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Primary Clerk domain for Frontend API
+ * Read from environment variable for flexibility across environments
  */
-const CLERK_FRONTEND_API = 'https://clerk.event-site-manager.com';
+const CLERK_FRONTEND_API = process.env.NEXT_PUBLIC_CLERK_FRONTEND_API_URL || 'https://clerk.event-site-manager.com';
 
 /**
  * Handles all HTTP methods (GET, POST, PUT, PATCH, DELETE, etc.)

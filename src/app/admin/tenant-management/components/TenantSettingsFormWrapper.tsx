@@ -35,6 +35,7 @@ export default function TenantSettingsFormWrapper({
       loading={loading}
       mode={mode}
       availableOrganizations={organizations}
+      settingsId={settingsId}
     />
   );
 }

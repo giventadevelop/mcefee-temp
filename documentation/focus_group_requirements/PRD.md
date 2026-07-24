@@ -74,6 +74,9 @@ AlwaysApply: false
 - Membership roles and statuses enforce at API level; tenant-scoped.
 - All enums and statuses are uppercase.
 
+## Troubleshooting: Joined member not listed in admin
+- If a user joins via the public "Join" button but does not appear on `/admin/focus-groups/[id]/members`, (1) the admin page uses `dynamic = 'force-dynamic'` and a "Refresh list" link so each visit/click refetches; (2) the backend must persist `focus_group_members.tenant_id` from the **request** (body `tenantId` or `X-Tenant-ID` header), not from the user profile. If the backend uses the user profile’s tenant when creating the row, the list (filtered by `tenantId.equals` = app tenant) will not return that row.
+
 ## Tasks (high-level)
 1) Schema applied in backend repo.
 2) Add proxy handlers: `/api/proxy/focus-groups`, `/api/proxy/focus-group-members`, `/api/proxy/event-focus-groups`.

@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
-import { getEmailHostUrlPrefix } from '@/lib/env';
+import { getEmailHostUrlPrefix, getApiBaseUrl } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 async function fetchWithJwtRetry(apiUrl: string, options: any = {}, debugLabel = '') {
   let token = await getCachedApiJwt();

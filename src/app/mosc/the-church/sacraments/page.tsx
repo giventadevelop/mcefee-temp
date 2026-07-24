@@ -1,13 +1,22 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import SyroPageBanner from '../../components/SyroPageBanner';
+import TheChurchSidebar from '../TheChurchSidebar';
 
 export const metadata = {
   title: 'Sacraments',
   description: 'The seven sacraments and their significance.',
 };
 
-const SacramentsPage = () => {
+export default async function SacramentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const params = await searchParams;
+  const breadcrumbFrom = params.from === 'the-church' ? 'the-church' : 'home';
+
   const sacraments = [
     {
       name: 'Baptism',
@@ -47,50 +56,35 @@ const SacramentsPage = () => {
   ];
 
   return (
-    <div className="bg-background">
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-br from-background to-muted">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-primary rounded-lg flex items-center justify-center mx-auto mb-6 sacred-shadow-lg">
-              <span className="text-primary-foreground text-4xl font-bold" role="img" aria-label="Sacraments">💒</span>
-            </div>
-            <h1 className="font-heading font-semibold text-4xl text-foreground mb-4">
-              Sacraments
-            </h1>
-            <p className="font-body text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              The seven sacraments and their significance.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="bg-syro-bg-gray">
+      <SyroPageBanner title="Sacraments" breadcrumbFrom={breadcrumbFrom} />
 
       {/* Main Content */}
-      <section className="py-16 bg-card">
+      <section className="py-16 bg-syro-bg-gray">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Main Content */}
-            <div className="lg:col-span-3">
-              <div className="bg-background rounded-lg sacred-shadow p-8">
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-[rgba(50,50,93,0.25)_0px_6px_12px_-2px,rgba(0,0,0,0.3)_0px_3px_7px_-3px] p-8">
                 {/* Featured Image */}
-                <div className="mb-8">
+                <div className="mb-8 flex justify-center">
                   <Image
                     src="/images/church/sacraments.jpg"
                     alt="Sacraments"
-                    width={500}
-                    height={300}
-                    className="rounded-lg sacred-shadow w-full h-auto"
+                    width={125}
+                    height={125}
+                    className="rounded-lg w-full max-w-[125px] max-h-[125px] object-contain"
                     priority
                   />
                 </div>
 
                 {/* Content */}
                 <div className="prose prose-lg max-w-none">
-                  <h2 className="font-heading font-semibold text-2xl text-foreground mb-6">
+                  <h2 className="font-syro-display font-semibold text-2xl text-syro-blue mb-6">
                     The Seven Holy Mysteries
                   </h2>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-8">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-8">
                     The Orthodox Church recognizes seven sacraments, which are called "mysteries" (roze-d-idtho 
                     in Syriac). These are sacred rites instituted by Christ Himself, through which divine grace 
                     is imparted to the faithful. Each sacrament is a visible sign of an invisible grace, and 
@@ -100,16 +94,16 @@ const SacramentsPage = () => {
                   {/* Sacraments Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {sacraments.map((sacrament, index) => (
-                      <div key={index} className="bg-muted/30 rounded-lg p-6 hover:bg-muted/50 reverent-transition">
+                      <div key={index} className="bg-syro-bg-gray rounded-lg p-6 hover:bg-syro-bg-gray/50 transition-all duration-300">
                         <div className="flex items-start space-x-4">
-                          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-12 h-12 bg-syro-red/10 rounded-full flex items-center justify-center flex-shrink-0">
                             <span className="text-2xl" role="img" aria-label={sacrament.name}>{sacrament.icon}</span>
                           </div>
                           <div>
-                            <h3 className="font-heading font-semibold text-lg text-foreground mb-2">
+                            <h3 className="font-syro-display font-semibold text-lg text-syro-blue mb-2">
                               {sacrament.name}
                             </h3>
-                            <p className="font-body text-muted-foreground text-sm leading-relaxed">
+                            <p className="font-syro-primary text-syro-dark-gray text-sm leading-relaxed">
                               {sacrament.description}
                             </p>
                           </div>
@@ -118,11 +112,11 @@ const SacramentsPage = () => {
                     ))}
                   </div>
 
-                  <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
+                  <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-4">
                     The Nature of Sacraments
                   </h3>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
                     In the Orthodox understanding, sacraments are not merely symbolic acts but are truly 
                     efficacious means of grace. They are channels through which God's grace flows into 
                     our lives, transforming us and making us partakers of the divine nature. The sacraments 
@@ -130,11 +124,11 @@ const SacramentsPage = () => {
                     preparation on the part of the recipient.
                   </p>
 
-                  <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
+                  <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-4">
                     The Three Sacraments of Initiation
                   </h3>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
                     Baptism, Chrismation, and Holy Eucharist are the three sacraments of initiation that 
                     bring a person into full membership in the Church. Baptism washes away original sin 
                     and incorporates the person into the Body of Christ. Chrismation seals the baptized 
@@ -142,33 +136,33 @@ const SacramentsPage = () => {
                     and Blood of Christ, maintaining our union with Him.
                   </p>
 
-                  <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
+                  <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-4">
                     The Sacraments of Healing
                   </h3>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
                     Confession and Holy Unction are the sacraments of healing. Confession provides 
                     spiritual healing through the forgiveness of sins, while Holy Unction offers 
                     healing for both body and soul, particularly for those who are ill or facing 
                     serious challenges in life.
                   </p>
 
-                  <h3 className="font-heading font-semibold text-xl text-foreground mb-4">
+                  <h3 className="font-syro-display font-semibold text-xl text-syro-blue mb-4">
                     The Sacraments of Service
                   </h3>
 
-                  <p className="font-body text-muted-foreground leading-relaxed mb-6">
+                  <p className="font-syro-primary text-syro-dark-gray leading-relaxed mb-6">
                     Holy Matrimony and Holy Orders are the sacraments of service. Holy Matrimony 
                     unites a man and woman in marriage, creating a sacred bond that reflects the 
                     relationship between Christ and His Church. Holy Orders confers the grace and 
                     authority to serve the Church in various ministries, from deacon to bishop.
                   </p>
 
-                  <div className="bg-primary/5 rounded-lg p-6 mt-8">
-                    <h4 className="font-heading font-semibold text-lg text-foreground mb-4">
+                  <div className="bg-syro-red/5 rounded-lg p-6 mt-8">
+                    <h4 className="font-syro-display font-semibold text-lg text-syro-blue mb-4">
                       The Importance of Sacraments
                     </h4>
-                    <p className="font-body text-muted-foreground leading-relaxed">
+                    <p className="font-syro-primary text-syro-dark-gray leading-relaxed">
                       The sacraments are essential to Orthodox Christian life. They are not optional 
                       extras but are fundamental to our spiritual growth and relationship with God. 
                       Through the sacraments, we receive the grace necessary for salvation and are 
@@ -181,121 +175,79 @@ const SacramentsPage = () => {
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-background rounded-lg sacred-shadow p-6 mb-6">
-                <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
-                  The Church
-                </h3>
-                <nav className="space-y-2">
-                  <Link 
-                    href="/mosc/the-church/what-do-we-believe" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    What Do We Believe
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/church-history" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Church History
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/orthodox-faith" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Orthodox Faith
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/liturgy-worship" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Liturgy & Worship
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/sacraments" 
-                    className="block px-3 py-2 bg-primary text-primary-foreground rounded-md font-body text-sm reverent-transition"
-                  >
-                    Sacraments
-                  </Link>
-                  <Link 
-                    href="/mosc/the-church/church-calendar" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
-                  >
-                    Church Calendar
-                  </Link>
-                </nav>
-              </div>
+            {/* Sidebar - The Church (all subpages, like mosc.in) */}
+            <div className="space-y-6 lg:col-span-1">
+              <TheChurchSidebar />
 
               {/* Quick Links */}
-              <div className="bg-background rounded-lg sacred-shadow p-6">
-                <h3 className="font-heading font-semibold text-lg text-foreground mb-4">
+              <div className="bg-syro-bg-gray rounded-lg shadow-syro-card p-6">
+                <h3 className="font-syro-display font-semibold text-lg text-syro-blue mb-4">
                   Quick Links
                 </h3>
                 <nav className="space-y-2">
                   <Link 
                     href="/mosc/downloads/kalpana" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Kalpana
                   </Link>
                   <Link 
                     href="/mosc/downloads" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Downloads
                   </Link>
                   <Link 
                     href="/mosc/institutions" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Institutions
                   </Link>
                   <Link 
                     href="/mosc/training" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Training
                   </Link>
                   <Link 
                     href="/mosc/publications" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Publications
                   </Link>
                   <Link 
                     href="/mosc/spiritual" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Spiritual Organisations
                   </Link>
                   <Link 
                     href="/mosc/theological" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Theological Seminaries
                   </Link>
                   <Link 
                     href="/mosc/lectionary" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Lectionary
                   </Link>
                   <Link 
-                    href="/mosc/photo-gallery" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    href="/mosc/gallery" 
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Gallery
                   </Link>
                   <Link 
                     href="/mosc/contact-info" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     Contact Info
                   </Link>
                   <Link 
                     href="/mosc/faqs" 
-                    className="block px-3 py-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-md font-body text-sm reverent-transition"
+                    className="block px-3 py-2 text-syro-dark-gray hover:text-syro-red hover:bg-syro-bg-gray rounded-md font-syro-primary text-sm transition-all duration-300"
                   >
                     FAQs
                   </Link>
@@ -309,4 +261,3 @@ const SacramentsPage = () => {
   );
 };
 
-export default SacramentsPage;

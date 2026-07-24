@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { EventDetailsDTO, EventMediaDTO } from '@/types';
-import { getAppUrl } from '@/lib/env';
+import { getTenantId } from '@/lib/env';
+import { proxyApiPath } from '@/lib/proxyApiPath';
 
 export interface EventWithMedia {
   event: EventDetailsDTO;
@@ -15,7 +16,7 @@ export interface EventsData {
   error: string | null;
 }
 
-export const useEventsData = () => {
+export const useEventsData = (enabled: boolean = true) => {
   const [data, setData] = useState<EventsData>({
     events: [],
     eventsWithMedia: [],
@@ -24,12 +25,12 @@ export const useEventsData = () => {
     error: null,
   });
 
-  // Check if event is in next 3 months
-  const isEventInNextThreeMonths = (eventDate: string, today: Date): boolean => {
+  // Check if event is in next 1 year
+  const isEventInNextYear = (eventDate: string, today: Date): boolean => {
     // Use the same today date as the filtering logic to ensure consistency
-    const threeMonthsFromNow = new Date();
-    threeMonthsFromNow.setMonth(today.getMonth() + 3);
-    threeMonthsFromNow.setHours(23, 59, 59, 999); // End of day
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(today.getFullYear() + 1);
+    oneYearFromNow.setHours(23, 59, 59, 999); // End of day
 
     // Parse the event date as local date (not UTC) to avoid timezone issues
     // The eventDate is in YYYY-MM-DD format, so we need to parse it as local time
@@ -37,22 +38,27 @@ export const useEventsData = () => {
     const eventStartDate = new Date(year, month - 1, day); // month is 0-indexed
     eventStartDate.setHours(0, 0, 0, 0); // Reset time to start of day
 
-    console.log(`Date comparison for ${eventDate}: eventStartDate=${eventStartDate.toISOString()}, today=${today.toISOString()}, threeMonthsFromNow=${threeMonthsFromNow.toISOString()}`);
-    console.log(`Event date >= today: ${eventStartDate >= today}, Event date <= threeMonthsFromNow: ${eventStartDate <= threeMonthsFromNow}`);
+    console.log(`Date comparison for ${eventDate}: eventStartDate=${eventStartDate.toISOString()}, today=${today.toISOString()}, oneYearFromNow=${oneYearFromNow.toISOString()}`);
+    console.log(`Event date >= today: ${eventStartDate >= today}, Event date <= oneYearFromNow: ${eventStartDate <= oneYearFromNow}`);
 
-    return eventStartDate >= today && eventStartDate <= threeMonthsFromNow;
+    return eventStartDate >= today && eventStartDate <= oneYearFromNow;
   };
 
   useEffect(() => {
+    // Defer API calls until enabled (after page ready + delay)
+    if (!enabled) return;
+
     const fetchEventsData = async () => {
       try {
         setData(prev => ({ ...prev, isLoading: true, error: null }));
 
-        const baseUrl = getAppUrl();
+        const tenantId = getTenantId();
 
-        // Fetch events
+        // Fetch events (tenant-scoped for homepage)
         let eventsResponse = await fetch(
-          `${baseUrl}/api/proxy/event-details?sort=startDate,asc`,
+          proxyApiPath(
+            `/api/proxy/event-details?tenantId.equals=${encodeURIComponent(tenantId)}&sort=startDate,asc`
+          ),
           { cache: 'no-store' }
         );
 
@@ -61,7 +67,9 @@ export const useEventsData = () => {
           // Try fallback
           try {
             eventsResponse = await fetch(
-              `${baseUrl}/api/proxy/event-details?sort=startDate,desc`,
+              proxyApiPath(
+                `/api/proxy/event-details?tenantId.equals=${encodeURIComponent(tenantId)}&sort=startDate,desc`
+              ),
               { cache: 'no-store' }
             );
             if (!eventsResponse.ok) {
@@ -98,14 +106,14 @@ export const useEventsData = () => {
         today.setHours(0, 0, 0, 0); // Reset time to start of day for consistency
         console.log(`Events Data - Today's date: ${today.toDateString()} (${today.toISOString()})`);
 
-        // Filter upcoming events (next 3 months and active)
+        // Filter upcoming events (next 1 year and active)
         const upcomingEvents = events.filter(event =>
           event.startDate &&
-          isEventInNextThreeMonths(event.startDate, today) &&
+          isEventInNextYear(event.startDate, today) &&
           event.isActive
         );
 
-        console.log('Upcoming events in next 3 months:', upcomingEvents.length);
+        console.log('Upcoming events in next 1 year:', upcomingEvents.length);
 
         // Fetch media for all upcoming events
         const eventsWithMedia: EventWithMedia[] = [];
@@ -115,7 +123,9 @@ export const useEventsData = () => {
           console.log(`Fetching media for event ${event.id}: ${event.title}`);
           try {
             const mediaResponse = await fetch(
-              `${baseUrl}/api/proxy/event-medias?eventId.equals=${event.id}`,
+              proxyApiPath(
+                `/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}`
+              ),
               { cache: 'no-store' }
             );
 
@@ -166,7 +176,7 @@ export const useEventsData = () => {
     };
 
     fetchEventsData();
-  }, []);
+  }, [enabled]);
 
   return data;
 };

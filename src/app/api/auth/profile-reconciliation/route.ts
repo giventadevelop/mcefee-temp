@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
 import type { UserProfileDTO } from '@/types';
+import { getApiBaseUrl } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     console.log('[PROFILE-RECONCILIATION-API] 📍 Trigger source:', triggerSource);
 
     // Get API base URL
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const apiBaseUrl = getApiBaseUrl();
     if (!apiBaseUrl) {
       throw new Error('API base URL not configured');
     }

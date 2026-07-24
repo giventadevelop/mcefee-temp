@@ -1,6 +1,6 @@
 import { fetchUserProfileServer, fetchMediaServer, fetchOfficialDocsServer } from './ApiServerActions';
 import { fetchEventDetailsServer } from '@/app/admin/ApiServerActions';
-import { auth } from '@clerk/nextjs/server';
+import { safeAuth } from '@/lib/safe-auth';
 import { MediaClientPage } from './MediaClientPage';
 
 interface UploadMediaPageProps { params: { id: string } }
@@ -11,7 +11,7 @@ export default async function UploadMediaPage({ params }: UploadMediaPageProps) 
   const mediaList = eventId ? await fetchMediaServer(eventId) : [];
   const eventDetails = eventId ? await fetchEventDetailsServer(eventId) : null;
   const officialDocsList = eventId ? await fetchOfficialDocsServer(eventId) : [];
-  const { userId } = await auth();
+  const { userId } = await safeAuth();
   let userProfileId = null;
   if (userId) {
     try {

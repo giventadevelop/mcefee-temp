@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getCachedApiJwt } from '@/lib/api/jwt';
+import { getApiBaseUrl } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 function buildQueryString(query: Record<string, any>) {
   const params = new URLSearchParams();

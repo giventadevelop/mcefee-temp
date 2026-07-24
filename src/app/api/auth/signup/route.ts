@@ -10,13 +10,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getTenantId } from '@/lib/env';
+import { getTenantId, getApiBaseUrl } from '@/lib/env';
 
 /**
  * Get backend API base URL
  */
 function getBackendBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const url = getApiBaseUrl();
   if (!url) {
     throw new Error('NEXT_PUBLIC_API_BASE_URL is not configured');
   }

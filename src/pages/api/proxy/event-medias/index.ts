@@ -1,13 +1,35 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getCachedApiJwt } from "@/lib/api/jwt";
+import { fetchWithJwtRetry } from "@/lib/proxyHandler";
+import { getApiBaseUrl, getTenantId } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = getApiBaseUrl();
 
 export const config = {
   api: {
     bodyParser: false, // Required for file uploads
   },
 };
+
+function buildBackendUrl(method: string | undefined, query: NextApiRequest['query']): string {
+  let apiUrl = `${API_BASE_URL}/api/event-medias`;
+  const params = new URLSearchParams();
+  for (const key in query) {
+    const value = query[key];
+    if (Array.isArray(value)) value.forEach(v => params.append(key, v));
+    else if (typeof value !== 'undefined') params.append(key, value);
+  }
+  if (method === 'GET' && !params.has('tenantId.equals')) {
+    try {
+      params.append('tenantId.equals', getTenantId());
+    } catch (e) {
+      console.warn('Event media proxy: tenantId not set, list may be empty');
+    }
+  }
+  const qs = params.toString();
+  if (qs) apiUrl += `?${qs}`;
+  return apiUrl;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!API_BASE_URL) {
@@ -19,31 +41,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const token = await getCachedApiJwt();
     const { method, query } = req;
-
-    let apiUrl = `${API_BASE_URL}/api/event-medias`;
-    // Forward query params (e.g., eventId)
-    const params = new URLSearchParams();
-    for (const key in query) {
-      const value = query[key];
-      if (Array.isArray(value)) value.forEach(v => params.append(key, v));
-      else if (typeof value !== 'undefined') params.append(key, value);
-    }
-    const qs = params.toString();
-    if (qs) apiUrl += `?${qs}`;
+    const apiUrl = buildBackendUrl(method, query);
 
     console.log(`Event media proxy: ${method} ${apiUrl}`);
 
     if (method === "POST") {
-      // Forward multipart/form-data
+      // Forward multipart/form-data (streaming body)
       const fetch = (await import("node-fetch")).default;
       const headers = { ...req.headers, authorization: `Bearer ${token}` };
       delete headers["host"];
       delete headers["connection"];
-      // Sanitize headers
       const sanitizedHeaders: Record<string, string> = {};
       for (const [key, value] of Object.entries(headers)) {
         if (Array.isArray(value)) sanitizedHeaders[key] = value.join("; ");
         else if (typeof value === "string") sanitizedHeaders[key] = value;
+      }
+      try {
+        sanitizedHeaders['X-Tenant-ID'] = getTenantId();
+      } catch {
+        /* tenant optional for some upload paths */
       }
       const apiRes = await fetch(apiUrl, {
         method: "POST",
@@ -56,38 +72,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (method === "GET") {
-      const fetch = (await import("node-fetch")).default;
-      const apiRes = await fetch(apiUrl, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const apiRes = await fetchWithJwtRetry(apiUrl, { method: 'GET' }, 'event-medias-GET');
 
       console.log(`Event media proxy response: ${apiRes.status} ${apiRes.statusText}`);
 
+      const totalHeader = apiRes.headers.get('x-total-count');
+      if (totalHeader) res.setHeader('x-total-count', totalHeader);
+
+      const text = await apiRes.text();
+
+      if (!text || text.trim() === '') {
+        if (!apiRes.ok) {
+          res.status(apiRes.status).json({
+            error: `Backend API error: ${apiRes.status} ${apiRes.statusText}`,
+            details: 'Empty response from backend',
+          });
+          return;
+        }
+        res.status(apiRes.status).json([]);
+        return;
+      }
+
       if (!apiRes.ok) {
         console.error(`Event media proxy error: ${apiRes.status} ${apiRes.statusText}`);
-        const errorText = await apiRes.text();
-        console.error(`Event media proxy error body: ${errorText}`);
+        console.error(`Event media proxy error body: ${text}`);
         res.status(apiRes.status).json({
           error: `Backend API error: ${apiRes.status} ${apiRes.statusText}`,
-          details: errorText
+          details: text,
         });
         return;
       }
 
-      // Check content type to handle different response types
-      const contentType = apiRes.headers.get('content-type');
-      console.log(`Event media proxy content-type: ${contentType}`);
-
-      if (contentType && contentType.includes('application/json')) {
-        const data = await apiRes.json();
-        console.log(`Event media proxy success: JSON response with ${Array.isArray(data) ? data.length : 1} items`);
+      try {
+        const data = JSON.parse(text);
+        const count = Array.isArray(data) ? data.length : (data?.content?.length ?? 1);
+        console.log(`Event media proxy success: JSON response with ${count} items${totalHeader ? `, x-total-count: ${totalHeader}` : ''}`);
         res.status(apiRes.status).json(data);
-      } else {
-        // Handle non-JSON responses (shouldn't happen for this endpoint)
-        const data = await apiRes.text();
-        console.log(`Event media proxy success: Text response with ${data.length} characters`);
-        res.status(apiRes.status).send(data);
+      } catch {
+        console.log(`Event media proxy success: Text response with ${text.length} characters`);
+        res.status(apiRes.status).send(text);
       }
       return;
     }

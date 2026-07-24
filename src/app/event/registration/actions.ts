@@ -2,10 +2,13 @@
 
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
 import { withTenantId } from '@/lib/withTenantId';
-import { getTenantId } from '@/lib/env';
+import { getTenantId, getApiBaseUrl } from '@/lib/env';
 import type { EventAttendeeDTO, EventAttendeeGuestDTO, UserProfileDTO } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 
 async function fetchWithJwtRetry(apiUrl: string, options: any = {}, debugLabel = '') {
   let token = await getCachedApiJwt();
@@ -42,7 +45,7 @@ export async function createUserProfileAction(profileData: Partial<UserProfileDT
       updatedAt: new Date().toISOString(),
     });
 
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/user-profiles`, {
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/user-profiles`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +76,7 @@ export async function createEventAttendeeAction(attendeeData: Partial<EventAtten
       updatedAt: new Date().toISOString(),
     });
 
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-attendees`, {
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-attendees`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -108,7 +111,7 @@ export async function createEventAttendeeGuestAction(
       updatedAt: new Date().toISOString(),
     });
 
-    const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-attendee-guests`, {
+    const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-attendee-guests`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -135,7 +138,7 @@ export async function lookupUserProfileByEmailAction(email: string): Promise<Use
   try {
     const tenantId = getTenantId();
     const response = await fetchWithJwtRetry(
-      `${API_BASE_URL}/api/user-profiles?email.equals=${encodeURIComponent(email)}&tenantId.equals=${tenantId}`,
+      `${getApiBase()}/api/user-profiles?email.equals=${encodeURIComponent(email)}&tenantId.equals=${tenantId}`,
       { method: 'GET' },
       'lookupUserProfileByEmail'
     );

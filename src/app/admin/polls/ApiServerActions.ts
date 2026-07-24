@@ -167,7 +167,7 @@ export async function fetchEventPollOptionServer(optionId: number) {
   }
 }
 
-export async function fetchEventPollOptionsServer(filters?: Record<string, any>) {
+export async function fetchEventPollOptionsServer(filters?: Record<string, any>): Promise<EventPollOptionDTO[]> {
   try {
     const params = new URLSearchParams();
     if (filters) {
@@ -190,19 +190,25 @@ export async function fetchEventPollOptionsServer(filters?: Record<string, any>)
       throw new Error(`Failed to fetch poll options: ${res.status}`);
     }
     
-    return await res.json();
+    const data = await res.json();
+    // Handle paginated response (Spring Data REST returns { content: [...], totalElements: number })
+    if (data && typeof data === 'object' && 'content' in data && Array.isArray(data.content)) {
+      return data.content;
+    }
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching event poll options:', error);
     return [];
   }
 }
 
-export async function createEventPollOptionServer(optionData: Omit<EventPollOptionDTO, 'id' | 'createdAt' | 'updatedAt'>) {
+export async function createEventPollOptionServer(optionData: Omit<EventPollOptionDTO, 'id' | 'createdAt' | 'updatedAt'> & { pollId?: number }) {
   try {
     const proxyUrl = `${baseUrl}/api/proxy/event-poll-options`;
-    
+    const { pollId, ...rest } = optionData as { pollId?: number; [key: string]: unknown };
     const payload = withTenantId({
-      ...optionData,
+      ...rest,
+      poll: pollId != null ? { id: pollId } : undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -226,7 +232,7 @@ export async function createEventPollOptionServer(optionData: Omit<EventPollOpti
   }
 }
 
-export async function updateEventPollOptionServer(optionId: number, optionData: Partial<EventPollOptionDTO>) {
+export async function updateEventPollOptionServer(optionId: number, optionData: Partial<EventPollOptionDTO> & { pollId?: number }) {
   try {
     // First fetch the existing poll option to preserve required fields
     const existingOption = await fetchEventPollOptionServer(optionId);
@@ -235,17 +241,22 @@ export async function updateEventPollOptionServer(optionId: number, optionData: 
     }
 
     const proxyUrl = `${baseUrl}/api/proxy/event-poll-options/${optionId}`;
-    
+    const { pollId, ...rest } = optionData as { pollId?: number; [key: string]: unknown };
+    const patchBody = {
+      ...rest,
+      id: optionId,
+      tenantId: existingOption.tenantId,
+      createdAt: existingOption.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    if (pollId != null) {
+      (patchBody as Record<string, unknown>).poll = { id: pollId };
+    }
+
     const res = await fetch(proxyUrl, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/merge-patch+json' },
-      body: JSON.stringify({
-        ...optionData,
-        id: optionId,
-        tenantId: existingOption.tenantId, // Preserve existing tenantId
-        createdAt: existingOption.createdAt, // Preserve original createdAt
-        updatedAt: new Date().toISOString(),
-      }),
+      body: JSON.stringify(patchBody),
     });
     
     if (!res.ok) {

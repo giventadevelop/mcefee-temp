@@ -12,3 +12,17 @@ export const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789");
 export function absoluteUrl(path: string) {
   return `${getAppUrl()}${path}`;
 }
+
+/**
+ * Check if a user role string represents an admin-level role.
+ * Accepts both 'ADMIN' and 'SUPER_ADMIN'.
+ */
+export function isAdminRole(role: string | null | undefined): boolean {
+  return role === 'ADMIN' || role === 'SUPER_ADMIN';
+}
+
+/** Gas station module: tenant owner / gas admin roles (all locations). */
+export function isGasStationTenantAdminRole(role: string | null | undefined): boolean {
+  if (!role) return false;
+  return role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'GAS_STATION_ADMIN';
+}

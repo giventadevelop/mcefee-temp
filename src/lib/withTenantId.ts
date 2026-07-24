@@ -8,8 +8,15 @@ import { getTenantId } from '@/lib/env';
  * @returns The DTO with tenantId set
  */
 export function withTenantId<T extends object>(dto: T): T & { tenantId: string } {
+  const tenantId = getTenantId();
+  console.log('[MOBILE-WORKFLOW] [withTenantId] Injecting tenantId:', {
+    tenantId,
+    hasValue: !!tenantId,
+    length: tenantId?.length,
+    timestamp: new Date().toISOString()
+  });
   return {
     ...dto,
-    tenantId: getTenantId(),
+    tenantId: tenantId,
   };
 }

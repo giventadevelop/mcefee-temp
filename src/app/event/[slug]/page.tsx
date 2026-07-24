@@ -90,11 +90,11 @@ async function EventPageContent({ slug }: { slug: string }) {
   const isMemberOnly = eventDetails.isMemberOnly === true;
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8">
+    <div className="max-w-5xl mx-auto px-8 pt-20 pb-8">
       <div className="bg-white rounded-lg shadow-md p-6">
         {/* Event Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {isFreeEvent && (
               <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
                 FREE EVENT
@@ -117,9 +117,9 @@ async function EventPageContent({ slug }: { slug: string }) {
               </span>
             )}
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{eventDetails.title}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4 break-words overflow-wrap-anywhere">{eventDetails.title}</h1>
           {eventDetails.caption && (
-            <p className="text-lg text-gray-600 mb-4">{eventDetails.caption}</p>
+            <p className="text-lg text-gray-600 mb-4 break-words overflow-wrap-anywhere">{eventDetails.caption}</p>
           )}
         </div>
 
@@ -266,16 +266,30 @@ async function EventPageContent({ slug }: { slug: string }) {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/events"
-            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-md text-center transition-colors"
+            className="flex-shrink-0 h-14 rounded-xl bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+            title="Back to Events"
+            aria-label="Back to Events"
           >
-            Back to Events
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-200 flex items-center justify-center">
+              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </div>
+            <span className="font-semibold text-indigo-700">Back to Events</span>
           </Link>
           {isRegistrationRequired && (
             <Link
               href={`/event/registration?eventId=${eventDetails.id}`}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-md text-center transition-colors"
+              className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+              title="Register for Event"
+              aria-label="Register for Event"
             >
-              Register for Event
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
+              <span className="font-semibold text-blue-700">Register for Event</span>
             </Link>
           )}
         </div>

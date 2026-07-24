@@ -9,7 +9,7 @@
  */
 
 import { tokenService } from '../auth';
-import { getTenantId } from '@/lib/env';
+import { getTenantId, getApiBaseUrl } from '@/lib/env';
 
 interface RequestConfig extends RequestInit {
   skipAuth?: boolean;
@@ -23,7 +23,7 @@ export class ApiClient {
   private refreshSubscribers: Array<(token: string) => void> = [];
 
   private constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    this.baseURL = getApiBaseUrl();
   }
 
   public static getInstance(): ApiClient {

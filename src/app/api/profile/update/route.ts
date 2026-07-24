@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { UserProfileDTO } from '@/types';
-import { getTenantId } from '@/lib/env';
+import { getTenantId, getApiBaseUrl } from '@/lib/env';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
 
 export async function PATCH(req: NextRequest) {
@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ message: 'id or userId required' }, { status: 400 });
     }
 
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const apiBaseUrl = getApiBaseUrl();
     if (!apiBaseUrl) {
       return NextResponse.json({ message: 'API base URL not configured' }, { status: 500 });
     }

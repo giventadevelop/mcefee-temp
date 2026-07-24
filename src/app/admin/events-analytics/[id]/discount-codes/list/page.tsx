@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { safeAuth } from '@/lib/safe-auth';
 import { fetchEventDetailsServer } from "@/app/admin/ApiServerActions";
 import DiscountCodeListClient from "./DiscountCodeListClient";
 import { fetchDiscountCodesForEvent } from "./ApiServerActions";
@@ -7,7 +7,7 @@ export default async function DiscountCodeListPage(props: { params: Promise<{ id
   const { params } = props;
 
   // Fix for Next.js 15+: await auth() before using
-  const { userId } = await auth();
+  const { userId } = await safeAuth();
 
   if (!userId) {
     return <div>You must be logged in to view this page.</div>;

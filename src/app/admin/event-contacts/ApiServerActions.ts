@@ -1,9 +1,12 @@
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
-import { getAppUrl } from '@/lib/env';
+import { getAppUrl, getApiBaseUrl } from '@/lib/env';
 import { withTenantId } from '@/lib/withTenantId';
 import type { EventContactsDTO } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+// Lazy getter — evaluated at call time, not module load time (critical for Lambda cold starts)
+function getApiBase() {
+  return getApiBaseUrl();
+}
 const baseUrl = getAppUrl();
 
 export async function fetchEventContactsServer(eventId?: number) {
@@ -12,7 +15,7 @@ export async function fetchEventContactsServer(eventId?: number) {
     params.append('eventId.equals', eventId.toString());
   }
 
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts${params.toString() ? `?${params.toString()}` : ''}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts${params.toString() ? `?${params.toString()}` : ''}`, {
     cache: 'no-store',
   });
 
@@ -23,8 +26,46 @@ export async function fetchEventContactsServer(eventId?: number) {
   return await response.json();
 }
 
+/**
+ * Paginated criteria fetch driven by backend page/size + X-Total-Count.
+ * `search` maps to `name.contains` (or `id.equals` when numeric).
+ */
+export async function fetchEventContactsPageServer(options: {
+  page: number;
+  size: number;
+  search?: string;
+  eventId?: number;
+  sort?: string;
+}): Promise<{ data: EventContactsDTO[]; totalCount: number }> {
+  const params = new URLSearchParams({
+    page: String(Math.max(0, options.page)),
+    size: String(Math.max(1, options.size)),
+    sort: options.sort || 'id,asc',
+  });
+  if (options.eventId) {
+    params.append('eventId.equals', options.eventId.toString());
+  }
+  const term = options.search?.trim();
+  if (term) {
+    if (/^\d+$/.test(term)) params.append('id.equals', term);
+    else params.append('name.contains', term);
+  }
+
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts?${params.toString()}`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch event contacts: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const totalCount = parseInt(response.headers.get('x-total-count') || '0', 10);
+  return { data: Array.isArray(data) ? data : [], totalCount };
+}
+
 export async function fetchEventContactServer(id: number) {
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts/${id}`, {
     cache: 'no-store',
   });
 
@@ -36,9 +77,14 @@ export async function fetchEventContactServer(id: number) {
 }
 
 export async function createEventContactServer(contact: Omit<EventContactsDTO, 'id' | 'createdAt' | 'updatedAt'>) {
-  const payload = withTenantId(contact);
+  const now = new Date().toISOString();
+  const payload = withTenantId({
+    ...contact,
+    createdAt: now,
+    updatedAt: now,
+  });
 
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -55,7 +101,7 @@ export async function createEventContactServer(contact: Omit<EventContactsDTO, '
 export async function updateEventContactServer(id: number, contact: Partial<EventContactsDTO>) {
   const payload = withTenantId({ ...contact, id });
 
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/merge-patch+json' },
     body: JSON.stringify(payload),
@@ -70,7 +116,7 @@ export async function updateEventContactServer(id: number, contact: Partial<Even
 }
 
 export async function deleteEventContactServer(id: number) {
-  const response = await fetchWithJwtRetry(`${API_BASE_URL}/api/event-contacts/${id}`, {
+  const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-contacts/${id}`, {
     method: 'DELETE',
   });
 

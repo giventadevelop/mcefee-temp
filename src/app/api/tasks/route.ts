@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
 import type { UserTaskDTO } from '@/types';
 import { getAppUrl } from '@/lib/env';
 
 // Force Node.js runtime
 export const runtime = 'nodejs';
-
-const API_BASE_URL = getAppUrl();
-if (!API_BASE_URL) {
-  throw new Error('API base URL not configured');
-}
 
 // Validation schema for task creation and update
 const createTaskSchema = z.object({
@@ -34,8 +29,8 @@ const createTaskSchema = z.object({
 });
 const updateTaskSchema = createTaskSchema.partial();
 
-function getUserId() {
-  const { userId } = auth();
+async function getUserId() {
+  const { userId } = await auth();
   if (!userId) throw new Error('Unauthorized');
   return userId;
 }
@@ -232,8 +227,12 @@ function applyFilters(tasks: UserTaskDTO[], searchParams: URLSearchParams): User
 }
 
 export async function GET(request: NextRequest, context?: { params?: { id?: string } }) {
+  const API_BASE_URL = getAppUrl();
+  if (!API_BASE_URL) {
+    return NextResponse.json({ error: 'API base URL not configured' }, { status: 503 });
+  }
   try {
-    const userId = getUserId();
+    const userId = await getUserId();
     // If context and params.id is present, fetch a single task
     if (context && context.params && context.params.id) {
       const response = await fetch(`${API_BASE_URL}/api/proxy/user-tasks/${context.params.id}`, {
@@ -266,8 +265,12 @@ export async function GET(request: NextRequest, context?: { params?: { id?: stri
 }
 
 export async function POST(request: NextRequest) {
+  const API_BASE_URL = getAppUrl();
+  if (!API_BASE_URL) {
+    return NextResponse.json({ error: 'API base URL not configured' }, { status: 503 });
+  }
   try {
-    const userId = getUserId();
+    const userId = await getUserId();
     const body = await request.json();
     const validatedData = createTaskSchema.parse(body);
     const now = new Date().toISOString();
@@ -310,8 +313,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const API_BASE_URL = getAppUrl();
+  if (!API_BASE_URL) {
+    return NextResponse.json({ error: 'API base URL not configured' }, { status: 503 });
+  }
   try {
-    const userId = getUserId();
+    const userId = await getUserId();
     const body = await request.json();
     const { id, ...updateData } = body;
     if (!id) {
@@ -383,8 +390,12 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const API_BASE_URL = getAppUrl();
+  if (!API_BASE_URL) {
+    return NextResponse.json({ error: 'API base URL not configured' }, { status: 503 });
+  }
   try {
-    const userId = getUserId();
+    const userId = await getUserId();
     const { id } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'Task id is required' }, { status: 400 });

@@ -304,12 +304,20 @@ export function PollVotingCard({ poll, options, userId, onVoteSubmitted }: PollV
                   <p className="text-gray-600 mb-4">
                     This poll doesn't have any voting options configured yet. Please contact the poll administrator.
                   </p>
-                  <Button 
+                  <button 
                     onClick={() => window.history.back()}
-                    className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+                    className="flex-shrink-0 h-14 rounded-xl bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                    title="Back to Polls"
+                    aria-label="Back to Polls"
+                    type="button"
                   >
-                    ← Back to Polls
-                  </Button>
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-200 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-indigo-700">Back to Polls</span>
+                  </button>
                 </div>
               ) : (
                 <>
@@ -353,23 +361,30 @@ export function PollVotingCard({ poll, options, userId, onVoteSubmitted }: PollV
                     />
                   </div>
 
-                  <Button
+                  <button
                     onClick={handleSubmitVote}
                     disabled={isSubmitting || selectedOptions.length === 0}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 px-6"
+                    title="Submit Vote"
+                    aria-label="Submit Vote"
+                    type="button"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-5 w-5 mr-2" />
-                        Submit Vote
-                      </>
-                    )}
-                  </Button>
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
+                      {isSubmitting ? (
+                        <svg className="animate-spin w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="font-semibold text-blue-700">
+                      {isSubmitting ? 'Submitting...' : 'Submit Vote'}
+                    </span>
+                  </button>
                   
                   {/* Manual test button for debugging */}
                 </>

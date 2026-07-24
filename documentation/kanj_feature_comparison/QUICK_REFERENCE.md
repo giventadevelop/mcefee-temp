@@ -266,6 +266,7 @@ const departments = {
 For complete analysis with all details, screenshots, and rationale:
 - **Main Analysis:** `KANJ_vs_OurSite_Analysis.md`
 - **Overview:** `README.md`
+- **Event Competitions PRD:** `Event_Competitions_PRD.html` · `event_competitions/generic_prd.html`
 - **This Guide:** `QUICK_REFERENCE.md`
 
 ---

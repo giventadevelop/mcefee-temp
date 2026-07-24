@@ -1,9 +1,10 @@
 import React from 'react';
 import { Metadata } from 'next';
-import MOSCHeader from './components/MOSCHeader';
-import MOSCFooter from './components/MOSCFooter';
-import NavigationBreadcrumb from './components/NavigationBreadcrumb';
-import './mosc-globals.css';
+import SyroHeader from './components/SyroHeader';
+import SyroFooter from './components/SyroFooter';
+import SyroStaticAssets from './components/SyroStaticAssets';
+import '@/styles/syro-malabar.css';
+import '@/styles/syro-news-articles.css';
 
 export const metadata: Metadata = {
   title: {
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
     default: 'Malankara Orthodox Syrian Church',
   },
   description: 'Official website of the Malankara Orthodox Syrian Church - Saint Thomas Christian Community',
-  keywords: ['Malankara Orthodox Church', 'Orthodox Christianity', 'Saint Thomas', 'Indian Orthodox Church'],
+  keywords: ['Malankara Orthodox Syrian Church', 'Catholic Christianity', 'Saint Thomas', 'Indian Catholic Church'],
   openGraph: {
     title: 'Malankara Orthodox Syrian Church',
     description: 'Official website of the Malankara Orthodox Syrian Church - Saint Thomas Christian Community',
@@ -19,21 +20,21 @@ export const metadata: Metadata = {
   },
 };
 
-interface MOSCLayoutProps {
+interface SyroLayoutProps {
   children: React.ReactNode;
 }
 
-export default function MOSCLayout({ children }: MOSCLayoutProps) {
+export default function SyroLayout({ children }: SyroLayoutProps) {
   return (
-    <div className="mosc-layout min-h-screen bg-background flex flex-col">
-      <MOSCHeader />
+    <div className="syro-layout min-h-screen flex flex-col">
+      <SyroStaticAssets />
+      <SyroHeader />
 
-      <main className="mosc-main flex-1">
-        <NavigationBreadcrumb />
+      <main id="mainContent" className="syro-main flex-1 min-w-0 overflow-x-hidden">
         {children}
       </main>
 
-      <MOSCFooter />
+      <SyroFooter />
     </div>
   );
 }

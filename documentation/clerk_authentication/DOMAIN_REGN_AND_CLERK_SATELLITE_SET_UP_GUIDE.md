@@ -1,10 +1,85 @@
 # Satellite Domain Setup Guide - www.mosc-temp.com
 
 **Date**: 2025-01-23
-**Updated**: 2025-01-25 (Clarified for separate Amplify apps)
+**Updated**: 2025-11-01 (Added sign-out flow, redirect URL fixes, DNS configuration fixes, Amplify platform type requirement)
 
 **Primary Domain**: www.adwiise.com (Amplify App #1 - ALREADY EXISTS)
 **New Satellite Domain**: www.mosc-temp.com (Amplify App #2 - Separate deployment)
+
+---
+
+## ⚠️ CRITICAL PRE-FLIGHT CHECKLIST
+
+**Before starting setup, verify these MUST-DO items:**
+
+### 1. ✅ Amplify Platform Type (MOST COMMON FAILURE POINT!)
+
+When creating the Amplify app, you MUST select **"Web Compute"** platform:
+
+```
+❌ Platform: WEB (Static site - will cause 404 errors!)
+✅ Platform: Web Compute (Next.js SSR with Lambda - REQUIRED!)
+```
+
+**How to verify:**
+- AWS Amplify Console → Your App → App settings → General settings
+- Check "Platform" field - MUST say **"Web Compute"**
+- If it says "WEB", you MUST delete and recreate the app
+
+**Why this matters:**
+- `WEB` = Static site deployment (no Lambda functions, no SSR)
+- `Web Compute` = Next.js SSR deployment (with Lambda@Edge functions)
+- Wrong platform = 404 errors even with successful builds
+- Wrong platform = No "Hosting compute logs" in Monitoring section
+- **Cannot be changed after creation** - must recreate app!
+
+**Signs you have wrong platform:**
+- ❌ Missing "Hosting compute logs" menu item under Monitoring
+- ❌ 404 errors on all pages despite successful deployment
+- ❌ Build logs show SSR functions created but site doesn't work
+- ❌ Direct Amplify URL returns 404
+
+---
+
+### 2. ✅ Update ALL Hardcoded Domain References in Source Code
+
+When setting up a new satellite domain, you MUST update hardcoded domain names in **BOTH** primary and satellite project source code. **Environment variables alone are NOT enough!**
+
+**Files requiring hardcoded domain updates** (see detailed section below):
+
+**Satellite Project** (e.g., md-strikers):
+- [ ] `src/app/layout.tsx` - Domain detection and Clerk config (3-4 locations)
+- [ ] `src/middleware.ts` - Satellite detection (2 locations)
+- [ ] `src/app/(auth)/sign-in/[[...sign-in]]/page.tsx` - Redirect URL
+- [ ] `src/app/(auth)/sign-up/[[...sign-up]]/page.tsx` - Redirect URL
+- [ ] `src/app/__clerk/[...path]/route.ts` - Clerk Frontend API URL
+- [ ] `src/components/Header.tsx` - Sign-out redirect URL
+- [ ] `next.config.mjs` - Clerk proxy rewrite destination
+
+**Primary Project** (e.g., event-site-manager):
+- [ ] `src/app/layout.tsx` - allowedRedirectOrigins array
+- [ ] `src/middleware.ts` - CORS headers (2 locations)
+
+**Common mistake:** Copying a project like mcefee-temp and only updating .env files. The code still has old domain hardcoded!
+
+---
+
+### 3. ✅ DNS Configuration Format Consistency
+
+Ensure your Clerk domain configuration matches your DNS records:
+
+```
+If DNS is:     clerk.www.md-strikers.com
+Then use:      NEXT_PUBLIC_CLERK_DOMAIN=www.md-strikers.com
+
+If DNS is:     clerk.md-strikers.com
+Then use:      NEXT_PUBLIC_CLERK_DOMAIN=md-strikers.com
+```
+
+**Always use environment variable as source of truth:**
+```typescript
+domain: process.env.NEXT_PUBLIC_CLERK_DOMAIN || 'www.md-strikers.com'
+```
 
 ---
 
@@ -49,6 +124,79 @@ This guide sets up `www.mosc-temp.com` as a **Clerk satellite domain** that uses
 - ✅ Multi-tenant architecture (add more satellite domains later)
 
 **Total Time**: ~1 hour (including DNS propagation)
+
+---
+
+## 📚 Additional Documentation: Satellite Branding During Authentication
+
+**For detailed information about showing satellite-specific headers and footers during authentication redirects, refer to the comprehensive guide in the Primary Domain project:**
+
+**📍 Documentation Location:**
+```
+E:\project_workspace\event-site-manager\documentation\clerk_authentication\DOMAIN_REGN_AND_CLERK_SATELLITE_SET_UP_GUIDE.md
+```
+
+**What's Covered in That Document:**
+
+### 🎨 Satellite Branding Implementation
+- **ConditionalAuthLayout Pattern** - How primary domain hides its header/footer on auth routes
+- **Configuration-Based Rendering** - How satellite branding is stored and rendered
+- **SatelliteHeader & SatelliteFooter Components** - Complete implementation details
+
+### 📋 Key Topics:
+1. **Architecture Overview** - Multi-domain authentication flow with branding
+2. **Problem & Solution** - Why mixed branding occurred and how it was fixed
+3. **Configuration Management** - Complete `satellites.json` branding structure
+4. **Code Structure** - All file locations and component relationships
+5. **Implementation Details** - Line-by-line code walkthrough
+6. **Setup Instructions** - Step-by-step guide for adding new satellites with branding
+7. **Testing Checklist** - Comprehensive testing procedures
+8. **Troubleshooting Guide** - Common issues and solutions
+
+### 🔑 Key Implementation:
+The primary domain uses a **ConditionalAuthLayout** component that:
+- Detects when a user is on an authentication route (`/sign-in`, `/sign-up`, `/auth/signout-redirect`)
+- **Hides** the primary domain's header and footer completely
+- **Shows** satellite-specific header and footer based on the `redirect_url` parameter
+- Renders satellite branding from configuration (no iframes, no external fetching)
+
+### 📖 Example Flow:
+```
+User on satellite (www.mosc-temp.com) → Clicks "Sign In"
+    ↓
+Redirects to primary with redirect_url:
+    https://www.event-site-manager.com/sign-in?redirect_url=https://www.mosc-temp.com
+    ↓
+Primary domain:
+    ✅ Hides MCEFEE header/footer (ConditionalAuthLayout)
+    ✅ Extracts satellite config from redirect_url
+    ✅ Shows "Unite India" header/footer (satellite branding)
+    ↓
+User completes authentication
+    ↓
+Redirects back to www.mosc-temp.com with session
+```
+
+### 💡 Why This Matters:
+Without this implementation, users would see **mixed branding** during authentication:
+- ❌ Primary domain header (MCEFEE) at top
+- ❌ Satellite footer (Unite India) at bottom
+- ❌ Confusing user experience
+
+With this implementation:
+- ✅ Only satellite branding visible during entire auth flow
+- ✅ Seamless branded experience
+- ✅ No user confusion about which site they're on
+
+### 🚀 For Developers:
+If you need to:
+- Understand how satellite branding works during authentication
+- Add a new satellite domain with custom branding
+- Troubleshoot branding issues (double headers/footers)
+- Modify satellite header/footer components
+- Update branding configuration
+
+**→ Refer to the Primary Domain documentation linked above for complete details.**
 
 ---
 
@@ -121,6 +269,57 @@ Key Point: Session transfer via Clerk backend (NOT cookies)
   - Each domain gets its own session cookie
   - Both cookies point to SAME Clerk session
   - No cookie sharing needed!
+```
+
+---
+
+## Sign-Out Flow Architecture
+
+**IMPORTANT**: Sign-out requires special handling for satellite domains because Clerk cookies are set on the PRIMARY domain.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│              Cross-Domain Sign-Out Flow                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│  1. User on www.mosc-temp.com clicks "Sign Out"                     │
+│     → Satellite Header.tsx handleSignOut() triggered                │
+│                                                                       │
+│  2. Satellite redirects to primary sign-out page:                   │
+│     → https://www.adwiise.com/auth/signout-redirect?redirect_url=   │
+│       https://www.mosc-temp.com                                     │
+│                                                                       │
+│  3. Primary domain (/auth/signout-redirect/page.tsx):              │
+│     → Calls Clerk signOut() to clear cookies on primary            │
+│     → Waits for sign-out to complete                                │
+│                                                                       │
+│  4. Primary redirects back to satellite with flag:                  │
+│     → https://www.mosc-temp.com?clerk_signout=true                 │
+│                                                                       │
+│  5. Satellite Header.tsx detects clerk_signout=true flag:          │
+│     → Clears all Clerk-related items from localStorage              │
+│     → Removes flag from URL                                         │
+│     → Reloads page                                                  │
+│                                                                       │
+│  6. User now signed out on www.mosc-temp.com                        │
+│     → Clean state, no stale data                                    │
+│                                                                       │
+└─────────────────────────────────────────────────────────────────────┘
+
+Why This Flow Is Necessary:
+  - Clerk cookies are set on PRIMARY domain (www.adwiise.com)
+  - Satellite domain CANNOT clear primary domain cookies (browser security)
+  - Must redirect to primary to call Clerk signOut()
+  - Use URL flag to signal successful sign-out back to satellite
+  - Satellite clears its local storage on flag detection
+
+Key Implementation Files:
+  PRIMARY (event-site-manager):
+    - src/app/auth/signout-redirect/page.tsx (handles sign-out)
+    - src/middleware.ts (add /auth/signout-redirect to publicRoutes)
+
+  SATELLITE (mcefee-temp):
+    - src/components/Header.tsx (sign-out button + flag detection)
 ```
 
 ---
@@ -706,6 +905,270 @@ afterAuth(auth, req) {
 
 ---
 
+#### 3. `src/app/(auth)/sign-in/[[...sign-in]]/page.tsx` - Handle redirect_url Parameter
+
+**Purpose**: Allows primary domain to redirect back to satellite after successful authentication.
+
+**Required Code**:
+```typescript
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { SignIn } from '@clerk/nextjs';
+
+export default function SignInPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  const [isPrimaryDomain, setIsPrimaryDomain] = useState(false);
+
+  // Get redirect_url from query parameters (for satellite domain redirects)
+  const redirectUrl = searchParams?.get('redirect_url') || '/';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        setIsLocalhost(true);
+        return;
+      }
+
+      // Check if we're on primary domain
+      if (hostname.includes('event-site-manager.com')) {
+        setIsPrimaryDomain(true);
+      }
+    }
+  }, []);
+
+  // On primary domain, handle redirect URL
+  if (isPrimaryDomain || isLocalhost) {
+    return (
+      <main className="flex flex-col items-center justify-center flex-1 py-2">
+        <h1 className="text-4xl font-bold">Welcome Back</h1>
+        <SignIn redirectUrl={redirectUrl} />
+      </main>
+    );
+  }
+
+  return null;
+}
+```
+
+**File Path**: `src/app/(auth)/sign-in/[[...sign-in]]/page.tsx`
+
+**Critical Notes**:
+- Primary domain MUST read `redirect_url` from query string
+- Pass `redirectUrl` prop to `<SignIn>` component
+- This allows Clerk to redirect back to satellite after authentication
+- Without this, users get stuck on primary domain after sign-in
+
+---
+
+#### 4. `src/app/(auth)/sign-up/[[...sign-up]]/page.tsx` - Handle redirect_url Parameter
+
+**Purpose**: Allows primary domain to redirect back to satellite after successful registration.
+
+**Required Code**:
+```typescript
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { SignUp } from '@clerk/nextjs';
+
+export default function SignUpPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  const [isPrimaryDomain, setIsPrimaryDomain] = useState(false);
+
+  // Get redirect_url from query parameters (for satellite domain redirects)
+  const redirectUrl = searchParams?.get('redirect_url') || '/';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        setIsLocalhost(true);
+        return;
+      }
+
+      // Check if we're on primary domain
+      if (hostname.includes('event-site-manager.com')) {
+        setIsPrimaryDomain(true);
+      }
+    }
+  }, []);
+
+  // On primary domain, handle redirect URL
+  if (isPrimaryDomain || isLocalhost) {
+    return (
+      <main className="flex flex-col items-center justify-center flex-1 py-2">
+        <h1 className="text-4xl font-bold">Create Your Account</h1>
+        <SignUp redirectUrl={redirectUrl} afterSignUpUrl={redirectUrl} />
+      </main>
+    );
+  }
+
+  return null;
+}
+```
+
+**File Path**: `src/app/(auth)/sign-up/[[...sign-up]]/page.tsx`
+
+**Critical Notes**:
+- Primary domain MUST read `redirect_url` from query string
+- Pass both `redirectUrl` and `afterSignUpUrl` props to `<SignUp>` component
+- This allows Clerk to redirect back to satellite after registration
+- Without this, users get stuck on primary domain after sign-up
+
+---
+
+#### 5. `src/app/auth/signout-redirect/page.tsx` - Handle Satellite Sign-Out (NEW FILE)
+
+**Purpose**: Handles sign-out for satellite domains by clearing Clerk cookies on primary domain.
+
+**Required Code**:
+```typescript
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useClerk } from '@clerk/nextjs';
+import { useSearchParams } from 'next/navigation';
+
+export default function SignOutRedirect() {
+  const { signOut } = useClerk();
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<'processing' | 'error'>('processing');
+  const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    const performSignOut = async () => {
+      try {
+        console.log('[SignOut Redirect] Starting sign-out process...');
+
+        // Get redirect URL from query params
+        const redirectUrl = searchParams.get('redirect_url') || '/';
+        console.log('[SignOut Redirect] Redirect URL:', redirectUrl);
+
+        // Validate redirect URL (security check)
+        if (redirectUrl && !redirectUrl.startsWith('http')) {
+          // Relative URL, use as-is
+        } else if (redirectUrl) {
+          // Absolute URL - validate it's one of our domains
+          const allowedDomains = ['mcefee-temp.com', 'event-site-manager.com'];
+          const url = new URL(redirectUrl);
+          const isAllowed = allowedDomains.some(domain => url.hostname.includes(domain));
+
+          if (!isAllowed) {
+            console.error('[SignOut Redirect] Invalid redirect URL:', redirectUrl);
+            setError('Invalid redirect URL');
+            setStatus('error');
+            return;
+          }
+        }
+
+        console.log('[SignOut Redirect] Calling Clerk signOut...');
+
+        // Sign out - CRITICAL: Pass redirectUrl as undefined to prevent Clerk from auto-redirecting
+        await signOut({ redirectUrl: undefined });
+
+        console.log('[SignOut Redirect] Sign out complete, manually redirecting to:', redirectUrl);
+
+        // Add a flag to indicate sign-out was successful
+        const separator = redirectUrl.includes('?') ? '&' : '?';
+        const redirectWithFlag = `${redirectUrl}${separator}clerk_signout=true`;
+
+        // Add a small delay to ensure sign-out completed
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Manually redirect after sign out completes
+        window.location.href = redirectWithFlag;
+      } catch (err) {
+        console.error('[SignOut Redirect] Error during sign-out:', err);
+        setError(String(err));
+        setStatus('error');
+
+        // Even on error, try to redirect after a delay
+        const redirectUrl = searchParams.get('redirect_url') || '/';
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 2000);
+      }
+    };
+
+    performSignOut();
+  }, [signOut, searchParams]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
+        {status === 'processing' && (
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <h2 className="mt-6 text-2xl font-bold text-gray-900">
+              Signing out...
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Please wait while we sign you out.
+            </p>
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Sign out error
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              {error || 'An error occurred while signing out.'}
+            </p>
+            <p className="mt-2 text-sm text-gray-600">
+              Redirecting back in a moment...
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+**File Path**: `src/app/auth/signout-redirect/page.tsx` (create new file)
+
+**Critical Notes**:
+- This page MUST be created on PRIMARY domain
+- Validates redirect URL for security
+- Calls Clerk `signOut()` with `redirectUrl: undefined` to prevent auto-redirect
+- Manually redirects back to satellite with `clerk_signout=true` flag
+- Satellite detects flag and clears local storage
+
+---
+
+#### 6. `src/middleware.ts` - Add Sign-Out Page to Public Routes
+
+**Purpose**: Allows unauthenticated access to sign-out redirect page.
+
+**Required Change**:
+```typescript
+export default authMiddleware({
+  publicRoutes: [
+    "/",
+    "/auth/signout-redirect",  // ← Add this line
+    // ... other routes
+  ],
+  // ...
+});
+```
+
+**File Path**: `src/middleware.ts`
+**Line**: Add to publicRoutes array
+
+---
+
 ### Satellite Domain Project (mcefee-temp)
 
 **Location**: `E:\project_workspace\mcefee-temp`
@@ -746,31 +1209,33 @@ const clerkProps = isSatellite
 // Satellite domains: www.mcefee-temp.com (and future tenant domains)
 const headersList = await headers();
 const hostname = headersList.get('host') || '';
-const isProd = process.env.NODE_ENV === 'production';
 
-// Detect if this is a satellite domain (only in production)
-const isSatellite = isProd && hostname.includes('mcefee-temp.com');
+// Detect if this is a satellite domain
+const isSatellite = hostname.includes('mcefee-temp.com');
 
 const clerkProps = isSatellite
   ? {
       isSatellite: true,
-      domain: 'mcefee-temp.com', // Bare domain without www (required by Clerk)
+      domain: process.env.NEXT_PUBLIC_CLERK_DOMAIN || 'www.mcefee-temp.com', // Use env var to match DNS
       signInUrl: 'https://www.event-site-manager.com/sign-in',
       signUpUrl: 'https://www.event-site-manager.com/sign-up',
     }
   : {
-      // Primary domain allows redirects from satellites (or default config for localhost)
-      allowedRedirectOrigins: isProd ? ['https://www.mcefee-temp.com'] : [],
+      // Primary domain allows redirects from satellites
+      allowedRedirectOrigins: ['https://www.mcefee-temp.com'],
     };
 ```
 
 **File Path**: `src/app/layout.tsx`
-**Lines**: ~23-46
+**Lines**: ~31-45
 
 **Critical Notes**:
-- `domain` must be **bare domain** (no `www` prefix): `mcefee-temp.com`
+- `domain` **MUST use environment variable** `process.env.NEXT_PUBLIC_CLERK_DOMAIN` to match DNS configuration
+- DNS record is `clerk.www.mcefee-temp.com` so domain must be `www.mcefee-temp.com` (with www)
+- `.env.production` must have: `NEXT_PUBLIC_CLERK_DOMAIN=www.mcefee-temp.com`
 - `signInUrl` and `signUpUrl` must be **full URLs** with `www`: `https://www.event-site-manager.com/...`
 - `allowedRedirectOrigins` must use **full URL** with `www`: `https://www.mcefee-temp.com`
+- **IMPORTANT**: Removed `isProd` check - satellite detection works in all environments
 
 ---
 
@@ -793,26 +1258,20 @@ const satDomain = isProd
 
 **Required Change** for event-site-manager.com + mcefee-temp.com:
 ```typescript
-const isProd = process.env.NODE_ENV === 'production';
-const isSatEnv = isProd && (
-  process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true' ||
-  process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com') ||
-  false
-);
-const satDomain = isProd
-  ? (process.env.NEXT_PUBLIC_CLERK_DOMAIN || (process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com') ? 'mcefee-temp.com' : undefined))
-  : undefined;
-```
-
-**Also Update signInUrl in middleware**:
-```typescript
-signInUrl: process.env.NEXT_PUBLIC_APP_URL?.includes('amplifyapp.com') || process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com')
-  ? 'https://www.event-site-manager.com/sign-in'
-  : '/sign-in',
+const isSatEnv = process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true' ||
+                  process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com') ||
+                  false;
+const satDomain = process.env.NEXT_PUBLIC_CLERK_DOMAIN ||
+                  (process.env.NEXT_PUBLIC_APP_URL?.includes('mcefee-temp.com') ? 'www.mcefee-temp.com' : undefined);
 ```
 
 **File Path**: `src/middleware.ts`
-**Lines**: ~14-22, ~59-61
+**Lines**: ~14-15
+
+**Critical Notes**:
+- Fallback domain must use `www.mcefee-temp.com` (with www) to match DNS record
+- Environment variable takes precedence: `NEXT_PUBLIC_CLERK_DOMAIN` from `.env.production`
+- **IMPORTANT**: Removed `isProd` check - works in all environments
 
 ---
 
@@ -878,59 +1337,226 @@ if (hostname.includes('mcefee-temp.com')) {
 
 ---
 
-#### 5. `src/app/__clerk/[...path]/route.ts` - Proxy Frontend API (Optional)
+#### 5. `src/components/Header.tsx` - Sign-Out Button and Flag Detection
 
-**Purpose**: If using Clerk proxy configuration, this route proxies requests to the primary domain's Clerk Frontend API.
+**Purpose**: Implements cross-domain sign-out flow with flag detection.
 
-**Current Code** (example from adwiise.com setup):
+**Required Changes**:
+
+1. **Add flag detection useEffect** (runs immediately on mount):
 ```typescript
-const CLERK_FRONTEND_API = 'https://clerk.adwiise.com';
+// CRITICAL: Check for sign-out flag IMMEDIATELY on mount, before Clerk loads
+useEffect(() => {
+  if (typeof window === 'undefined') return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const clerkSignedOut = urlParams.get('clerk_signout');
+
+  if (clerkSignedOut === 'true') {
+    console.log('[Header] Detected clerk_signout=true flag');
+
+    // Clear all Clerk-related items from localStorage
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('clerk') || key.includes('__clerk')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // Remove flag from URL and reload
+    urlParams.delete('clerk_signout');
+    const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+    window.location.replace(newUrl);
+  }
+}, []);
 ```
 
-**Required Change** for event-site-manager.com + mcefee-temp.com:
+2. **Update handleSignOut function** to redirect to primary:
 ```typescript
-const CLERK_FRONTEND_API = 'https://clerk.event-site-manager.com';
+const handleSignOut = async () => {
+  console.log('[Header] Sign out button clicked');
+  setIsSigningOut(true);
+
+  // Broadcast sign-out to other tabs
+  localStorage.setItem('clerk_signout_broadcast', Date.now().toString());
+
+  // For satellite domains, redirect to primary domain's sign-out URL
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isSatellite = hostname.includes('mcefee-temp.com');
+
+  if (isSatellite) {
+    console.log('[Header] Satellite domain detected, redirecting to primary domain sign-out...');
+
+    // Redirect to primary domain's dedicated sign-out page
+    const primarySignOutUrl = 'https://www.event-site-manager.com/auth/signout-redirect';
+    const returnUrl = encodeURIComponent(window.location.origin);
+
+    window.location.href = `${primarySignOutUrl}?redirect_url=${returnUrl}`;
+    return;
+  }
+
+  // Primary domain: normal sign out
+  try {
+    await signOut();
+    window.location.href = '/';
+  } catch (error) {
+    console.error('[Header] Error signing out:', error);
+    setIsSigningOut(false);
+  }
+};
+```
+
+**File Path**: `src/components/Header.tsx`
+
+**Critical Notes**:
+- Flag detection MUST run immediately on mount (before Clerk loads)
+- Clear ALL Clerk-related localStorage items (prevents stale auth state)
+- Satellite sign-out redirects to primary domain
+- Primary domain returns with `clerk_signout=true` flag
+- Flag triggers localStorage cleanup and page reload
+
+---
+
+#### 6. `src/app/__clerk/[...path]/route.ts` - Proxy Frontend API (CRITICAL)
+
+**Purpose**: Proxies Clerk Frontend API requests to the primary domain. **This file MUST be updated when cloning from another satellite project!**
+
+**Current Code** (example from old project like mosc-temp):
+```typescript
+/**
+ * Primary Clerk domain for Frontend API
+ */
+const CLERK_FRONTEND_API = 'https://clerk.adwiise.com';  // ← OLD DOMAIN!
+```
+
+**Required Change** for event-site-manager.com + md-strikers.com:
+```typescript
+/**
+ * Primary Clerk domain for Frontend API
+ */
+const CLERK_FRONTEND_API = 'https://clerk.event-site-manager.com';  // ← NEW PRIMARY DOMAIN!
 ```
 
 **File Path**: `src/app/__clerk/[...path]/route.ts`
 **Line**: ~18
 
-**Note**: This file may not exist if you're using DNS verification (not proxy). Only update if you use proxy configuration.
+**⚠️ CRITICAL**:
+- This file is often overlooked when copying from another satellite project
+- If left unchanged, Clerk SDK will try to load from wrong domain
+- Results in `net::ERR_NAME_NOT_RESOLVED` errors
+- Authentication will not work at all
+
+---
+
+#### 7. `next.config.mjs` - Clerk Proxy Rewrite Destination (CRITICAL)
+
+**Purpose**: Configures Next.js rewrites to proxy `/__clerk` requests to the primary domain's Clerk Frontend API.
+
+**Current Code** (example from old project like mcefee-temp):
+```typescript
+// Configure rewrites for Clerk proxy (satellite domain support)
+async rewrites() {
+  return [
+    {
+      source: '/__clerk/:path*',
+      destination: 'https://clerk.adwiise.com/:path*',  // ← OLD PRIMARY DOMAIN!
+    },
+  ];
+},
+```
+
+**Required Change** for event-site-manager.com + md-strikers.com:
+```typescript
+// Configure rewrites for Clerk proxy (satellite domain support)
+async rewrites() {
+  return [
+    {
+      source: '/__clerk/:path*',
+      destination: 'https://clerk.event-site-manager.com/:path*',  // ← NEW PRIMARY DOMAIN!
+    },
+  ];
+},
+```
+
+**File Path**: `next.config.mjs`
+**Lines**: ~50-58
+
+**⚠️ CRITICAL**:
+- This is one of the MOST COMMONLY MISSED updates when cloning projects
+- If left unchanged, Clerk API requests will fail
+- Results in authentication errors even after DNS is correct
+- Can cause 404 errors if primary domain doesn't exist
 
 ---
 
 ### Summary Checklist: Code Changes for New Domain Pair
 
+⚠️ **CRITICAL**: All these changes MUST be made. Missing even ONE will cause authentication failures!
+
 **For Primary Domain Project (event-site-manager):**
 
-- [ ] **`src/app/layout.tsx`**: Update `allowedRedirectOrigins` to include `'https://www.mcefee-temp.com'`
-- [ ] **`src/middleware.ts`**: Update CORS `Access-Control-Allow-Origin` headers to `'https://www.mcefee-temp.com'` (2 locations)
-
-**For Satellite Domain Project (mcefee-temp):**
-
-- [ ] **`src/app/layout.tsx`**:
-  - [ ] Update comment: Primary domain to `www.event-site-manager.com`
-  - [ ] Update `isSatellite` detection: change `hostname.includes('mosc-temp.com')` to `hostname.includes('mcefee-temp.com')`
-  - [ ] Update `domain`: change `'mosc-temp.com'` to `'mcefee-temp.com'` (bare domain, no www)
-  - [ ] Update `signInUrl`: change to `'https://www.event-site-manager.com/sign-in'`
-  - [ ] Update `signUpUrl`: change to `'https://www.event-site-manager.com/sign-up'`
-  - [ ] Update `allowedRedirectOrigins`: change to `['https://www.mcefee-temp.com']`
-
+- [ ] **`src/app/layout.tsx`**: Update `allowedRedirectOrigins` to include `'https://www.md-strikers.com'`
 - [ ] **`src/middleware.ts`**:
-  - [ ] Update `isSatEnv` detection: change `includes('mosc-temp.com')` to `includes('mcefee-temp.com')`
-  - [ ] Update `satDomain` fallback: change `'mosc-temp.com'` to `'mcefee-temp.com'`
-  - [ ] Update `signInUrl`: change to `'https://www.event-site-manager.com/sign-in'`
+  - [ ] Update CORS `Access-Control-Allow-Origin` headers to `'https://www.md-strikers.com'` (2 locations)
+  - [ ] Add `/auth/signout-redirect` to `publicRoutes` array
+- [ ] **`src/app/(auth)/sign-in/[[...sign-in]]/page.tsx`**: Add `redirect_url` parameter handling (read from query string and pass to SignIn component)
+- [ ] **`src/app/(auth)/sign-up/[[...sign-up]]/page.tsx`**: Add `redirect_url` parameter handling (read from query string and pass to SignUp component)
+- [ ] **`src/app/auth/signout-redirect/page.tsx`**: Create new file to handle satellite sign-out (calls Clerk signOut and redirects back with flag)
 
-- [ ] **`src/app/(auth)/sign-in/[[...sign-in]]/page.tsx`**:
-  - [ ] Update redirect check: change `includes('mosc-temp.com')` to `includes('mcefee-temp.com')`
-  - [ ] Update redirect URL: change to `'https://www.event-site-manager.com/sign-in'`
+**For Satellite Domain Project (md-strikers):**
 
-- [ ] **`src/app/(auth)/sign-up/[[...sign-up]]/page.tsx`**:
-  - [ ] Update redirect check: change `includes('mosc-temp.com')` to `includes('mcefee-temp.com')`
-  - [ ] Update redirect URL: change to `'https://www.event-site-manager.com/sign-up'`
+- [ ] **`src/app/layout.tsx`** (4-5 changes):
+  - [ ] Update comment: Primary domain to `www.event-site-manager.com`
+  - [ ] Update satellite domain comment: `www.md-strikers.com`
+  - [ ] Update `isSatellite` detection: `hostname.includes('md-strikers.com')`
+  - [ ] Update `domain`: `process.env.NEXT_PUBLIC_CLERK_DOMAIN || 'www.md-strikers.com'`
+  - [ ] Update `signInUrl`: `'https://www.event-site-manager.com/sign-in'`
+  - [ ] Update `signUpUrl`: `'https://www.event-site-manager.com/sign-up'`
+  - [ ] Update `allowedRedirectOrigins`: `['https://www.md-strikers.com']`
 
-- [ ] **`src/app/__clerk/[...path]/route.ts`** (if exists):
-  - [ ] Update `CLERK_FRONTEND_API` to `'https://clerk.event-site-manager.com'`
+- [ ] **`src/middleware.ts`** (3 changes):
+  - [ ] Update `isSatEnv` detection: `includes('md-strikers.com')`
+  - [ ] Update `satDomain` fallback: `'www.md-strikers.com'` (match DNS format)
+  - [ ] Update `signInUrl`: `'https://www.event-site-manager.com/sign-in'`
+
+- [ ] **`src/app/(auth)/sign-in/[[...sign-in]]/page.tsx`** (2 changes):
+  - [ ] Update redirect check: `hostname.includes('md-strikers.com')`
+  - [ ] Update redirect URL: `'https://www.event-site-manager.com/sign-in'`
+
+- [ ] **`src/app/(auth)/sign-up/[[...sign-up]]/page.tsx`** (2 changes):
+  - [ ] Update redirect check: `hostname.includes('md-strikers.com')`
+  - [ ] Update redirect URL: `'https://www.event-site-manager.com/sign-up'`
+
+- [ ] **`src/components/Header.tsx`** (2 changes):
+  - [ ] Add flag detection useEffect (checks for `clerk_signout=true` and clears localStorage)
+  - [ ] Update `isSatellite` check: `hostname.includes('md-strikers.com')`
+  - [ ] Update sign-out redirect URL: `'https://www.event-site-manager.com/auth/signout-redirect'`
+
+- [ ] **⚠️ `src/app/__clerk/[...path]/route.ts`** (CRITICAL - Often Missed!):
+  - [ ] Update `CLERK_FRONTEND_API` constant to `'https://clerk.event-site-manager.com'`
+
+- [ ] **⚠️ `next.config.mjs`** (CRITICAL - Often Missed!):
+  - [ ] Update `rewrites()` destination to `'https://clerk.event-site-manager.com/:path*'`
+
+---
+
+### Quick Search & Replace Reference
+
+When cloning from an old satellite project (like mcefee-temp) to create a new one (like md-strikers), use these find/replace operations:
+
+**Find:**
+- `mcefee-temp.com` or `mosc-temp.com` (old satellite domain)
+- `adwiise.com` (old primary domain)
+- `clerk.adwiise.com` (old Clerk frontend API)
+
+**Replace with:**
+- `md-strikers.com` (new satellite domain)
+- `event-site-manager.com` (new primary domain)
+- `clerk.event-site-manager.com` (new Clerk frontend API)
+
+**⚠️ IMPORTANT**:
+- Search in source code files only (exclude `node_modules`, `documentation`, `.next`)
+- Manually review each match before replacing
+- Some occurrences may be in comments or examples - use judgment
 
 ---
 
@@ -938,11 +1564,14 @@ const CLERK_FRONTEND_API = 'https://clerk.event-site-manager.com';
 
 | Property | Format | Example | Notes |
 |----------|--------|---------|-------|
-| `domain` (ClerkProvider) | **Bare domain** | `mcefee-temp.com` | NO www prefix |
+| `domain` (ClerkProvider) | **From env var** | `process.env.NEXT_PUBLIC_CLERK_DOMAIN` or `'www.mcefee-temp.com'` | MUST match DNS record (`clerk.${domain}`) |
+| `.env.production` | **Match DNS** | `NEXT_PUBLIC_CLERK_DOMAIN=www.mcefee-temp.com` | If DNS is `clerk.www.*` use `www.*` |
 | `signInUrl` / `signUpUrl` | **Full URL** | `https://www.event-site-manager.com/sign-in` | WITH www |
 | `allowedRedirectOrigins` | **Full URL** | `https://www.mcefee-temp.com` | WITH www |
 | `hostname.includes()` check | **Any part** | `hostname.includes('mcefee-temp.com')` | Works with or without www |
 | CORS headers | **Full URL** | `'https://www.mcefee-temp.com'` | WITH www |
+
+**CRITICAL**: The `domain` value determines Clerk SDK loading URL: `clerk.${domain}`. Your DNS record MUST match this pattern exactly. Always use environment variable as source of truth.
 
 ---
 
@@ -1367,6 +1996,50 @@ Notes:
 3. Wait 10 minutes and click "Verify" again
 4. Check for typos in domain name
 
+### Clerk SDK Fails to Load (ERR_NAME_NOT_RESOLVED)
+
+**Issue**: Browser console shows error:
+```
+GET https://clerk.mcefee-temp.com/npm/@clerk/clerk-js@4/dist/clerk.browser.js net::ERR_NAME_NOT_RESOLVED
+```
+
+**Root Cause**: Mismatch between Clerk domain configuration in code and DNS records.
+
+**Symptoms**:
+- Sign-out button doesn't work
+- Authentication functions fail
+- Clerk hooks return null or undefined
+
+**Fix**:
+
+1. **Check DNS record** - verify which format exists:
+   ```powershell
+   # Check if bare domain DNS exists
+   nslookup clerk.mcefee-temp.com
+
+   # Check if www domain DNS exists
+   nslookup clerk.www.mcefee-temp.com
+   ```
+
+2. **Match code to DNS**:
+   - If DNS is `clerk.www.mcefee-temp.com`:
+     - `.env.production`: `NEXT_PUBLIC_CLERK_DOMAIN=www.mcefee-temp.com`
+     - `layout.tsx`: `domain: process.env.NEXT_PUBLIC_CLERK_DOMAIN || 'www.mcefee-temp.com'`
+     - `middleware.ts` fallback: `'www.mcefee-temp.com'`
+
+   - If DNS is `clerk.mcefee-temp.com`:
+     - `.env.production`: `NEXT_PUBLIC_CLERK_DOMAIN=mcefee-temp.com`
+     - `layout.tsx`: `domain: process.env.NEXT_PUBLIC_CLERK_DOMAIN || 'mcefee-temp.com'`
+     - `middleware.ts` fallback: `'mcefee-temp.com'`
+
+3. **Redeploy** after making changes
+
+**Important**:
+- Clerk domain in code determines SDK loading URL: `clerk.${domain}`
+- DNS record MUST match this exact pattern
+- Environment variable should be source of truth - use it in both layout.tsx and middleware.ts
+- Do NOT hardcode domain values - always read from `process.env.NEXT_PUBLIC_CLERK_DOMAIN`
+
 ### Redirect Loop
 
 **Issue**: Keeps redirecting between mosc-temp.com and adwiise.com
@@ -1396,6 +2069,54 @@ Notes:
 1. Verify www.mosc-temp.com is in Clerk allowed origins (via API or Dashboard)
 2. Check that both domains use same Clerk publishable key
 3. Verify satellite domain is verified (not just added)
+
+### Sign-Out Not Working on Satellite
+
+**Issue**: Sign-out button clicked but user remains signed in
+
+**Symptoms**:
+- User appears signed out but returns after refresh
+- `handleSignOut` function not being called
+- Clerk SDK fails to load
+
+**Fix**:
+
+1. **Check if Clerk SDK loads** (see "Clerk SDK Fails to Load" above)
+   - Verify DNS matches code configuration
+   - Check browser console for loading errors
+
+2. **Verify sign-out redirect page exists on primary**:
+   - File: `src/app/auth/signout-redirect/page.tsx`
+   - Added to public routes in middleware
+
+3. **Verify Header.tsx has sign-out redirect code**:
+   ```typescript
+   const isSatellite = hostname.includes('mcefee-temp.com');
+   if (isSatellite) {
+     window.location.href = `https://www.event-site-manager.com/auth/signout-redirect?redirect_url=${returnUrl}`;
+     return;
+   }
+   ```
+
+4. **Verify Header.tsx has flag detection**:
+   ```typescript
+   useEffect(() => {
+     const clerkSignedOut = urlParams.get('clerk_signout');
+     if (clerkSignedOut === 'true') {
+       // Clear localStorage and reload
+     }
+   }, []);
+   ```
+
+5. **Check browser console logs**:
+   - Should see: `[Header] Sign out button clicked`
+   - Should see: `[Header] Satellite domain detected, redirecting...`
+   - Should see: `[SignOut Redirect] Starting sign-out process...`
+   - Should see: `[Header] Detected clerk_signout=true flag`
+
+6. **Verify both projects deployed**:
+   - Primary domain has sign-out redirect page
+   - Satellite domain has updated Header.tsx
 
 ---
 
