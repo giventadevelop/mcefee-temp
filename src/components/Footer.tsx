@@ -7,7 +7,6 @@ import React, { useEffect, useState } from "react";
 import { useTenantSettings } from "@/components/TenantSettingsProvider";
 import GoogleAdSenseRegion from "@/components/ads/GoogleAdSenseRegion";
 import { InstagramIcon } from "@/components/icons/InstagramIcon";
-import { formatAddressBlock } from "@/lib/formatAddress";
 
 // Back-to-top button component with comprehensive styling
 const BackToTopButton = () => {
@@ -70,7 +69,11 @@ const linkBaseClass =
 const Footer = () => {
   const { settings, organizationIdentity } = useTenantSettings();
   const hasAnySocial = settings?.facebookUrl?.trim() || settings?.instagramUrl?.trim() || settings?.twitterUrl?.trim() || settings?.linkedinUrl?.trim() || settings?.youtubeUrl?.trim() || settings?.tiktokUrl?.trim();
-  const formattedAddress = formatAddressBlock(organizationIdentity);
+  const formattedAddress = [
+    'MCEFEE',
+    'Malayali Cultural Exchange Foundation for Education and Events',
+    'New Jersey, USA',
+  ].join('\n');
   const contactEmail = settings?.email?.trim() || '';
   const contactPhone = settings?.phoneNumber?.trim() || '';
   const footerDescription =
@@ -88,8 +91,8 @@ const Footer = () => {
             <div className="lg:col-span-1">
               <Link href="/charity-theme" className="inline-block mb-6">
                 <Image
-                  src="https://cdn.builder.io/api/v1/image/assets%2Fa70a28525f6f491aaa751610252a199c%2Fd7543f582d4f477599d341da96d48e2b?format=webp&width=800"
-                  alt="Malayalees Friends Logo"
+                  src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
+                  alt="MCEFEE"
                   width={150}
                   height={150}
                   priority
@@ -157,14 +160,12 @@ const Footer = () => {
               <h6 className="text-white font-inter font-semibold text-lg mb-6 tracking-wide">Get in Touch</h6>
 
               <div className="space-y-4">
-                {formattedAddress && (
-                  <div className="flex items-start space-x-3">
-                    <MapPin size={18} className="text-blue-400 mt-1 flex-shrink-0" strokeWidth={2} />
-                    <p className="text-gray-400 font-inter text-sm leading-relaxed whitespace-pre-wrap">
-                      {formattedAddress}
-                    </p>
-                  </div>
-                )}
+                <div className="flex items-start space-x-3">
+                  <MapPin size={18} className="text-blue-400 mt-1 flex-shrink-0" strokeWidth={2} />
+                  <p className="text-gray-400 font-inter text-sm leading-relaxed whitespace-pre-wrap">
+                    {formattedAddress}
+                  </p>
+                </div>
 
                 {contactPhone && (
                   <div className="flex items-center space-x-3">

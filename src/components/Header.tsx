@@ -1053,8 +1053,8 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
               <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-2.5 lg:gap-2 xl:gap-3 h-full">
                 <div className="header-logo-image-wrap flex h-full w-[5.75rem] min-w-[5.75rem] sm:w-[6.75rem] sm:min-w-[6.75rem] lg:w-[6.5rem] lg:min-w-[6.5rem] xl:w-[7.5rem] xl:min-w-[7.5rem] 2xl:w-[9rem] 2xl:min-w-[9rem] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl transition-all duration-300 group-hover:scale-105">
                   <Image
-                    src="/images/logos/Malayalees_US/Malayalees_US_Header_Branding.png"
-                    alt="Unite India"
+                    src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
+                    alt="MCEFEE"
                     width={168}
                     height={128}
                     priority
@@ -1065,7 +1065,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                 </div>
                 <div className="min-w-0 shrink text-left">
                   <div className="header-logo-brand truncate whitespace-nowrap text-base leading-tight sm:text-lg md:text-xl lg:text-base xl:text-lg 2xl:text-[1.5rem]">
-                    MALAYALEES.US
+                    MCEFEE
                   </div>
                 </div>
               </Link>
@@ -1276,8 +1276,8 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
             >
               <div className="header-logo-image-wrap flex h-12 w-12 min-w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg sm:h-14 sm:w-14 sm:min-w-14">
                 <Image
-                  src="/images/logos/Malayalees_US/Malayalees_US_Header_Branding.png"
-                  alt="Unite India"
+                  src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
+                  alt="MCEFEE"
                   width={56}
                   height={56}
                   className="h-full w-full object-contain"
@@ -1285,7 +1285,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
               </div>
               <div className="min-w-0 text-left">
                 <div className="header-logo-brand truncate text-base leading-tight sm:text-lg">
-                  MALAYALEES.US
+                  MCEFEE
                 </div>
               </div>
             </Link>

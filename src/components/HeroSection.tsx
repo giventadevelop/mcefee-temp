@@ -908,8 +908,8 @@ const HeroSection: React.FC = () => {
         <div className="hero-brand-card">
           <div className="hero-brand-image-wrap">
             <Image
-              src="/images/hero_section/wooden-boat-under-coconut-tree-riverside_ver_2.jpg"
-              alt="Malayalees.US - Kerala Backwaters"
+              src="/images/mcefee_hero_left_panel/Mcefee.jpg"
+              alt="MCEFEE"
               fill
               className="hero-brand-kerala-image object-contain object-top md:object-cover md:object-center"
               sizes="(max-width: 767px) 100vw, 30vw"

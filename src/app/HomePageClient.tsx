@@ -382,7 +382,7 @@ function HomePageContent({ initialFeaturedEvents }: { initialFeaturedEvents: Fea
                     Location
                   </h3>
                   <p className="text-gray-600 leading-relaxed text-sm lg:text-base">
-                    Unite India<br />
+                    MCEFEE<br />
                     New Jersey, USA
                   </p>
                 </div>
@@ -402,8 +402,8 @@ function HomePageContent({ initialFeaturedEvents }: { initialFeaturedEvents: Fea
                     Phone
                   </h3>
                   <p className="text-gray-600 leading-relaxed text-sm lg:text-base">
-                    <a href="tel:+16317088442" className="text-blue-600 hover:underline hover:text-blue-700 transition-colors duration-300">
-                      +1 (631) 708-8442
+                    <a href="tel:+19085168781" className="text-blue-600 hover:underline hover:text-blue-700 transition-colors duration-300">
+                      (908) 516-8781
                     </a>
                   </p>
                 </div>
@@ -423,8 +423,8 @@ function HomePageContent({ initialFeaturedEvents }: { initialFeaturedEvents: Fea
                     Email
                   </h3>
                   <p className="text-gray-600 leading-relaxed text-sm lg:text-base">
-                    <a href="mailto:Contactus@malyalees.org" className="text-blue-600 hover:underline hover:text-blue-700 transition-colors duration-300">
-                      Contactus@malyalees.org
+                    <a href="mailto:Contactus@mcefee.org" className="text-blue-600 hover:underline hover:text-blue-700 transition-colors duration-300">
+                      Contactus@mcefee.org
                     </a>
                   </p>
                 </div>
