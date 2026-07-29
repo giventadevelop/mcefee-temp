@@ -509,7 +509,9 @@ body:has(.syro-layout) {
     content: '';
     width: 7px;
     height: 120%;
-    @apply bg-syro-red absolute -left-[30px] top-0;
+    /* Hex instead of @apply bg-syro-red — Amplify PostCSS rejects nested theme colors in @apply */
+    @apply absolute -left-[30px] top-0;
+    background-color: #dc3545;
   }
 
   /* Mobile Section Title - Horizontal Layout */
@@ -596,7 +598,8 @@ body:has(.syro-layout) {
 
   /* Highlighted Text Color (for use with .imp-color class) */
   .syro-imp-color {
-    @apply text-syro-red;
+    /* Hex instead of @apply text-syro-red — Amplify PostCSS rejects nested theme colors in @apply */
+    color: #dc3545;
   }
 
   /* Dotted Pattern Background */
