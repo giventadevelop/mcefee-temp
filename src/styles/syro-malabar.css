@@ -499,7 +499,9 @@ body:has(.syro-layout) {
 
   .syro-section-title h6 {
     writing-mode: vertical-lr;
-    @apply tracking-[5px] text-syro-section-title font-bold whitespace-nowrap absolute -left-[50px] bottom-0 max-h-0;
+    /* Avoid @apply text-syro-section-title — Amplify PostCSS rejects custom fontSize utilities in @apply */
+    @apply tracking-[5px] font-bold whitespace-nowrap absolute -left-[50px] bottom-0 max-h-0;
+    font-size: 24px;
     color: #798daf;
   }
 
