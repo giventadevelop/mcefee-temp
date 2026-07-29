@@ -757,19 +757,36 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
   // On satellite domains, the server-side check is skipped during __clerk_synced, so
   // the client-side check here is the primary mechanism for showing the admin menu.
   useEffect(() => {
-    // If user is not loaded yet, use server-verified flag (from SSR)
+    // If auth is not loaded yet, use server-verified flag (from SSR)
     if (!isLoaded) {
       setIsAdmin(!!isTenantAdmin);
       return;
     }
 
-    // If user is not logged in, clear admin status
-    if (!userId || !user) {
+    // Clear admin only when there is no Clerk userId.
+    // Do NOT require `user` from useUser() — it can load a tick after useAuth() and
+    // briefly clearing admin causes the Admin menu to flicker off.
+    if (!userId) {
       setIsAdmin(false);
       return;
     }
 
     let cancelled = false;
+
+    const applyAdminFallback = () => {
+      if (typeof isTenantAdmin === 'boolean') {
+        setIsAdmin(isTenantAdmin);
+        return;
+      }
+      const publicRole = user?.publicMetadata?.role as string | undefined;
+      const orgRole = user?.organizationMemberships?.[0]?.role;
+      const isAdminUser =
+        publicRole === 'admin' ||
+        publicRole === 'administrator' ||
+        orgRole === 'admin' ||
+        orgRole === 'org:admin';
+      setIsAdmin(!!isAdminUser);
+    };
 
     // Fetch profile and check admin role, with optional retry for satellite domain timing
     const checkAdminStatus = async (attempt = 1): Promise<void> => {
@@ -784,12 +801,24 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
         if (resp.ok) {
           const data = await resp.json();
           const adminResult = data?.isAdmin === true;
+          const lookupFailed = data?.lookupFailed === true;
           console.log(
-            `[Header] Admin status API: isAdmin=${adminResult}, userId=${data?.userId ?? userId}, attempt=${attempt}`
+            `[Header] Admin status API: isAdmin=${adminResult}, lookupFailed=${lookupFailed}, userId=${data?.userId ?? userId}, tenantId=${data?.tenantId ?? 'n/a'}, attempt=${attempt}`
           );
-          if (!cancelled) {
-            setIsAdmin(adminResult);
+          if (cancelled) return;
+
+          // lookup_failed must not clear a true SSR admin flag (false-negative flicker)
+          if (lookupFailed) {
+            if (attempt < 2) {
+              console.log('[Header] Admin lookup failed — retrying in 2s...');
+              await new Promise((r) => setTimeout(r, 2000));
+              if (!cancelled) return checkAdminStatus(attempt + 1);
+            }
+            applyAdminFallback();
+            return;
           }
+
+          setIsAdmin(adminResult);
         } else {
           console.warn(`[Header] Admin status check failed (attempt ${attempt}):`, resp.status);
 
@@ -801,20 +830,8 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
             if (!cancelled) return checkAdminStatus(attempt + 1);
           }
 
-          // Final fallback
           if (!cancelled) {
-            if (typeof isTenantAdmin === 'boolean') {
-              setIsAdmin(isTenantAdmin);
-            } else {
-              const publicRole = user.publicMetadata?.role as string;
-              const orgRole = user.organizationMemberships?.[0]?.role;
-              const isAdminUser =
-                publicRole === 'admin' ||
-                publicRole === 'administrator' ||
-                orgRole === 'admin' ||
-                orgRole === 'org:admin';
-              setIsAdmin(isAdminUser);
-            }
+            applyAdminFallback();
           }
         }
       } catch (error) {
@@ -828,7 +845,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
         }
 
         if (!cancelled) {
-          setIsAdmin(typeof isTenantAdmin === 'boolean' ? isTenantAdmin : false);
+          applyAdminFallback();
         }
       }
     };
@@ -851,7 +868,8 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     }
 
     return () => { cancelled = true; };
-  }, [isLoaded, userId, user, isTenantAdmin]);
+    // Intentionally omit `user` — waiting on useUser() previously cleared admin and re-ran this effect.
+  }, [isLoaded, userId, isTenantAdmin]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
