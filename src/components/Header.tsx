@@ -9,24 +9,28 @@ import { useTenantSettings } from '@/components/TenantSettingsProvider';
 import { isPrimaryHostname, isSatelliteHostname } from '@/lib/clerkSatellite';
 import Image from 'next/image';
 
-const navItems = [
+const navItemCatalog = [
   {
+    key: 'home' as const,
     name: 'Home',
     href: '/',
-    active: false
+    active: false,
   },
   {
+    key: 'about' as const,
     name: 'About',
     href: '/#about-us',
     active: false,
-    dropdown: [] // Will be populated dynamically based on tenant settings
+    dropdown: [] as { name: string; href: string }[],
   },
   {
+    key: 'events' as const,
     name: 'Events',
     href: '/events',
-    active: false
+    active: false,
   },
   {
+    key: 'features' as const,
     name: 'Features',
     href: '#',
     active: false,
@@ -37,24 +41,45 @@ const navItems = [
       { name: 'Members', href: '/member-portal', requiresAuth: true },
       { name: 'Membership', href: '/membership' },
       { name: 'MOSC', href: '/mosc' },
-      { name: 'MOSC_Redesign', href: '/mosc-redesign' }
-    ]
+      { name: 'MOSC_Redesign', href: '/mosc-redesign' },
+    ],
   },
   {
+    key: 'calendar' as const,
     name: 'Calendar',
     href: '/calendar',
-    active: false
+    active: false,
   },
   {
+    key: 'gallery' as const,
     name: 'Gallery',
     href: '/gallery',
-    active: false
+    active: false,
   },
   {
+    key: 'news' as const,
+    name: 'News',
+    href: '/news',
+    active: false,
+  },
+  {
+    key: 'downloads' as const,
+    name: 'Downloads',
+    href: '/downloads',
+    active: false,
+  },
+  {
+    key: 'links' as const,
+    name: 'Links',
+    href: '/links',
+    active: false,
+  },
+  {
+    key: 'contact' as const,
     name: 'Contact',
     href: '/#contact',
-    active: false
-  }
+    active: false,
+  },
 ];
 
 // Admin submenu items
@@ -62,6 +87,7 @@ const adminSubmenuItems = [
   { name: 'Admin Home', href: '/admin' },
   { name: 'Manage Users', href: '/admin/manage-usage' },
   { name: 'Manage Events', href: '/admin/manage-events' },
+  { name: 'Profile Site', href: '/admin/profile-site' },
   { name: 'Event Analytics', href: '/admin/events/dashboard' },
   { name: 'Registrations', href: '/admin/events/registrations' },
   { name: 'QR Scanner', href: '/admin/qr-scanner' },
@@ -662,6 +688,16 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     showProfileHero,
     showProfileWritings,
     showProfileContact,
+    showHeaderHome,
+    showHeaderAbout,
+    showHeaderEvents,
+    showHeaderFeatures,
+    showHeaderCalendar,
+    showHeaderGallery,
+    showHeaderContact,
+    showHeaderNews,
+    showHeaderDownloads,
+    showHeaderLinks,
     loading: settingsLoading,
   } = useTenantSettings();
   const mounted = useMounted();
@@ -1027,27 +1063,42 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     aboutDropdown.push({ name: 'Sponsors', href: '/sponsors' });
   }
 
-  // Update nav items with dynamic About dropdown and profile-oriented links
-  const navItemsWithDropdown = navItems.flatMap((item) => {
-    if (item.name === 'About') {
-      const aboutItem = {
-        ...item,
-        href: isProfileNav ? '/about' : item.href,
-        dropdown: isProfileNav ? undefined : aboutDropdown,
-      };
-      if (isProfileNav && showProfileWritings) {
-        return [
-          aboutItem,
-          { name: 'Perspectives', href: '/#profile-writings', active: false },
-        ];
+  const headerVisibility: Record<(typeof navItemCatalog)[number]['key'], boolean> = {
+    home: showHeaderHome,
+    about: showHeaderAbout,
+    events: showHeaderEvents,
+    features: showHeaderFeatures,
+    calendar: showHeaderCalendar,
+    gallery: showHeaderGallery,
+    news: showHeaderNews,
+    downloads: showHeaderDownloads,
+    links: showHeaderLinks,
+    contact: showHeaderContact,
+  };
+
+  // Filter catalog by tenant header flags, then apply profile-oriented href/label tweaks
+  const navItemsWithDropdown = navItemCatalog
+    .filter((item) => headerVisibility[item.key])
+    .map((item) => {
+      if (item.key === 'about') {
+        return {
+          ...item,
+          href: isProfileNav ? '/about' : item.href,
+          dropdown: isProfileNav ? undefined : aboutDropdown,
+        };
       }
-      return [aboutItem];
-    }
-    if (item.name === 'Contact') {
-      return [{ ...item, href: isProfileNav ? '/contact' : item.href }];
-    }
-    return [item];
-  });
+      if (item.key === 'news') {
+        return {
+          ...item,
+          name: isProfileNav ? 'Perspectives' : 'News',
+          href: '/news',
+        };
+      }
+      if (item.key === 'contact') {
+        return { ...item, href: isProfileNav ? '/contact' : item.href };
+      }
+      return item;
+    });
 
   // Update active state based on current route
   const updatedNavItems = navItemsWithDropdown.map(item => ({
@@ -1056,7 +1107,10 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
       item.href === pathname ||
       (item.href === '/' && (pathname === '/charity-theme' || pathname === '/')) ||
       (item.href === '/about' && pathname === '/about') ||
-      (item.href === '/contact' && pathname === '/contact'),
+      (item.href === '/contact' && pathname === '/contact') ||
+      (item.href === '/news' && (pathname === '/news' || pathname?.startsWith('/writings'))) ||
+      (item.href === '/downloads' && pathname?.startsWith('/downloads')) ||
+      (item.href === '/links' && pathname === '/links'),
   }));
 
   return (
