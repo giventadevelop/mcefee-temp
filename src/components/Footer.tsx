@@ -309,38 +309,12 @@ const Footer = () => {
       {/* Copyright Section */}
       <div className="bg-gray-900 border-t border-gray-800 w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 font-inter text-sm text-center md:text-left">
-              © 2024{' '}
-              <Link
-                href="/charity-theme"
-                className="text-white hover:text-blue-400 transition-colors duration-300 focus:outline-none focus:text-blue-400"
-              >
-                Malayalees US Charity Organization
-              </Link>
-              .<span className="block md:inline"> All rights reserved.</span> Making hope happen.
+          <div className="flex justify-center items-center">
+            <p className="text-gray-400 font-inter text-sm text-center">
+              © 2026 MCEFEE
+              <span className="block">Malayali Cultural Exchange Foundation</span>
+              <span className="block">for Education and Events</span>
             </p>
-
-            <nav className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6">
-              <Link
-                href="#privacy"
-                className="text-gray-400 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white"
-              >
-                Privacy Policy
-              </Link>
-              <Link
-                href="#terms"
-                className="text-gray-400 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white"
-              >
-                Terms of Service
-              </Link>
-              <Link
-                href="#accessibility"
-                className="text-gray-400 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white"
-              >
-                Accessibility
-              </Link>
-            </nav>
           </div>
         </div>
       </div>

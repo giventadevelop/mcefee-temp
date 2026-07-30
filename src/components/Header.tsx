@@ -1120,9 +1120,9 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
       >
         <div className="w-full max-w-[90rem] mx-auto px-4 sm:px-6 lg:pl-5 lg:pr-8 xl:px-10">
           <div className="header-inner-grid h-[8rem] w-full min-w-0 items-center gap-2 sm:gap-3 lg:gap-3 xl:gap-4">
-            {/* Brand — logo + MALAYALEES.US on all breakpoints (incl. mobile) */}
+            {/* Brand — logo only (wordmark is in the image) */}
             <div className="header-brand-col flex min-w-0 items-center h-full max-w-[calc(100%-5.75rem)] sm:max-w-[calc(100%-6.25rem)] lg:max-w-none">
-              <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-2.5 lg:gap-2 xl:gap-3 h-full">
+              <Link href="/" className="group flex min-w-0 items-center h-full" aria-label="MCEFEE home">
                 <div className="header-logo-image-wrap flex h-full w-[5.75rem] min-w-[5.75rem] sm:w-[6.75rem] sm:min-w-[6.75rem] lg:w-[6.5rem] lg:min-w-[6.5rem] xl:w-[7.5rem] xl:min-w-[7.5rem] 2xl:w-[9rem] 2xl:min-w-[9rem] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl transition-all duration-300 group-hover:scale-105">
                   <Image
                     src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
@@ -1134,11 +1134,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                     className="h-full w-full object-contain object-center"
                     style={{ width: 'auto', height: '100%' }}
                   />
-                </div>
-                <div className="min-w-0 shrink text-left">
-                  <div className="header-logo-brand truncate whitespace-nowrap text-base leading-tight sm:text-lg md:text-xl lg:text-base xl:text-lg 2xl:text-[1.5rem]">
-                    MCEFEE
-                  </div>
                 </div>
               </Link>
             </div>
@@ -1343,8 +1338,9 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
           <div className="flex shrink-0 items-center gap-3 border-b border-[var(--header-border)] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
             <Link
               href="/"
-              className="group flex min-w-0 flex-1 items-center gap-2 overflow-hidden"
+              className="group flex min-w-0 flex-1 items-center overflow-hidden"
               onClick={closeMobileMenu}
+              aria-label="MCEFEE home"
             >
               <div className="header-logo-image-wrap flex h-12 w-12 min-w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg sm:h-14 sm:w-14 sm:min-w-14">
                 <Image
@@ -1354,11 +1350,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                   height={56}
                   className="h-full w-full object-contain"
                 />
-              </div>
-              <div className="min-w-0 text-left">
-                <div className="header-logo-brand truncate text-base leading-tight sm:text-lg">
-                  MCEFEE
-                </div>
               </div>
             </Link>
             <button

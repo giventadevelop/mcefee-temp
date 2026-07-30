@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/modernist-b2f3c42b-36a3-4bbd-80ba-c5edb2f3b897/styles.css">
+<script src="_ds/modernist-b2f3c42b-36a3-4bbd-80ba-c5edb2f3b897/_ds_bundle.js"></script>
+<script src="image-slot.js"></script>
+<style>
+  body { margin: 0; background: #dcdad9; text-wrap: pretty; }
+  a { color: var(--color-accent); }
+  a:hover { color: var(--color-accent-700); }
+</style>
+</helmet>
+
+<section style="display:flex;flex-direction:column;gap:32px;padding:48px">
+  <div style="display:flex;align-items:baseline;gap:16px">
+    <h2 style="margin:0;font-size:22px;letter-spacing:-0.01em;color:var(--color-text)">Turn 1 — Modernist homepage</h2>
+    <p style="margin:0;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Two directions · <a href="#1a">1a</a> ruled timetable · <a href="#1b">1b</a> poster</p>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:48px">
+
+    <!-- ════════════════════ OPTION 1a ════════════════════ -->
+    <div id="1a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 8px;background:var(--color-accent);color:var(--color-bg);font-family:var(--font-heading);font-weight:800;font-size:13px;letter-spacing:0.04em">1a</span>
+        <span style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-800)">Ruled timetable — the grid shows, red spent as a mark</span>
+      </div>
+
+      <div style="width:1440px;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px;line-height:1.55;box-shadow:0 24px 60px rgba(32,30,29,0.28)">
+
+        <!-- masthead -->
+        <nav class="nav" data-screen-label="Masthead" style="display:flex;align-items:center;gap:24px;padding:20px 72px;border-bottom:2px solid var(--color-divider)">
+          <span class="nav-brand" style="font-family:var(--font-heading);font-weight:800;font-size:20px;letter-spacing:-0.02em;margin-right:auto">MALAYALEES.US</span>
+          <a href="#1a" aria-current="location" style="font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap">Events</a>
+          <a href="#1a" style="font-size:14px;font-weight:600;color:var(--color-text);text-decoration:none;white-space:nowrap">Calendar</a>
+          <a href="#1a" style="font-size:14px;font-weight:600;color:var(--color-text);text-decoration:none;white-space:nowrap">Gallery</a>
+          <a href="#1a" style="font-size:14px;font-weight:600;color:var(--color-text);text-decoration:none;white-space:nowrap">Members</a>
+          <a href="#1a" style="font-size:14px;font-weight:600;color:var(--color-text);text-decoration:none;white-space:nowrap">About</a>
+          <a href="#1a" style="font-size:14px;font-weight:600;color:var(--color-text);text-decoration:none;white-space:nowrap">Contact</a>
+          <span style="width:2px;height:20px;background:var(--color-divider)"></span>
+          <a href="#1a" style="font-size:14px;font-weight:600;color:var(--color-text);text-decoration:none;white-space:nowrap">Sign in</a>
+          <button type="button" class="btn btn-primary" style="padding:10px 16px;font-size:13px">Get tickets</button>
+        </nav>
+
+        <!-- hero -->
+        <section data-screen-label="Hero" style="display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);border-bottom:2px solid var(--color-divider)">
+          <div style="padding:112px 48px 84px 72px;border-right:2px solid var(--color-divider)">
+            <h1 style="margin:0 0 0 -0.058em;font-family:var(--font-heading);font-weight:800;font-size:76px;line-height:80px;letter-spacing:-0.02em">
+              <span style="display:block">Kerala keeps time</span>
+              <span style="display:block">in New Jersey.</span>
+            </h1>
+            <p style="margin:36px 0 0;font-size:17px;line-height:28px;max-width:52ch">MCEFEE — the Malayali Cultural Exchange Foundation for Education and Events — runs the calendar the community plans its year around: Onam, stage shows, workshops, and the Spark of Kerala tour. Tickets, registration and the whole schedule in one place.</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:32px">
+              <button type="button" class="btn btn-primary" style="padding:14px 22px;font-size:14px">Browse all events</button>
+              <button type="button" class="btn btn-secondary" style="padding:14px 22px;font-size:14px">Donate</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;gap:10px;padding:16px 72px 16px 40px;border-bottom:2px solid var(--color-divider)">
+              <span style="width:10px;height:10px;background:var(--color-accent);flex-shrink:0"></span>
+              <span style="font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-700)">On sale now</span>
+              <span style="margin-left:auto;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Ticketed · 300 seats</span>
+            </div>
+            <figure style="margin:0;flex:1 1 auto;min-height:0;display:flex;flex-direction:column">
+              <span class="grayscale" style="display:block;flex:1 1 auto;min-height:0">
+                <img src="assets/mcefee/spark_kerala_2026_wide.jpg" alt="MCEFEE Spark of Kerala — a showcase of performance arts and rhythm" style="width:100%;height:100%;object-fit:cover;display:block">
+              </span>
+              <figcaption style="padding:12px 72px 12px 40px;font-size:11px;color:var(--color-neutral-700);border-top:2px solid var(--color-divider)">MCEFEE Spark of Kerala — Breslin Performing Arts Center, Lodi, NJ · 27 Feb 2027</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <!-- timetable -->
+        <section data-screen-label="Upcoming events" style="padding:72px 72px 84px">
+          <div style="display:flex;align-items:baseline;gap:24px;margin-bottom:8px">
+            <span style="font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-700)">Upcoming events</span>
+            <a href="#1a" style="margin-left:auto;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none">View all events →</a>
+          </div>
+          <h2 style="margin:0 0 40px -0.02em;font-family:var(--font-heading);font-weight:800;font-size:40px;line-height:44px;letter-spacing:-0.015em">The next six dates</h2>
+
+          <div style="display:flex;flex-direction:column;border-top:2px solid var(--color-divider)">
+            <sc-for list="{{ events }}" as="ev" hint-placeholder-count="6">
+              <div style="display:grid;grid-template-columns:132px minmax(0,1fr) 260px 132px 132px;align-items:baseline;gap:24px;padding:24px 0;border-bottom:2px solid var(--color-divider)">
+                <p style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:15px;line-height:22px;font-feature-settings:'tnum' 1">{{ ev.date }}</p>
+                <div>
+                  <h3 style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:22px;line-height:26px;letter-spacing:-0.01em">{{ ev.title }}</h3>
+                  <p style="margin:6px 0 0;font-size:14px;line-height:22px;color:var(--color-neutral-700)">{{ ev.caption }}</p>
+                </div>
+                <p style="margin:0;font-size:14px;line-height:22px;color:var(--color-neutral-800)">{{ ev.location }}</p>
+                <p style="margin:0;font-size:14px;line-height:22px;font-feature-settings:'tnum' 1;color:var(--color-neutral-800)">{{ ev.time }}</p>
+                <div style="display:flex;justify-content:flex-end">
+                  <span class="{{ ev.tagClass }}" style="font-size:12px">{{ ev.admission }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- featured -->
+        <section data-screen-label="Featured event" style="display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);border-top:2px solid var(--color-divider);border-bottom:2px solid var(--color-divider)">
+          <figure style="margin:0;border-right:2px solid var(--color-divider);min-height:420px;display:flex">
+            <image-slot id="mod-featured-onam-2026" shape="rect" style="width:100%;min-height:420px" placeholder="Drop the Onam Celebration 2026 poster here"></image-slot>
+          </figure>
+          <div style="padding:56px 72px 56px 48px;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+              <span style="width:10px;height:10px;background:var(--color-accent);flex-shrink:0"></span>
+              <span style="font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-700)">Featured event</span>
+            </div>
+            <h2 style="margin:0 0 0 -0.02em;font-family:var(--font-heading);font-weight:800;font-size:44px;line-height:47px;letter-spacing:-0.015em">Onam Celebration 2026</h2>
+            <p style="margin:24px 0 0;font-size:16px;line-height:28px;max-width:38ch;color:var(--color-neutral-800)">Celebrate this onam with us, the malayalees in US.</p>
+            <div style="display:flex;flex-direction:column;margin-top:32px;border-top:2px solid var(--color-divider)">
+              <div style="display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--color-neutral-300)">
+                <span style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Date</span>
+                <span style="font-size:14px;font-weight:600;font-feature-settings:'tnum' 1">Mon 24 Aug 2026</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--color-neutral-300)">
+                <span style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Time</span>
+                <span style="font-size:14px;font-weight:600;font-feature-settings:'tnum' 1">10:00 — 13:00 ET</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--color-neutral-300)">
+                <span style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Venue</span>
+                <span style="font-size:14px;font-weight:600">New York</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;gap:16px;padding:12px 0">
+                <span style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Admission</span>
+                <span style="font-size:14px;font-weight:600">Free · registration required</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:32px">
+              <button type="button" class="btn btn-primary" style="padding:14px 22px;font-size:14px">Register</button>
+              <button type="button" class="btn btn-secondary" style="padding:14px 22px;font-size:14px">Add to calendar</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- what we do -->
+        <section data-screen-label="What we do" style="padding:84px 72px">
+          <span style="display:block;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:14px">What we do</span>
+          <h2 style="margin:0 0 48px -0.02em;font-family:var(--font-heading);font-weight:800;font-size:40px;line-height:44px;letter-spacing:-0.015em">Cultural workshops and educational events</h2>
+
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ services }}" as="s" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:120px minmax(0,420px) minmax(0,1fr);gap:28px 72px;align-items:baseline;padding:42px 0;border-top:2px solid var(--color-divider)">
+                <div style="position:relative">
+                  <span style="position:absolute;left:-24px;top:7px;width:10px;height:10px;background:var(--color-accent)"></span>
+                  <p style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:15px;line-height:28px;font-feature-settings:'tnum' 1">{{ s.num }}</p>
+                </div>
+                <h3 style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:24px;line-height:28px;letter-spacing:-0.01em">{{ s.title }}</h3>
+                <p style="margin:0;font-size:15.5px;line-height:28px;max-width:52ch;color:var(--color-neutral-800)">{{ s.description }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- about -->
+        <section data-screen-label="About" style="display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:28px 96px;align-items:start;padding:84px 72px;border-top:2px solid var(--color-divider);border-bottom:2px solid var(--color-divider)">
+          <div>
+            <span style="display:block;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:14px">About the foundation</span>
+            <h2 style="margin:0 0 0 -0.02em;font-family:var(--font-heading);font-weight:800;font-size:44px;line-height:47px;letter-spacing:-0.015em">Preserve and promote the rich cultural heritage of Kerala</h2>
+          </div>
+          <div>
+            <p style="margin:0;font-size:17px;line-height:28px;max-width:56ch">The Unite India Corporation Foundation for Education and Events is a vibrant, community-driven organization based in New Jersey, USA, dedicated to reviving real Malayali culture, empowering the next generation through education, and offering a nostalgic sense of home to our community.</p>
+            <p style="margin:28px 0 0;font-size:17px;line-height:28px;max-width:56ch;color:var(--color-neutral-800)">Our mission is to preserve and promote the rich cultural heritage of Kerala while fostering a deeper connection among Malayalis in the USA, creating a sense of belonging and unity.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:42px;padding-top:28px;border-top:2px solid var(--color-divider)">
+              <p style="margin:0;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Legal name</p>
+              <p style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:22px;line-height:28px;letter-spacing:-0.01em">Malayali Cultural Exchange Foundation for Education and Events</p>
+              <p style="margin:8px 0 0;font-size:15px;line-height:26px;color:var(--color-neutral-800)">New Jersey, USA · <a href="tel:+19085168781" style="color:var(--color-text);text-decoration:none">(908) 516-8781</a> · <a href="mailto:Contactus@mcefee.org">Contactus@mcefee.org</a></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- team -->
+        <section data-screen-label="Team" style="padding:84px 72px">
+          <span style="display:block;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:14px">Executive committee</span>
+          <h2 style="margin:0 0 16px -0.02em;font-family:var(--font-heading);font-weight:800;font-size:40px;line-height:44px;letter-spacing:-0.015em">The people who run the year</h2>
+          <p style="margin:0 0 48px;font-size:14px;line-height:24px;color:var(--color-accent-700);max-width:60ch">Layout only — committee members come from the executive-committee API and are not in the repo. Send the real list and photographs and they drop straight in.</p>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:48px">
+            <sc-for list="{{ team }}" as="m" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;border-top:2px solid var(--color-divider);padding-top:24px">
+                <figure style="margin:0 0 24px;display:flex">
+                  <image-slot id="{{ m.slot }}" shape="rect" style="width:100%;aspect-ratio:4/5" placeholder="Committee portrait"></image-slot>
+                </figure>
+                <p style="margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-700)">Executive committee</p>
+                <h3 style="margin:0 0 12px;font-family:var(--font-heading);font-weight:800;font-size:22px;line-height:26px;letter-spacing:-0.01em;color:var(--color-neutral-500)">{{ m.title }}</h3>
+                <p style="margin:0 0 16px;font-size:15px;line-height:24px;color:var(--color-neutral-500)">{{ m.bio }}</p>
+                <p style="margin:0;font-size:13px;letter-spacing:0.02em;color:var(--color-neutral-500)">{{ m.expertise }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- sponsors -->
+        <section data-screen-label="Sponsors" style="padding:0 72px 84px">
+          <div style="display:flex;align-items:baseline;gap:24px;padding-top:42px;border-top:2px solid var(--color-divider);margin-bottom:32px">
+            <span style="font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-accent-700)">Sponsors</span>
+            <a href="#1a" style="margin-left:auto;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none">See all sponsors →</a>
+          </div>
+          <div style="display:flex;flex-direction:column;border-top:2px solid var(--color-divider)">
+            <sc-for list="{{ sponsors }}" as="sp" hint-placeholder-count="3">
+              <div style="display:grid;grid-template-columns:200px minmax(0,1fr) 160px;align-items:baseline;gap:24px;padding:20px 0;border-bottom:2px solid var(--color-divider)">
+                <p style="margin:0;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">{{ sp.tier }}</p>
+                <h3 style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:20px;line-height:26px;letter-spacing:-0.01em">{{ sp.name }}</h3>
+                <a href="#1a" style="justify-self:end;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none">Visit →</a>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <!-- red poster close -->
+        <section data-screen-label="Close" style="background:var(--color-accent);color:var(--color-bg);padding:84px 72px">
+          <h3 style="margin:0 0 0 -0.058em;font-family:var(--font-heading);font-weight:800;font-size:60px;line-height:64px;letter-spacing:-0.015em">
+            <span style="display:block">Save your seat at the sadhya.</span>
+          </h3>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:42px">
+            <button type="button" class="btn btn-ghost" style="padding:14px 22px;font-size:14px;color:var(--color-bg);border:1px solid var(--color-bg)">Get tickets for Onam 2026</button>
+            <button type="button" class="btn btn-ghost" style="padding:14px 22px;font-size:14px;color:var(--color-bg);border:1px solid var(--color-bg)">Donate</button>
+          </div>
+        </section>
+
+        <!-- footer -->
+        <footer data-screen-label="Footer" style="padding:56px 72px 42px">
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:48px;padding-bottom:42px;border-bottom:2px solid var(--color-divider)">
+            <div>
+              <p style="margin:0 0 16px;font-family:var(--font-heading);font-weight:800;font-size:18px;letter-spacing:-0.02em">MALAYALEES.US</p>
+              <p style="margin:0;font-size:14px;line-height:24px;color:var(--color-neutral-800)">MCEFEE<br>Malayali Cultural Exchange Foundation for Education and Events<br>New Jersey, USA</p>
+            </div>
+            <div>
+              <p style="margin:0 0 16px;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Get in touch</p>
+              <p style="margin:0;font-size:14px;line-height:24px"><a href="tel:+19085168781" style="color:var(--color-text);text-decoration:none">(908) 516-8781</a><br><a href="mailto:Contactus@mcefee.org">Contactus@mcefee.org</a></p>
+            </div>
+            <div>
+              <p style="margin:0 0 16px;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Quick links</p>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <a href="#1a" style="font-size:14px;color:var(--color-text);text-decoration:none">Events</a>
+                <a href="#1a" style="font-size:14px;color:var(--color-text);text-decoration:none">Calendar</a>
+                <a href="#1a" style="font-size:14px;color:var(--color-text);text-decoration:none">Gallery</a>
+                <a href="#1a" style="font-size:14px;color:var(--color-text);text-decoration:none">Membership</a>
+              </div>
+            </div>
+            <div>
+              <p style="margin:0 0 16px;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Ways to help</p>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <a href="#1a" style="font-size:14px;color:var(--color-text);text-decoration:none">Make a donation</a>
+                <a href="#1a" style="font-size:14px;color:var(--color-text);text-decoration:none">Become a volunteer</a>
+                <a href="#1a" style="font-size:14px;color:var(--color-text);text-decoration:none">Corporate sponsorship</a>
+                <a href="#1a" style="font-size:14px;color:var(--color-text);text-decoration:none">Newsletter signup</a>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:24px;padding-top:24px;font-size:13px;color:var(--color-neutral-700)">
+            <p style="margin:0">© 2026 MCEFEE. All rights reserved.</p>
+            <div style="display:flex;gap:24px">
+              <a href="#1a" style="color:var(--color-neutral-700);text-decoration:none">Privacy</a>
+              <a href="#1a" style="color:var(--color-neutral-700);text-decoration:none">Terms</a>
+              <a href="#1a" style="color:var(--color-neutral-700);text-decoration:none">Accessibility</a>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- ════════════════════ OPTION 1b ════════════════════ -->
+    <div id="1b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 8px;background:var(--color-accent);color:var(--color-bg);font-family:var(--font-heading);font-weight:800;font-size:13px;letter-spacing:0.04em">1b</span>
+        <span style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-800)">Poster — full-bleed grayscale hero, red field bands (top of page only)</span>
+      </div>
+
+      <div style="width:1440px;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px;line-height:1.55;box-shadow:0 24px 60px rgba(32,30,29,0.28)">
+
+        <nav class="nav" style="display:flex;align-items:center;gap:24px;padding:20px 72px;background:var(--color-text);color:var(--color-bg)">
+          <span class="nav-brand" style="font-family:var(--font-heading);font-weight:800;font-size:20px;letter-spacing:-0.02em;margin-right:auto;color:var(--color-bg)">MALAYALEES.US</span>
+          <a href="#1b" style="font-size:14px;font-weight:600;color:var(--color-bg);text-decoration:none;white-space:nowrap">Events</a>
+          <a href="#1b" style="font-size:14px;font-weight:600;color:var(--color-bg);text-decoration:none;white-space:nowrap">Calendar</a>
+          <a href="#1b" style="font-size:14px;font-weight:600;color:var(--color-bg);text-decoration:none;white-space:nowrap">Gallery</a>
+          <a href="#1b" style="font-size:14px;font-weight:600;color:var(--color-bg);text-decoration:none;white-space:nowrap">Members</a>
+          <a href="#1b" style="font-size:14px;font-weight:600;color:var(--color-bg);text-decoration:none;white-space:nowrap">About</a>
+          <button type="button" class="btn btn-primary" style="padding:10px 16px;font-size:13px">Get tickets</button>
+        </nav>
+
+        <!-- poster hero -->
+        <section data-screen-label="Poster hero" style="position:relative;height:720px;overflow:hidden">
+          <figure class="grayscale" style="margin:0;position:absolute;inset:0">
+            <img src="assets/mcefee/kerala_riverside.jpeg" alt="Kerala backwaters — wooden boat under a coconut tree" style="width:100%;height:100%;object-fit:cover;display:block">
+          </figure>
+          <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(32,30,29,0.86) 0%,rgba(32,30,29,0.62) 52%,rgba(32,30,29,0.18) 100%)"></div>
+          <div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:72px;max-width:900px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+              <span style="width:10px;height:10px;background:var(--color-accent);flex-shrink:0"></span>
+              <span style="font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-bg)">Est. New Jersey · Malayali culture, kept alive</span>
+            </div>
+            <h1 style="margin:0 0 0 -0.058em;font-family:var(--font-heading);font-weight:800;font-size:88px;line-height:92px;letter-spacing:-0.02em;color:var(--color-bg)">
+              <span style="display:block">Onam. Theyyam.</span>
+              <span style="display:block">Thiruvathira.</span>
+              <span style="display:block;color:var(--color-accent-400)">All of it, here.</span>
+            </h1>
+            <p style="margin:32px 0 0;font-size:18px;line-height:30px;max-width:48ch;color:var(--color-neutral-200)">MCEFEE runs the calendar the community plans its year around. Tickets, registration and the whole schedule in one place.</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:36px">
+              <button type="button" class="btn btn-primary" style="padding:16px 24px;font-size:15px">Browse all events</button>
+              <button type="button" class="btn btn-ghost" style="padding:16px 24px;font-size:15px;color:var(--color-bg);border:1px solid var(--color-bg)">Donate</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- red field band -->
+        <section style="background:var(--color-accent);color:var(--color-bg);padding:32px 72px;display:flex;align-items:center;gap:32px">
+          <h2 style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:28px;line-height:32px;letter-spacing:-0.015em">On sale now — MCEFEE Spark of Kerala, Lodi NJ, 27 Feb 2027</h2>
+          <button type="button" class="btn btn-ghost" style="margin-left:auto;padding:12px 20px;font-size:14px;color:var(--color-bg);border:1px solid var(--color-bg);white-space:nowrap">Get tickets</button>
+        </section>
+
+        <!-- events as poster grid -->
+        <section data-screen-label="Events grid" style="padding:84px 72px">
+          <div style="display:flex;align-items:baseline;gap:24px;margin-bottom:40px">
+            <h2 style="margin:0 0 0 -0.02em;font-family:var(--font-heading);font-weight:800;font-size:40px;line-height:44px;letter-spacing:-0.015em">Upcoming events</h2>
+            <a href="#1b" style="margin-left:auto;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-decoration:none">View all events →</a>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:48px 40px">
+            <sc-for list="{{ posterEvents }}" as="ev" hint-placeholder-count="6">
+              <article style="display:flex;flex-direction:column;border-top:2px solid var(--color-text)">
+                <figure class="grayscale" style="margin:0;display:flex">
+                  <image-slot id="{{ ev.id }}" shape="rect" src="{{ ev.image }}" style="width:100%;aspect-ratio:3/2" placeholder="Event poster"></image-slot>
+                </figure>
+                <div style="display:flex;align-items:baseline;gap:12px;padding:16px 0 8px;border-bottom:1px solid var(--color-neutral-300)">
+                  <span style="font-family:var(--font-heading);font-weight:800;font-size:14px;letter-spacing:0.04em;color:var(--color-accent);font-feature-settings:'tnum' 1">{{ ev.date }}</span>
+                  <span style="margin-left:auto;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">{{ ev.admission }}</span>
+                </div>
+                <h3 style="margin:16px 0 8px;font-family:var(--font-heading);font-weight:800;font-size:24px;line-height:28px;letter-spacing:-0.01em">{{ ev.title }}</h3>
+                <p style="margin:0 0 16px;font-size:14px;line-height:24px;color:var(--color-neutral-800)">{{ ev.location }} · {{ ev.time }}</p>
+                <button type="button" class="btn btn-secondary" style="align-self:flex-start;padding:12px 18px;font-size:13px">{{ ev.cta }}</button>
+              </article>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="background:var(--color-text);color:var(--color-bg);padding:84px 72px">
+          <h3 style="margin:0 0 0 -0.058em;font-family:var(--font-heading);font-weight:800;font-size:60px;line-height:64px;letter-spacing:-0.015em;max-width:24ch">Save your seat at the sadhya.</h3>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:42px">
+            <button type="button" class="btn btn-primary" style="padding:16px 24px;font-size:15px">Get tickets for Onam 2026</button>
+            <button type="button" class="btn btn-ghost" style="padding:16px 24px;font-size:15px;color:var(--color-bg);border:1px solid var(--color-bg)">Donate</button>
+          </div>
+        </section>
+
+        <div style="padding:32px 72px;font-size:13px;color:var(--color-neutral-700)">Direction sample — remaining sections (what we do, about, team, sponsors, footer) follow <a href="#1a">1a</a> unless you pick this one.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals() {
+    // Rows lifted verbatim from code_html_template/SQLS/corrected_event_media_inserts.ordered_bckup.sql
+    // (public.event_details, tenant_demo_002). `image` is set ONLY where a matching
+    // poster exists in the repo's public/ tree; everything else is a drop-in slot.
+    const events = [
+      { id: 'ev-8321', date: 'Thu 26 Mar 2026', title: 'Fundraiser Registration Required', caption: 'Fundraiser Registration Required', location: '—', time: '12:38 — 16:38 AEDT', admission: 'Free', tagClass: 'tag tag-neutral', image: 'assets/mcefee/dinner_fundraiser_strip.jpeg', hasImage: true, cta: 'Register' },
+      { id: 'ev-10535', date: 'Mon 4 May 2026', title: 'Malayalee Association', caption: 'Charity event — Givebutter', location: '—', time: '14:02 — 17:00 CDT', admission: 'Charity', tagClass: 'tag tag-outline', image: '', hasImage: false, cta: 'Donate' },
+      { id: 'ev-10941', date: 'Tue 9 Jun 2026', title: 'Cochin Carnival', caption: 'Cochin Carnival is hosted by GCDA', location: 'Kochi', time: '10:00 — 21:00 IST', admission: 'Free', tagClass: 'tag tag-neutral', image: '', hasImage: false, cta: 'Register' },
+      { id: 'ev-10328', date: 'Mon 24 Aug 2026', title: 'Onam Celebration 2026', caption: 'Celebrate this onam with us, the malayalees in US', location: 'New York', time: '10:00 — 13:00 ET', admission: 'Free', tagClass: 'tag tag-neutral', image: '', hasImage: false, cta: 'Register' },
+      { id: 'ev-4202', date: 'Tue 26 Jan 2027', title: 'Givebutter Test', caption: 'Givebutter Test', location: '—', time: '12:38 — 16:38 AEDT', admission: 'Ticketed', tagClass: 'tag tag-accent', image: 'assets/mcefee/givebutter_featured_event.png', hasImage: true, cta: 'Get tickets' },
+      { id: 'ev-2', date: 'Sat 27 Feb 2027', title: 'MCEFEE Spark of Kerala', caption: 'A Showcase Of Performance Arts & Rhythm.', location: 'Breslin Performing Arts Center, Lodi, NJ', time: '17:00 — 21:00 ET', admission: 'Ticketed', tagClass: 'tag tag-accent', image: 'assets/mcefee/spark_kerala_2026_wide.jpg', hasImage: true, cta: 'Get tickets' }
+    ];
+
+    return {
+      events: events,
+      posterEvents: events,
+      services: [
+        { num: '01', title: 'Traditional Dance & Music', description: 'Experience the rich heritage of Kerala through dance and music workshops.' },
+        { num: '02', title: 'Art & Craft Workshops', description: 'Learn traditional Kerala art forms and crafts through hands-on workshops.' },
+        { num: '03', title: 'Kerala Folklore and Tribal Traditions', description: 'Introduce lesser-known folk dances like Theyyam, Padayani, and Poothan Thira.' },
+        { num: '04', title: 'Kerala Cuisine Classes', description: 'Master the art of traditional Kerala cooking with expert chefs.' }
+      ],
+      // Executive-committee records live behind /api/proxy/executive-committee-team-members —
+      // no rows in the repo. Fields are labelled as placeholders, not invented people.
+      team: [
+        { slot: 'team-1', title: 'Name', bio: 'Title / designation', expertise: 'Bio and expertise from executive-committee record' },
+        { slot: 'team-2', title: 'Name', bio: 'Title / designation', expertise: 'Bio and expertise from executive-committee record' },
+        { slot: 'team-3', title: 'Name', bio: 'Title / designation', expertise: 'Bio and expertise from executive-committee record' }
+      ],
+      // Sponsor records come from the event-sponsors API; the only sponsor named
+      // in repo content is Spectrum Auto (Spark of Kerala poster credit).
+      sponsors: [
+        { tier: 'Sponsor', name: 'Spectrum Auto' },
+        { tier: 'Sponsor', name: 'Sponsor name from event-sponsors record' },
+        { tier: 'Sponsor', name: 'Sponsor name from event-sponsors record' }
+      ]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

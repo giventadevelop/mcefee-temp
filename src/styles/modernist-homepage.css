@@ -1,0 +1,1200 @@
+/* Modernist homepage — scoped to body.modernist-home so other routes stay unchanged */
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap');
+
+body.home-page-background.modernist-home {
+  --mh-bg: #f3f2f2;
+  --mh-surface: #eae9e9;
+  --mh-text: #201e1d;
+  --mh-accent: #ec3013;
+  --mh-accent-400: #ff9783;
+  --mh-accent-600: #dd2b0f;
+  --mh-accent-700: #ae1800;
+  --mh-accent-100: #fff2ef;
+  --mh-accent-800: #7c1405;
+  --mh-accent-2-100: #fff2ef;
+  --mh-accent-2-800: #71261b;
+  --mh-neutral-100: #f8f4f4;
+  --mh-neutral-200: #eae7e7;
+  --mh-neutral-300: #d7d3d3;
+  --mh-neutral-500: #9b9797;
+  --mh-neutral-700: #605d5d;
+  --mh-neutral-800: #444141;
+  --mh-divider: color-mix(in srgb, #201e1d 40%, transparent);
+  --mh-font: 'Archivo', system-ui, sans-serif;
+  /* Kill default mint glass so header stays transparent */
+  --homepage-section-bg-glass: transparent;
+
+  background: var(--mh-bg) !important;
+  color: var(--mh-text);
+  font-family: var(--mh-font);
+}
+
+body.modernist-home .modernist-home {
+  background: var(--mh-bg);
+  color: var(--mh-text);
+  font-family: var(--mh-font);
+  font-size: 15px;
+  line-height: 1.55;
+  width: 100%;
+  min-height: 100vh;
+}
+
+body.modernist-home .modernist-home *,
+body.modernist-home .modernist-home *::before,
+body.modernist-home .modernist-home *::after {
+  box-sizing: border-box;
+}
+
+body.modernist-home .mh-grayscale {
+  filter: grayscale(1) contrast(1.08);
+}
+
+body.modernist-home .mh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--mh-text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  border-radius: 0;
+}
+
+body.modernist-home .mh-btn-primary {
+  background: var(--mh-accent);
+  color: var(--mh-bg);
+  border-color: var(--mh-accent);
+}
+
+body.modernist-home .mh-btn-primary:hover {
+  background: var(--mh-accent-600);
+}
+
+body.modernist-home .mh-btn-secondary {
+  border-color: var(--mh-divider);
+}
+
+body.modernist-home .mh-btn-secondary:hover {
+  background: color-mix(in srgb, var(--mh-text) 7%, transparent);
+}
+
+body.modernist-home .mh-btn-ghost {
+  color: var(--mh-accent);
+  border: 1px solid currentColor;
+  background: transparent;
+}
+
+body.modernist-home .mh-btn-ghost:hover {
+  background: color-mix(in srgb, var(--mh-accent) 10%, transparent);
+}
+
+body.modernist-home .mh-btn-on-dark {
+  color: var(--mh-bg);
+  border: 1px solid var(--mh-bg);
+  background: transparent;
+}
+
+body.modernist-home .mh-btn-on-dark:hover {
+  background: color-mix(in srgb, var(--mh-bg) 12%, transparent);
+}
+
+body.modernist-home .mh-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+}
+
+body.modernist-home .mh-tag-accent {
+  background: var(--mh-accent-100);
+  color: var(--mh-accent-800);
+}
+
+body.modernist-home .mh-tag-outline {
+  border: 1px solid var(--mh-accent);
+  color: var(--mh-accent);
+}
+
+body.modernist-home .mh-tag-neutral {
+  background: var(--mh-neutral-100);
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-eyebrow {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mh-accent-700);
+}
+
+body.modernist-home .mh-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--mh-accent);
+  flex-shrink: 0;
+}
+
+body.modernist-home .mh-link {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--mh-accent);
+}
+
+body.modernist-home .mh-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* —— 1b Poster hero —— */
+/* Fixed site header is h-[8rem]; keep hero copy clear of the logo at every width */
+body.modernist-home .mh-poster-hero {
+  --mh-header-clearance: calc(8rem + 1.5rem);
+  position: relative;
+  min-height: min(720px, 92vh);
+  overflow: hidden;
+}
+
+body.modernist-home .mh-poster-hero-media {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+body.modernist-home .mh-poster-hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+body.modernist-home .mh-poster-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(32, 30, 29, 0.86) 0%,
+    rgba(32, 30, 29, 0.62) 52%,
+    rgba(32, 30, 29, 0.18) 100%
+  );
+}
+
+body.modernist-home .mh-poster-hero-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: inherit;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* Top padding clears fixed header logo so kicker never sits under it */
+  padding: var(--mh-header-clearance) 72px 72px;
+  max-width: 920px;
+  box-sizing: border-box;
+}
+
+body.modernist-home .mh-poster-hero-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mh-bg);
+  position: relative;
+  z-index: 2;
+}
+
+body.modernist-home .mh-poster-hero h1 {
+  margin: 0 0 0 -0.04em;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--mh-bg);
+}
+
+body.modernist-home .mh-poster-hero-title {
+  font-size: clamp(28px, 4.8vw, 56px);
+  line-height: 1.12;
+}
+
+body.modernist-home .mh-poster-hero-sub {
+  margin-top: 0.2em;
+  font-size: clamp(22px, 3.6vw, 40px);
+  line-height: 1.18;
+}
+
+body.modernist-home .mh-poster-hero h1 .mh-accent-line {
+  color: var(--mh-accent-400);
+}
+
+body.modernist-home .mh-poster-hero-lede {
+  margin: 28px 0 0;
+  font-size: 17px;
+  line-height: 28px;
+  max-width: 48ch;
+  color: var(--mh-neutral-200);
+}
+
+body.modernist-home .mh-cta-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 36px;
+}
+
+/* Legacy hero slider mid-page — clear fixed-header padding used when it was above the fold */
+body.modernist-home .mh-legacy-hero-slider {
+  border-top: 2px solid var(--mh-divider);
+  border-bottom: 2px solid var(--mh-divider);
+  background: var(--mh-bg);
+}
+
+body.modernist-home .mh-legacy-hero-slider .hero-container-split {
+  padding-top: 2.5rem !important;
+  padding-bottom: 2.5rem;
+}
+
+body.modernist-home .mh-cta-row .mh-btn {
+  padding: 16px 24px;
+  font-size: 15px;
+}
+
+/* —— Red on-sale band —— */
+body.modernist-home .mh-onsale-band {
+  background: var(--mh-accent);
+  color: var(--mh-bg);
+  padding: 32px 72px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+body.modernist-home .mh-onsale-band h2 {
+  margin: 0;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: clamp(20px, 2.4vw, 28px);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  flex: 1 1 280px;
+}
+
+body.modernist-home .mh-onsale-band .mh-btn {
+  margin-left: auto;
+  padding: 12px 20px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* —— Shared section padding —— */
+body.modernist-home .mh-section {
+  padding: 72px;
+}
+
+body.modernist-home .mh-section-tight-top {
+  padding-top: 42px;
+}
+
+body.modernist-home .mh-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+body.modernist-home .mh-section-head .mh-link {
+  margin-left: auto;
+}
+
+body.modernist-home .mh-h2 {
+  margin: 0 0 40px -0.02em;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: clamp(28px, 3.2vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+/* —— 1a Timetable —— */
+body.modernist-home .mh-timetable {
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-timetable-row {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) 260px 132px 132px;
+  align-items: baseline;
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 2px solid var(--mh-divider);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+}
+
+body.modernist-home .mh-timetable-row:hover {
+  background: color-mix(in srgb, var(--mh-text) 4%, transparent);
+}
+
+body.modernist-home .mh-timetable-date {
+  margin: 0;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 22px;
+  font-feature-settings: 'tnum' 1;
+}
+
+body.modernist-home .mh-timetable-title {
+  margin: 0;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 26px;
+  letter-spacing: -0.01em;
+}
+
+body.modernist-home .mh-timetable-caption {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-timetable-meta {
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--mh-neutral-800);
+  font-feature-settings: 'tnum' 1;
+}
+
+body.modernist-home .mh-timetable-tag {
+  display: flex;
+  justify-content: flex-end;
+}
+
+body.modernist-home .mh-empty {
+  padding: 32px 0;
+  color: var(--mh-neutral-700);
+  font-size: 15px;
+}
+
+/* —— Featured split —— */
+body.modernist-home .mh-featured {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  align-items: stretch;
+  min-height: 640px;
+  border-top: 2px solid var(--mh-divider);
+  border-bottom: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-featured-media {
+  margin: 0;
+  border-right: 2px solid var(--mh-divider);
+  min-height: 640px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mh-surface);
+  position: relative;
+  overflow: hidden;
+}
+
+body.modernist-home .mh-featured-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  display: block;
+}
+
+body.modernist-home .mh-featured-body {
+  padding: 64px 72px 64px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+body.modernist-home .mh-featured-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+body.modernist-home .mh-featured-body h2 {
+  margin: 0 0 0 -0.02em;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+body.modernist-home .mh-featured-lede {
+  margin: 24px 0 0;
+  font-size: 16px;
+  line-height: 28px;
+  max-width: 38ch;
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-featured-meta {
+  display: flex;
+  flex-direction: column;
+  margin-top: 32px;
+  border-top: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-featured-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--mh-neutral-300);
+}
+
+body.modernist-home .mh-featured-meta-row:last-child {
+  border-bottom: 0;
+}
+
+body.modernist-home .mh-featured-meta-label {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-featured-meta-value {
+  font-size: 14px;
+  font-weight: 600;
+  font-feature-settings: 'tnum' 1;
+  text-align: right;
+}
+
+body.modernist-home .mh-featured-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+
+body.modernist-home .mh-featured-actions .mh-btn {
+  padding: 14px 22px;
+  font-size: 14px;
+}
+
+/* —— What we do (interactive cards) —— */
+body.modernist-home .mh-services {
+  padding-top: 84px;
+  padding-bottom: 84px;
+}
+
+body.modernist-home .mh-services-eyebrow {
+  margin-bottom: 14px;
+}
+
+body.modernist-home .mh-services-heading {
+  margin-bottom: 48px;
+}
+
+body.modernist-home .mh-services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+body.modernist-home .mh-service-card {
+  --mh-stagger: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+  padding: 32px 28px 36px;
+  background: var(--mh-bg);
+  border: 2px solid var(--mh-divider);
+  overflow: hidden;
+  cursor: default;
+  opacity: 0;
+  transform: translateY(36px) scale(0.985);
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.35s ease;
+  transition-delay: calc(var(--mh-stagger) * 90ms);
+}
+
+body.modernist-home .mh-services--in .mh-service-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+body.modernist-home .mh-service-card-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 0;
+  background: var(--mh-accent);
+  transition: height 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.modernist-home .mh-service-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+body.modernist-home .mh-services-num {
+  margin: 0;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 28px;
+  letter-spacing: 0.04em;
+  font-feature-settings: 'tnum' 1;
+  color: var(--mh-accent-700);
+  transition: color 0.25s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body.modernist-home .mh-services-title {
+  margin: 0;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), color 0.25s ease;
+}
+
+body.modernist-home .mh-services-desc {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 28px;
+  max-width: 42ch;
+  color: var(--mh-neutral-800);
+  transition: color 0.25s ease;
+}
+
+body.modernist-home .mh-service-card-rule {
+  display: block;
+  width: 48px;
+  height: 2px;
+  margin-top: auto;
+  background: var(--mh-divider);
+  transition:
+    width 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.25s ease;
+}
+
+body.modernist-home .mh-service-card:hover,
+body.modernist-home .mh-service-card:focus-within {
+  border-color: var(--mh-text);
+  background: color-mix(in srgb, var(--mh-surface) 70%, var(--mh-bg));
+  box-shadow: 8px 10px 0 color-mix(in srgb, var(--mh-accent) 18%, transparent);
+  transform: translateY(-6px);
+}
+
+body.modernist-home .mh-service-card:hover .mh-service-card-accent,
+body.modernist-home .mh-service-card:focus-within .mh-service-card-accent {
+  height: 100%;
+}
+
+body.modernist-home .mh-service-card:hover .mh-services-num,
+body.modernist-home .mh-service-card:focus-within .mh-services-num {
+  color: var(--mh-accent);
+  transform: translateX(4px);
+}
+
+body.modernist-home .mh-service-card:hover .mh-services-title,
+body.modernist-home .mh-service-card:focus-within .mh-services-title {
+  transform: translateX(4px);
+}
+
+body.modernist-home .mh-service-card:hover .mh-service-card-rule,
+body.modernist-home .mh-service-card:focus-within .mh-service-card-rule {
+  width: 100%;
+  background: var(--mh-accent);
+}
+
+body.modernist-home .mh-service-card:hover .mh-dot,
+body.modernist-home .mh-service-card:focus-within .mh-dot {
+  transform: scale(1.25);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.modernist-home .mh-service-card {
+    opacity: 1;
+    transform: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  body.modernist-home .mh-service-card:hover,
+  body.modernist-home .mh-service-card:focus-within {
+    transform: none;
+    box-shadow: none;
+  }
+
+  body.modernist-home .mh-service-card:hover .mh-services-num,
+  body.modernist-home .mh-service-card:focus-within .mh-services-num,
+  body.modernist-home .mh-service-card:hover .mh-services-title,
+  body.modernist-home .mh-service-card:focus-within .mh-services-title {
+    transform: none;
+  }
+}
+
+/* —— About —— */
+body.modernist-home .mh-about {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 28px 96px;
+  align-items: start;
+  padding: 84px 72px;
+  border-top: 2px solid var(--mh-divider);
+  border-bottom: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-about h2 {
+  margin: 0 0 0 -0.02em;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+body.modernist-home .mh-about-copy p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 28px;
+  max-width: 56ch;
+}
+
+body.modernist-home .mh-about-copy p + p {
+  margin-top: 28px;
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-about-legal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 42px;
+  padding-top: 28px;
+  border-top: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-about-legal-name {
+  margin: 0;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+}
+
+body.modernist-home .mh-about-legal-contact {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 26px;
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-about-legal-contact a {
+  color: var(--mh-text);
+  text-decoration: none;
+}
+
+body.modernist-home .mh-about-legal-contact a[href^='mailto'] {
+  color: var(--mh-accent);
+  text-underline-offset: 3px;
+}
+
+/* —— Team —— */
+body.modernist-home #team-section {
+  text-align: center;
+}
+
+body.modernist-home #team-section .mh-eyebrow,
+body.modernist-home #team-section .mh-h2 {
+  text-align: center;
+}
+
+body.modernist-home #team-section > p {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center;
+}
+
+body.modernist-home .mh-team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+  max-width: 920px;
+  margin: 0 auto;
+  justify-items: center;
+}
+
+body.modernist-home .mh-team-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 280px;
+  border-top: 2px solid var(--mh-divider);
+  padding-top: 24px;
+}
+
+body.modernist-home .mh-team-photo {
+  margin: 0 auto 20px;
+  width: 100%;
+  max-width: 180px;
+  aspect-ratio: 4 / 5;
+  background: var(--mh-surface);
+  overflow: hidden;
+}
+
+body.modernist-home .mh-team-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+body.modernist-home .mh-team-name {
+  margin: 0 0 6px;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.modernist-home .mh-team-title {
+  display: block;
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--mh-neutral-700);
+  white-space: normal;
+}
+
+body.modernist-home .mh-team-bio {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--mh-neutral-700);
+}
+
+/* —— Sponsors —— */
+body.modernist-home .mh-sponsors-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-sponsor-row {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 160px;
+  align-items: baseline;
+  gap: 24px;
+  padding: 20px 0;
+  border-bottom: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-sponsor-tier {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-sponsor-name {
+  margin: 0;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 26px;
+  letter-spacing: -0.01em;
+}
+
+body.modernist-home .mh-sponsor-visit {
+  justify-self: end;
+}
+
+/* —— Red close —— */
+body.modernist-home .mh-close {
+  background: var(--mh-accent);
+  color: var(--mh-bg);
+  padding: 84px 72px;
+}
+
+body.modernist-home .mh-close h3 {
+  margin: 0 0 0 -0.058em;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: clamp(32px, 5vw, 60px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+body.modernist-home .mh-close .mh-cta-row {
+  margin-top: 42px;
+}
+
+body.modernist-home .mh-close .mh-btn {
+  padding: 14px 22px;
+  font-size: 14px;
+}
+
+/* —— Responsive —— */
+@media (max-width: 1024px) {
+  body.modernist-home .mh-timetable-row {
+    grid-template-columns: 110px minmax(0, 1fr) 100px;
+    grid-template-areas:
+      'date title tag'
+      'date meta meta'
+      'date loc loc';
+  }
+
+  body.modernist-home .mh-timetable-row > :nth-child(1) {
+    grid-area: date;
+  }
+  body.modernist-home .mh-timetable-row > :nth-child(2) {
+    grid-area: title;
+  }
+  body.modernist-home .mh-timetable-row > :nth-child(3) {
+    grid-area: loc;
+  }
+  body.modernist-home .mh-timetable-row > :nth-child(4) {
+    grid-area: meta;
+  }
+  body.modernist-home .mh-timetable-row > :nth-child(5) {
+    grid-area: tag;
+  }
+
+  body.modernist-home .mh-featured {
+    grid-template-columns: 1fr;
+  }
+
+  body.modernist-home .mh-featured-media {
+    border-right: 0;
+    border-bottom: 2px solid var(--mh-divider);
+    min-height: 420px;
+  }
+
+  body.modernist-home .mh-featured {
+    min-height: 0;
+  }
+
+  body.modernist-home .mh-featured-body {
+    padding: 48px 32px;
+  }
+
+  body.modernist-home .mh-services-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  body.modernist-home .mh-about {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 56px 32px;
+  }
+
+  body.modernist-home .mh-team-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+    max-width: 560px;
+  }
+
+  body.modernist-home .mh-sponsor-row {
+    grid-template-columns: 120px minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 768px) {
+  body.modernist-home .mh-poster-hero {
+    --mh-header-clearance: calc(8rem + 1rem);
+    min-height: min(680px, 96vh);
+  }
+
+  body.modernist-home .mh-poster-hero-content,
+  body.modernist-home .mh-onsale-band,
+  body.modernist-home .mh-section,
+  body.modernist-home .mh-close {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  body.modernist-home .mh-poster-hero-content {
+    padding-top: var(--mh-header-clearance);
+    padding-bottom: 48px;
+  }
+
+  body.modernist-home .mh-poster-hero-title {
+    font-size: clamp(24px, 7.2vw, 36px);
+  }
+
+  body.modernist-home .mh-poster-hero-sub {
+    font-size: clamp(18px, 5.2vw, 26px);
+  }
+
+  body.modernist-home .mh-onsale-band {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  body.modernist-home .mh-onsale-band .mh-btn {
+    margin-left: 0;
+  }
+
+  body.modernist-home .mh-timetable-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  body.modernist-home .mh-timetable-row > :nth-child(1),
+  body.modernist-home .mh-timetable-row > :nth-child(2),
+  body.modernist-home .mh-timetable-row > :nth-child(3),
+  body.modernist-home .mh-timetable-row > :nth-child(4),
+  body.modernist-home .mh-timetable-row > :nth-child(5) {
+    grid-area: auto;
+  }
+
+  body.modernist-home .mh-timetable-tag {
+    justify-content: flex-start;
+  }
+
+  body.modernist-home .mh-service-card {
+    padding: 28px 22px 32px;
+  }
+
+  body.modernist-home .mh-team-grid {
+    grid-template-columns: 1fr;
+    max-width: 240px;
+  }
+
+  body.modernist-home .mh-sponsor-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  body.modernist-home .mh-sponsor-visit {
+    justify-self: start;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Header — sticky frosted glass; readable nav; no border / no black Admin strip */
+/* -------------------------------------------------------------------------- */
+
+body.modernist-home .header-glass.header-glass--home {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  /* Clear over dark hero at top */
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* Scrolled: dark translucent frost — readable nav + logo over any section */
+body.modernist-home .header-glass.header-glass--home.header-glass--scrolled {
+  background: rgba(20, 18, 16, 0.62) !important;
+  backdrop-filter: blur(18px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove dark purple / black Admin + avatar strip */
+body.modernist-home .header-auth-cluster,
+body.modernist-home .header-glass.header-glass--home.header-glass--scrolled .header-auth-cluster {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 0.5rem !important;
+}
+
+/* No dark pill behind nav links */
+body.modernist-home .header-main-nav {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Top of page: light labels over dark poster hero */
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-nav-link {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-nav-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-nav-link.active {
+  color: #ffd166 !important;
+}
+
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-nav-link.active::after {
+  background: #ffd166 !important;
+}
+
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-chevron {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-search-btn {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-search-btn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-hamburger-line {
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+body.modernist-home .header-glass--home:not(.header-glass--scrolled) .header-cta {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Scrolled: light labels over dark frosted glass (same as hero, for logo + nav) */
+body.modernist-home .header-glass--home.header-glass--scrolled .header-nav-link {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.modernist-home .header-glass--home.header-glass--scrolled .header-nav-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.modernist-home .header-glass--home.header-glass--scrolled .header-nav-link.active {
+  color: #ffd166 !important;
+}
+
+body.modernist-home .header-glass--home.header-glass--scrolled .header-nav-link.active::after {
+  background: #ffd166 !important;
+}
+
+body.modernist-home .header-glass--home.header-glass--scrolled .header-chevron {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body.modernist-home .header-glass--home.header-glass--scrolled .header-search-btn {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+body.modernist-home .header-glass--home.header-glass--scrolled .header-search-btn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+body.modernist-home .header-glass--home.header-glass--scrolled .header-hamburger-line {
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+body.modernist-home .header-glass--home.header-glass--scrolled .header-cta {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.75) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.modernist-home .header-glass.header-glass--home.header-glass--scrolled::after {
+  content: none;
+}
+
+/* Hide legacy hero mission CTA + browse-events row on modernist homepage */
+body.modernist-home .mh-legacy-hero-slider .hero-left-cta-card,
+body.modernist-home .mh-legacy-hero-slider .hero-browse-container {
+  display: none !important;
+}
+
+/* —— Light footer (homepage only) —— */
+body.modernist-home footer.footer-edge-to-edge,
+body.modernist-home footer.footer-edge-to-edge .bg-gray-900,
+body.modernist-home footer.footer-edge-to-edge [class*='bg-gray-900'] {
+  background-color: var(--mh-bg, #f3f2f2) !important;
+  background: var(--mh-bg, #f3f2f2) !important;
+  color: var(--mh-neutral-700, #605d5d) !important;
+}
+
+body.modernist-home footer.footer-edge-to-edge {
+  border-top: 1px solid var(--mh-neutral-300, #d7d3d3);
+  color: var(--mh-neutral-700, #605d5d);
+}
+
+body.modernist-home footer.footer-edge-to-edge .border-gray-800,
+body.modernist-home footer.footer-edge-to-edge [class*='border-gray-800'] {
+  border-color: var(--mh-neutral-300, #d7d3d3) !important;
+}
+
+body.modernist-home footer.footer-edge-to-edge .text-white,
+body.modernist-home footer.footer-edge-to-edge h6,
+body.modernist-home footer.footer-edge-to-edge .font-semibold,
+body.modernist-home footer.footer-edge-to-edge [class*='text-white'] {
+  color: var(--mh-text, #201e1d) !important;
+}
+
+body.modernist-home footer.footer-edge-to-edge .text-gray-300,
+body.modernist-home footer.footer-edge-to-edge .text-gray-400,
+body.modernist-home footer.footer-edge-to-edge a {
+  color: var(--mh-neutral-700, #605d5d) !important;
+}
+
+body.modernist-home footer.footer-edge-to-edge a:hover {
+  color: var(--mh-accent, #ec3013) !important;
+}
+
+body.modernist-home footer.footer-edge-to-edge .bg-gray-800,
+body.modernist-home footer.footer-edge-to-edge [class*='bg-gray-800'] {
+  background-color: var(--mh-neutral-200, #eae7e7) !important;
+  color: var(--mh-text, #201e1d) !important;
+}

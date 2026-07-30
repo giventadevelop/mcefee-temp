@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@500;600;700&family=Crimson+Text:wght@600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #1a0a2e; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #a5b4fc; text-decoration: none; }
+  a:hover { color: #c7d2fe; }
+  @keyframes mcKenBurns { from { transform: scale(1); } to { transform: scale(1.12); } }
+  @keyframes mcSpin { to { transform: rotate(360deg); } }
+</style>
+</helmet>
+
+<div style="position:relative;min-height:100vh;width:100%;overflow-x:hidden;background:#1a0a2e">
+
+  <canvas ref="{{ canvasRef }}" aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none"></canvas>
+
+  <!-- ─────────── HEADER (fixed, 8rem / 128px) ─────────── -->
+  <header data-screen-label="Header" style="{{ headerStyle }}">
+    <div style="width:100%;max-width:90rem;margin:0 auto;padding:0 2.5rem">
+      <div style="display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,max-content);align-items:center;height:8rem;gap:1rem">
+
+        <a href="#" aria-label="MCEFEE home" style="display:flex;align-items:center;height:100%;min-width:0">
+          <span style="box-sizing:border-box;padding-bottom:1rem;display:flex;height:100%;width:7.5rem;min-width:7.5rem;align-items:center;justify-content:center;overflow:hidden;border-radius:0.75rem">
+            <img src="assets/mcefee/mcefee_logo.png" alt="MCEFEE" style="height:100%;width:auto;object-fit:contain;object-position:center">
+          </span>
+        </a>
+
+        <nav aria-label="Main navigation" style="display:flex;flex-wrap:nowrap;align-items:center;justify-content:center;gap:0.125rem;margin:0 auto;max-width:100%;overflow-x:auto">
+          <a href="#" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;letter-spacing:0.01em;color:rgba(248,250,252,0.94);padding:0.5rem;border-radius:0.5rem;display:inline-flex;align-items:center;height:2.5rem;white-space:nowrap;background:rgba(167,139,250,0.28)" style-hover="background:rgba(255,255,255,0.1)">Home</a>
+          <a href="#about-us" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;letter-spacing:0.01em;color:rgba(248,250,252,0.94);padding:0.5rem;border-radius:0.5rem;display:inline-flex;align-items:center;height:2.5rem;white-space:nowrap" style-hover="background:rgba(255,255,255,0.1)">About</a>
+          <a href="#" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;letter-spacing:0.01em;color:rgba(248,250,252,0.94);padding:0.5rem;border-radius:0.5rem;display:inline-flex;align-items:center;height:2.5rem;white-space:nowrap" style-hover="background:rgba(255,255,255,0.1)">Events</a>
+
+          <div style="position:relative;flex-shrink:0" onMouseEnter="{{ openFeatures }}" onMouseLeave="{{ closeFeatures }}">
+            <button type="button" onClick="{{ toggleFeatures }}" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;letter-spacing:0.01em;color:rgba(248,250,252,0.94);padding:0.5rem;border-radius:0.5rem;display:inline-flex;align-items:center;gap:0.375rem;height:2.5rem;white-space:nowrap;background:transparent;border:0;cursor:pointer" style-hover="background:rgba(255,255,255,0.1)">
+              <span>Features</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(226,232,240,0.88)" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+            </button>
+            <div style="{{ featuresMenuStyle }}">
+              <div style="padding:0.5rem 0">
+                <sc-for list="{{ featureItems }}" as="fi" hint-placeholder-count="7">
+                  <a href="#" style="display:block;padding:0.5rem 1rem;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:0.9375rem;font-weight:600;color:rgba(248,250,252,0.94)" style-hover="background:rgba(167,139,250,0.28)">{{ fi.name }}</a>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <a href="#" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;letter-spacing:0.01em;color:rgba(248,250,252,0.94);padding:0.5rem;border-radius:0.5rem;display:inline-flex;align-items:center;height:2.5rem;white-space:nowrap" style-hover="background:rgba(255,255,255,0.1)">Calendar</a>
+          <a href="#" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;letter-spacing:0.01em;color:rgba(248,250,252,0.94);padding:0.5rem;border-radius:0.5rem;display:inline-flex;align-items:center;height:2.5rem;white-space:nowrap" style-hover="background:rgba(255,255,255,0.1)">Gallery</a>
+          <a href="#contact" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;letter-spacing:0.01em;color:rgba(248,250,252,0.94);padding:0.5rem;border-radius:0.5rem;display:inline-flex;align-items:center;height:2.5rem;white-space:nowrap" style-hover="background:rgba(255,255,255,0.1)">Contact</a>
+        </nav>
+
+        <div style="display:flex;flex-shrink:0;flex-wrap:nowrap;align-items:center;justify-content:flex-end;gap:0.625rem;padding-left:0.5rem">
+          <a href="#" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:1.0625rem;color:rgba(248,250,252,0.94);padding:0.5rem;border-radius:0.5rem;display:inline-flex;align-items:center;height:2.5rem;white-space:nowrap" style-hover="background:rgba(255,255,255,0.1)">Sign In</a>
+          <a href="#" style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:600;font-size:0.9375rem;color:#fff;background:linear-gradient(135deg,#6d28d9 0%,#a855f7 50%,#f59e0b 100%);padding:0.625rem 1.125rem;border-radius:0.5rem;white-space:nowrap;box-shadow:0 4px 14px rgba(109,40,217,0.35)" style-hover="filter:brightness(1.08)">Sign up</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main style="position:relative;z-index:1;width:100%;min-height:100vh">
+
+    <!-- ─────────── HERO ─────────── -->
+    <section data-screen-label="Hero" aria-label="Homepage hero" style="position:relative;padding-top:9.75rem;width:100%;display:flex;flex-direction:column;background:transparent">
+      <div style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.35;background-image:radial-gradient(circle at 15% 25%, rgba(34,197,94,0.08) 0%, transparent 45%),radial-gradient(circle at 85% 70%, rgba(109,40,217,0.06) 0%, transparent 40%),linear-gradient(90deg, rgba(22,163,74,0.04) 1px, transparent 1px),linear-gradient(rgba(22,163,74,0.04) 1px, transparent 1px);background-size:100% 100%,100% 100%,32px 32px,32px 32px"></div>
+
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:0.35rem;padding:0 0.75rem 0.25rem;width:100%">
+
+        <!-- top row: 30% brand | 70% slideshow -->
+        <div style="display:grid;grid-template-columns:minmax(0,30%) minmax(0,1fr);column-gap:0.75rem;align-items:center;width:100%;height:calc(100dvh - 9.75rem);min-height:34rem;overflow:hidden;padding:0.875rem 0">
+
+          <div style="grid-column:1;height:94%;display:flex;flex-direction:column;align-items:stretch;padding:2px;border-radius:1rem;border:2px solid transparent;background:linear-gradient(rgba(15,23,42,0.55),rgba(15,23,42,0.55)) padding-box,linear-gradient(135deg,rgba(34,211,238,0.55),rgba(129,140,248,0.45),rgba(232,121,249,0.5)) border-box;box-shadow:0 0 28px rgba(34,211,238,0.25),0 0 56px rgba(99,102,241,0.12),inset 0 0 40px rgba(15,23,42,0.35);overflow:hidden">
+            <div style="position:relative;width:100%;flex:1 1 auto;min-height:12rem;border-radius:0.5rem;overflow:hidden">
+              <img src="assets/mcefee/Mcefee.jpg" alt="MCEFEE" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:0.45rem;transition:transform 0.8s ease-out, filter 0.8s ease-out" style-hover="transform:scale(1.04);filter:brightness(1.08)">
+            </div>
+          </div>
+
+          <div style="grid-column:2;height:94%;min-width:0;display:flex;flex-direction:column;justify-content:flex-start">
+            <div style="position:relative;flex:1 1 0%;min-height:0;height:100%;width:100%;display:flex;align-items:stretch;border-radius:1rem;padding:2px;background:linear-gradient(135deg,rgba(34,211,238,0.55),rgba(129,140,248,0.45),rgba(232,121,249,0.5));box-shadow:0 0 28px rgba(34,211,238,0.25),0 0 56px rgba(99,102,241,0.12),inset 0 0 40px rgba(15,23,42,0.35)"
+                 onMouseEnter="{{ heroHoverOn }}" onMouseLeave="{{ heroHoverOff }}">
+              <div style="position:relative;z-index:2;border-radius:calc(1rem - 2px);width:100%;height:100%;overflow:hidden;transform:rotate(-4deg);box-shadow:0 20px 44px rgba(15,23,42,0.32),0 8px 24px rgba(109,40,217,0.18)">
+                <div style="{{ slideAStyle }}"><img src="{{ slideASrc }}" alt="Featured Event" style="{{ slideAImgStyle }}"></div>
+                <div style="{{ slideBStyle }}"><img src="{{ slideBSrc }}" alt="Featured Event" style="{{ slideBImgStyle }}"></div>
+
+                <div style="{{ heroControlsStyle }}">
+                  <button type="button" onClick="{{ goPrev }}" title="Previous Image" aria-label="Previous Image" style="pointer-events:auto;flex-shrink:0;width:3rem;height:3rem;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.55);backdrop-filter:blur(8px);border:2px solid rgba(34,211,238,0.75);box-shadow:0 0 16px rgba(34,211,238,0.45),inset 0 0 12px rgba(34,211,238,0.08);cursor:pointer;transition:all 0.3s ease" style-hover="transform:scale(1.1);border-color:rgba(103,232,249,0.95)">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a5f3fc" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"></path></svg>
+                  </button>
+                  <button type="button" onClick="{{ togglePlay }}" title="{{ playTitle }}" aria-label="{{ playTitle }}" style="pointer-events:auto;flex-shrink:0;width:3rem;height:3rem;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.55);backdrop-filter:blur(8px);border:2px solid rgba(34,211,238,0.75);box-shadow:0 0 16px rgba(34,211,238,0.45),inset 0 0 12px rgba(34,211,238,0.08);cursor:pointer;transition:all 0.3s ease" style-hover="transform:scale(1.1);border-color:rgba(103,232,249,0.95)">
+                    {{ playIcon }}
+                  </button>
+                  <button type="button" onClick="{{ goNext }}" title="Next Image" aria-label="Next Image" style="pointer-events:auto;flex-shrink:0;width:3rem;height:3rem;border-radius:9999px;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.55);backdrop-filter:blur(8px);border:2px solid rgba(34,211,238,0.75);box-shadow:0 0 16px rgba(34,211,238,0.45),inset 0 0 12px rgba(34,211,238,0.08);cursor:pointer;transition:all 0.3s ease" style-hover="transform:scale(1.1);border-color:rgba(103,232,249,0.95)">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a5f3fc" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"></path></svg>
+                  </button>
+                </div>
+              </div>
+              <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;z-index:3;border-radius:1rem;background:radial-gradient(circle at 8% 92%, rgba(34,211,238,0.2) 0%, transparent 35%),radial-gradient(circle at 94% 88%, rgba(232,121,249,0.18) 0%, transparent 32%);opacity:0.85"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- mission + donate bar -->
+        <div style="display:flex;flex-direction:row;align-items:center;justify-content:center;gap:2rem;max-width:42rem;margin:0 auto;padding:calc(0.35rem + 2px) calc(1rem + 2px);border-radius:1rem;border:2px solid transparent;background:linear-gradient(rgba(15,23,42,0.55),rgba(15,23,42,0.55)) padding-box,linear-gradient(135deg,rgba(34,211,238,0.55),rgba(129,140,248,0.45),rgba(232,121,249,0.5)) border-box;box-shadow:0 0 28px rgba(34,211,238,0.25),0 0 56px rgba(99,102,241,0.12),inset 0 0 40px rgba(15,23,42,0.35);width:100%">
+          <a href="#about-us" title="About our mission" aria-label="Our mission — about us" style="display:flex;align-items:center;gap:0.5rem;color:#fff;flex:0 0 auto">
+            <span style="position:relative;display:block;height:3.5rem;width:17.5rem;flex-shrink:0;border-radius:0.5rem;overflow:hidden;background:#fff;box-shadow:0 0 0 1px rgba(6,182,212,0.4)">
+              <img src="assets/mcefee/malayalees_us_logo.png" alt="Unite India" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;transition:transform 0.8s ease-out, filter 0.8s ease-out" style-hover="transform:scale(1.03);filter:brightness(1.05)">
+            </span>
+            <span style="font-family:'Crimson Text',Times New Roman,serif;font-size:1.2rem;font-weight:600;letter-spacing:0.02em;text-shadow:0 0 12px rgba(255,255,255,0.35);white-space:nowrap;color:#fff">Our Mission</span>
+          </a>
+          <button type="button" style="display:flex;align-items:center;gap:0.375rem;padding:0.3125rem 0.875rem;flex-shrink:0;background:linear-gradient(135deg,#f59e0b 0%,#ea580c 100%);border:0;border-radius:9999px;color:#fff;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:0.8125rem;font-weight:600;box-shadow:0 0 18px rgba(249,115,22,0.45),0 4px 16px rgba(245,158,11,0.35);cursor:pointer;transition:all 0.3s ease" style-hover="transform:scale(1.05);background:linear-gradient(135deg,#d97706 0%,#c2410c 100%)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"></path></svg>
+            <span>Donate Now</span>
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:center;max-width:1400px;margin:0 auto;padding:0.75rem 1rem 0;width:100%">
+          <a href="#" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1.125rem;border-radius:0.75rem;background:rgba(15,23,42,0.78);color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.28);box-shadow:0 4px 16px rgba(15,23,42,0.4),inset 0 0 0 1px rgba(255,255,255,0.06);backdrop-filter:blur(10px) saturate(120%);line-height:1.25" style-hover="background:rgba(109,40,217,0.92);border-color:rgba(196,181,253,0.55)">
+            <span>Browse all upcoming events</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── LIVE EVENTS ─────────── -->
+    <section data-screen-label="Live events" style="padding:0 0 0.125rem;background:transparent">
+      <div style="max-width:80rem;margin:0 auto;padding:0 2rem;display:flex;flex-direction:column;gap:1.5rem">
+        <sc-for list="{{ liveEvents }}" as="ev" hint-placeholder-count="1">
+          <div style="display:flex;flex-direction:row;height:200px;border-radius:1rem;overflow:hidden;background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75)">
+            <div style="position:relative;width:70%;height:100%;overflow:hidden">
+              <img src="{{ ev.image }}" alt="{{ ev.title }}" style="width:100%;height:100%;object-fit:cover">
+              <span style="position:absolute;top:0.75rem;left:0.75rem;display:inline-flex;align-items:center;gap:0.375rem;padding:0.25rem 0.625rem;border-radius:9999px;background:rgba(220,38,38,0.92);color:#fff;font-size:0.6875rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase">
+                <span style="width:0.5rem;height:0.5rem;border-radius:9999px;background:#fff"></span>Live now
+              </span>
+            </div>
+            <div style="position:relative;width:30%;display:flex;flex-direction:column;padding:1rem 1.25rem;min-width:0">
+              <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(251,191,36,0.18),transparent 60%);pointer-events:none"></div>
+              <h3 style="position:relative;margin:0 0 0.625rem;font-size:1rem;font-weight:700;color:#1e1b4b;line-height:1.3">{{ ev.title }}</h3>
+              <div style="position:relative;display:flex;flex-direction:column;gap:0.375rem">
+                <div style="display:flex;align-items:center;gap:0.5rem">
+                  <span style="width:1.75rem;height:1.75rem;border-radius:0.5rem;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 11h18"></path></svg>
+                  </span>
+                  <span style="font-size:0.75rem;font-weight:500;color:#312e81">{{ ev.date }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem">
+                  <span style="width:1.75rem;height:1.75rem;border-radius:0.5rem;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                  </span>
+                  <span style="font-size:0.75rem;font-weight:500;color:#312e81">{{ ev.time }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem;min-width:0">
+                  <span style="width:1.75rem;height:1.75rem;border-radius:0.5rem;background:#f3e8ff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1116 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  </span>
+                  <span style="font-size:0.75rem;font-weight:500;color:#312e81;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ev.location }}</span>
+                </div>
+              </div>
+              <a href="#" style="position:relative;margin-top:auto;display:inline-flex;align-items:center;justify-content:center;height:2.25rem;border-radius:0.5rem;border:1px solid rgba(167,243,208,0.9);background:#ecfdf5;color:#065f46;font-size:0.8125rem;font-weight:600">View event</a>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ─────────── FEATURED EVENTS ─────────── -->
+    <section data-screen-label="Featured events" style="padding:0.25rem 0;background:transparent">
+      <div style="display:flex;flex-direction:row;align-items:stretch;gap:0.5rem;max-width:72rem;margin:0 auto;padding:0 2rem">
+        <aside style="flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;width:2.75rem;padding-top:0.35rem">
+          <div style="display:inline-flex;align-items:center;justify-content:center;padding:0.65rem 0.5rem;border-radius:9999px;background:rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(15,23,42,0.14),inset 0 0 0 1px rgba(255,255,255,0.5);backdrop-filter:blur(8px)">
+            <div style="display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:0.35rem;writing-mode:vertical-rl;transform:rotate(180deg)">
+              <span aria-hidden="true" style="width:0.5rem;height:1.25rem;border-radius:0.25rem;background:#facc15;flex-shrink:0"></span>
+              <p style="margin:0;font-size:0.875rem;line-height:1.25;letter-spacing:0.02em;white-space:nowrap;color:#0f172a;font-weight:600">Featured</p>
+            </div>
+          </div>
+        </aside>
+        <div style="flex:1 1 0%;min-width:0">
+          <div style="margin:1rem 0 1.5rem;text-align:center">
+            <h2 style="margin:0;font-size:1.875rem;font-weight:700;color:#0f172a">
+              <span style="text-shadow:0 1px 3px rgba(255,255,255,0.78),0 0 12px rgba(255,255,255,0.5)">Featured</span>
+              <span style="font-weight:500;background:linear-gradient(90deg,#2563eb 0%,#9333ea 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 5px rgba(255,255,255,0.55))">Events</span>
+            </h2>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1.25rem">
+            <sc-for list="{{ featuredEvents }}" as="ev" hint-placeholder-count="2">
+              <div style="overflow:hidden;border-radius:1rem;border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75);background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);transition:box-shadow 0.3s ease,border-color 0.3s ease" style-hover="border-color:rgba(255,255,255,0.9);box-shadow:0 10px 28px rgba(76,29,149,0.22),inset 0 1px 0 rgba(255,255,255,0.9)">
+                <div style="display:flex;flex-direction:row;align-items:stretch">
+                  <div style="position:relative;width:70%;flex-shrink:0;min-height:15rem">
+                    <img src="{{ ev.image }}" alt="{{ ev.title }}" style="width:100%;height:100%;object-fit:cover;display:block">
+                    <span style="position:absolute;top:0.875rem;left:0.875rem;display:inline-flex;align-items:center;gap:0.375rem;padding:0.3125rem 0.75rem;border-radius:9999px;background:rgba(30,27,75,0.82);backdrop-filter:blur(8px);border:1px solid rgba(250,204,21,0.55);color:#fde68a;font-size:0.6875rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#facc15"><path d="M12 2l2.9 6.3 6.9.8-5 4.8 1.3 6.8L12 17.5 5.9 20.7 7.2 13.9l-5-4.8 6.9-.8z"></path></svg>
+                      Featured event
+                    </span>
+                  </div>
+                  <div style="position:relative;display:flex;width:30%;min-width:0;flex-direction:column;padding:1.25rem;border-left:1px solid rgba(255,255,255,0.35)">
+                    <h3 style="margin:0 0 0.875rem;font-size:1.0625rem;font-weight:700;color:#1e1b4b;line-height:1.3">{{ ev.title }}</h3>
+                    <div style="display:flex;flex-direction:column;gap:0.5rem">
+                      <div style="display:flex;align-items:center;gap:0.5rem">
+                        <span style="width:1.75rem;height:1.75rem;border-radius:0.5rem;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 11h18"></path></svg>
+                        </span>
+                        <span style="font-size:0.8125rem;font-weight:500;color:#312e81">{{ ev.date }}</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:0.5rem">
+                        <span style="width:1.75rem;height:1.75rem;border-radius:0.5rem;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                        </span>
+                        <span style="font-size:0.8125rem;font-weight:500;color:#312e81">{{ ev.time }}</span>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:0.5rem;min-width:0">
+                        <span style="width:1.75rem;height:1.75rem;border-radius:0.5rem;background:#f3e8ff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1116 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        </span>
+                        <span style="font-size:0.8125rem;font-weight:500;color:#312e81;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ev.location }}</span>
+                      </div>
+                    </div>
+                    <div style="margin-top:auto;padding-top:1rem;display:flex;flex-direction:column;gap:0.5rem">
+                      <a href="#" style="display:inline-flex;align-items:center;justify-content:center;height:2.25rem;border-radius:0.5rem;border:1px solid rgba(167,243,208,0.9);background:#ecfdf5;color:#065f46;font-size:0.8125rem;font-weight:600">View details</a>
+                      <a href="#" style="display:inline-flex;align-items:center;justify-content:center;gap:0.375rem;height:2.25rem;border-radius:0.5rem;border:1px solid rgba(191,219,254,0.9);background:#eff6ff;color:#1d4ed8;font-size:0.8125rem;font-weight:600">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 11h18"></path></svg>
+                        Add to calendar
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── SERVICES / WHAT WE DO ─────────── -->
+    <section data-screen-label="What we do" style="position:relative;overflow:hidden;padding:6rem 0;background:transparent">
+      <div style="position:relative;z-index:1;display:flex;flex-direction:row;align-items:stretch;gap:0.5rem;max-width:72rem;margin:0 auto;padding:0 2rem">
+        <aside style="flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;width:2.75rem;padding-top:0.35rem">
+          <div style="display:inline-flex;align-items:center;justify-content:center;padding:0.65rem 0.5rem;border-radius:9999px;background:rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(15,23,42,0.14),inset 0 0 0 1px rgba(255,255,255,0.5);backdrop-filter:blur(8px)">
+            <div style="display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:0.35rem;writing-mode:vertical-rl;transform:rotate(180deg)">
+              <span aria-hidden="true" style="width:0.5rem;height:1.25rem;border-radius:0.25rem;background:#facc15;flex-shrink:0"></span>
+              <p style="margin:0;font-size:0.875rem;line-height:1.25;letter-spacing:0.02em;white-space:nowrap;color:#0f172a;font-weight:600">What we do</p>
+            </div>
+          </div>
+        </aside>
+        <div style="flex:1 1 0%;min-width:0">
+          <div style="margin-bottom:4rem">
+            <h2 style="margin:0;text-align:center;font-size:2.25rem;font-weight:700;color:#0f172a">
+              <span style="text-shadow:0 1px 3px rgba(255,255,255,0.78),0 0 12px rgba(255,255,255,0.5)">Cultural Workshops and Educational</span>
+              <span style="font-weight:500;background:linear-gradient(90deg,#2563eb 0%,#9333ea 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 5px rgba(255,255,255,0.55))">Events</span>
+            </h2>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3rem 2rem">
+            <sc-for list="{{ services }}" as="s" hint-placeholder-count="4">
+              <div style="position:relative;border-radius:1rem;padding:2rem;background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75);backdrop-filter:blur(18px);transition:box-shadow 0.3s ease,border-color 0.3s ease" style-hover="border-color:rgba(255,255,255,0.9);box-shadow:0 10px 28px rgba(76,29,149,0.22),inset 0 1px 0 rgba(255,255,255,0.9)">
+                <div style="display:flex;align-items:flex-start;gap:1.5rem">
+                  <div style="display:flex;height:3rem;width:3rem;flex-shrink:0;align-items:center;justify-content:center;border-radius:0.75rem;background:{{ s.iconBg }};border:1px solid {{ s.iconBorder }};box-shadow:0 1px 2px rgba(0,0,0,0.05);transition:transform 0.3s ease" style-hover="transform:scale(1.1)">
+                    {{ s.icon }}
+                  </div>
+                  <div style="min-width:0;flex:1 1 0%">
+                    <h3 style="margin:0 0 0.75rem;font-size:1.25rem;font-weight:700;color:#1e1b4b;line-height:1.3">{{ s.title }}</h3>
+                    <p style="margin:0;font-size:1rem;line-height:1.6;color:#312e81">{{ s.description }}</p>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:4rem;text-align:center">
+            <div style="display:inline-flex;align-items:center;gap:0.5rem;border-radius:9999px;background:rgba(239,246,255,0.9);padding:0.75rem 1.5rem;font-size:0.875rem;font-weight:500;color:#1d4ed8;box-shadow:0 1px 2px rgba(0,0,0,0.05);backdrop-filter:blur(4px)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v4h1"></path></svg>
+              <span>Join our cultural community and preserve Kerala's rich heritage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── ABOUT ─────────── -->
+    <div id="about-us" data-screen-label="About" style="padding:3rem 0;background:transparent">
+      <div style="display:flex;flex-direction:row;align-items:stretch;gap:0.5rem;max-width:80rem;margin:0 auto;padding:0 2rem">
+        <aside style="flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;width:2.75rem;padding-top:0.35rem">
+          <div style="display:inline-flex;align-items:center;justify-content:center;padding:0.65rem 0.5rem;border-radius:9999px;background:rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(15,23,42,0.14),inset 0 0 0 1px rgba(255,255,255,0.5);backdrop-filter:blur(8px)">
+            <div style="display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:0.35rem;writing-mode:vertical-rl;transform:rotate(180deg)">
+              <span aria-hidden="true" style="width:0.5rem;height:1.25rem;border-radius:0.25rem;background:#facc15;flex-shrink:0"></span>
+              <p style="margin:0;font-size:0.875rem;line-height:1.25;letter-spacing:0.02em;white-space:nowrap;color:#0f172a;font-weight:600">About foundation</p>
+            </div>
+          </div>
+        </aside>
+        <div style="flex:1 1 0%;min-width:0;display:flex;flex-direction:row;gap:4rem;align-items:flex-start">
+          <div style="flex:1 1 0%;max-width:32rem">
+            <h2 style="margin:0;font-size:3.75rem;font-weight:400;line-height:1.1;letter-spacing:-0.02em;color:#0f172a">
+              <span style="text-shadow:0 1px 3px rgba(255,255,255,0.78),0 0 12px rgba(255,255,255,0.5)">Preserve and promote the rich cultural heritage of</span>
+              <span style="font-weight:500;background:linear-gradient(90deg,#2563eb 0%,#9333ea 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 5px rgba(255,255,255,0.55))">Kerala</span>
+            </h2>
+          </div>
+          <div style="flex:1 1 0%">
+            <p style="margin:0;font-size:1rem;line-height:1.7;color:#1e293b;background:rgba(255,255,255,0.92);padding:1rem 1.25rem;border-radius:0.75rem;box-shadow:0 2px 12px rgba(15,23,42,0.1),inset 0 0 0 1px rgba(255,255,255,0.6);backdrop-filter:blur(6px)">The Unite India Corporation Foundation for Education and Events is a vibrant, community-driven organization based in New Jersey, USA, dedicated to reviving real Malayali culture, empowering the next generation through education, and offering a nostalgic sense of home to our community. Our mission is to preserve and promote the rich cultural heritage of Kerala while fostering a deeper connection among Malayalis in the USA, creating a sense of belonging and unity.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────── UPCOMING EVENTS ─────────── -->
+    <section data-screen-label="Upcoming events" style="padding:4rem 0;background:transparent">
+      <div style="display:flex;flex-direction:row;align-items:stretch;gap:0.5rem;max-width:80rem;margin:0 auto;padding:0 2rem">
+        <aside style="flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;width:2.75rem;padding-top:0.35rem">
+          <div style="display:inline-flex;align-items:center;justify-content:center;padding:0.65rem 0.5rem;border-radius:9999px;background:rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(15,23,42,0.14),inset 0 0 0 1px rgba(255,255,255,0.5);backdrop-filter:blur(8px)">
+            <div style="display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:0.35rem;writing-mode:vertical-rl;transform:rotate(180deg)">
+              <span aria-hidden="true" style="width:0.5rem;height:1.25rem;border-radius:0.25rem;background:#facc15;flex-shrink:0"></span>
+              <p style="margin:0;font-size:0.875rem;line-height:1.25;letter-spacing:0.02em;white-space:nowrap;color:#0f172a;font-weight:600">Events</p>
+            </div>
+          </div>
+        </aside>
+        <div style="flex:1 1 0%;min-width:0">
+          <div style="text-align:center;margin-bottom:3rem">
+            <h2 style="margin:0 0 1rem;font-size:2.25rem;font-weight:700;color:#0f172a">
+              <span style="text-shadow:0 1px 3px rgba(255,255,255,0.78),0 0 12px rgba(255,255,255,0.5)">Upcoming</span>
+              <span style="font-weight:500;background:linear-gradient(90deg,#2563eb 0%,#9333ea 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 5px rgba(255,255,255,0.55))">Events</span>
+            </h2>
+            <p style="margin:0 auto;max-width:42rem;font-size:1.125rem;line-height:1.7;color:#1e293b;background:rgba(255,255,255,0.92);padding:1rem 1.25rem;border-radius:0.75rem;box-shadow:0 2px 12px rgba(15,23,42,0.1),inset 0 0 0 1px rgba(255,255,255,0.6);backdrop-filter:blur(6px)">Join us for our upcoming cultural celebrations and community events (showing up to 6 events)</p>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2rem;align-items:stretch;margin-bottom:2rem">
+            <sc-for list="{{ upcomingEvents }}" as="ev" hint-placeholder-count="4">
+              <div style="position:relative;display:flex;height:100%;flex-direction:column;border-radius:1rem;overflow:hidden;background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75);transition:box-shadow 0.3s ease,border-color 0.3s ease" style-hover="border-color:rgba(255,255,255,0.9);box-shadow:0 10px 28px rgba(76,29,149,0.22),inset 0 1px 0 rgba(255,255,255,0.9)">
+                <div style="position:relative;width:100%;height:12rem;overflow:hidden">
+                  <img src="{{ ev.image }}" alt="{{ ev.title }}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.3s ease" style-hover="transform:scale(1.05)">
+                </div>
+                <div style="border-top:1px solid rgba(255,255,255,0.25);padding:1.25rem;display:flex;flex-direction:column;flex:1 1 auto">
+                  <h3 style="margin:0 0 0.25rem;font-size:1.125rem;font-weight:700;color:#1e1b4b;line-height:1.3">{{ ev.title }}</h3>
+                  <p style="margin:0 0 1rem;font-size:0.875rem;color:#312e81;line-height:1.5">{{ ev.caption }}</p>
+                  <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem">
+                    <div style="display:flex;align-items:center;gap:0.75rem">
+                      <span style="width:3.5rem;height:3.5rem;border-radius:0.75rem;background:#dbeafe;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 11h18"></path></svg>
+                      </span>
+                      <span style="font-size:0.9375rem;font-weight:500;color:#312e81">{{ ev.date }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.75rem">
+                      <span style="width:3.5rem;height:3.5rem;border-radius:0.75rem;background:#dcfce7;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                      </span>
+                      <span style="font-size:0.9375rem;font-weight:500;color:#312e81">{{ ev.time }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.75rem;min-width:0">
+                      <span style="width:3.5rem;height:3.5rem;border-radius:0.75rem;background:#f3e8ff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9333ea" stroke-width="2"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1116 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                      </span>
+                      <span style="font-size:0.9375rem;font-weight:500;color:#312e81;overflow:hidden;text-overflow:ellipsis">{{ ev.location }}</span>
+                    </div>
+                  </div>
+                  <div style="margin-top:auto;display:flex;gap:0.75rem">
+                    <a href="#" style="flex:1 1 0%;display:inline-flex;align-items:center;justify-content:center;height:3.5rem;border-radius:0.75rem;background:#dcfce7;color:#166534;font-size:0.9375rem;font-weight:600;transition:all 0.3s ease" style-hover="background:#bbf7d0;transform:scale(1.05)">{{ ev.cta }}</a>
+                    <a href="#" style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:3.5rem;height:3.5rem;border-radius:0.75rem;background:#dbeafe;color:#1d4ed8;transition:all 0.3s ease" aria-label="Add to calendar" style-hover="background:#bfdbfe;transform:scale(1.05)">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 11h18M12 14v4M10 16h4"></path></svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="text-align:center">
+            <a href="#" title="View All Events" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.625rem 1.25rem;border-radius:0.75rem;background:rgba(15,23,42,0.78);color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.28);box-shadow:0 4px 16px rgba(15,23,42,0.4);backdrop-filter:blur(10px) saturate(120%)" style-hover="background:rgba(109,40,217,0.92);border-color:rgba(196,181,253,0.55)">
+              <span>View All Events</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M9 5l7 7-7 7"></path></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── TEAM ─────────── -->
+    <div id="team-section" data-screen-label="Team" style="padding:6rem 0;background:transparent">
+      <div style="display:flex;flex-direction:row;align-items:stretch;gap:0.5rem;max-width:80rem;margin:0 auto;padding:0 2rem">
+        <aside style="flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;width:2.75rem;padding-top:0.35rem">
+          <div style="display:inline-flex;align-items:center;justify-content:center;padding:0.65rem 0.5rem;border-radius:9999px;background:rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(15,23,42,0.14),inset 0 0 0 1px rgba(255,255,255,0.5);backdrop-filter:blur(8px)">
+            <div style="display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:0.35rem;writing-mode:vertical-rl;transform:rotate(180deg)">
+              <span aria-hidden="true" style="width:0.5rem;height:1.25rem;border-radius:0.25rem;background:#facc15;flex-shrink:0"></span>
+              <p style="margin:0;font-size:0.875rem;line-height:1.25;letter-spacing:0.02em;white-space:nowrap;color:#0f172a;font-weight:600">Our team</p>
+            </div>
+          </div>
+        </aside>
+        <div style="flex:1 1 0%;min-width:0">
+          <div style="margin-bottom:5rem;text-align:center">
+            <h2 style="margin:0;font-size:3.75rem;font-weight:300;line-height:1.1;letter-spacing:-0.02em;color:#0f172a">
+              <span style="text-shadow:0 1px 3px rgba(255,255,255,0.78),0 0 12px rgba(255,255,255,0.5)">Meet our amazing</span>
+              <span style="font-weight:500;background:linear-gradient(90deg,#2563eb 0%,#9333ea 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 5px rgba(255,255,255,0.55))">team</span>
+            </h2>
+            <p style="margin:1rem auto 0;max-width:42rem;font-size:1.125rem;line-height:1.7;color:#1e293b;background:rgba(255,255,255,0.92);padding:1rem 1.25rem;border-radius:0.75rem;box-shadow:0 2px 12px rgba(15,23,42,0.1),inset 0 0 0 1px rgba(255,255,255,0.6);backdrop-filter:blur(6px)">Dedicated professionals working together to make a positive impact in our communities.</p>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:2.5rem">
+            <sc-for list="{{ teamMembers }}" as="m" hint-placeholder-count="3">
+              <div style="position:relative;width:300px;display:flex;flex-direction:column;border-radius:2rem;overflow:hidden;background:#fff;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1);transition:transform 0.5s ease-out,box-shadow 0.5s ease-out" style-hover="transform:translateY(-0.75rem);box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)">
+                <div style="height:0.5rem;background:{{ m.headerGradient }}"></div>
+                <div style="position:relative;height:400px;flex-shrink:0;overflow:hidden;padding:1rem">
+                  <div style="position:relative;width:100%;height:100%;border-radius:0.75rem;overflow:hidden">
+                    <img src="{{ m.image }}" alt="{{ m.name }}" style="width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform 0.7s ease-out" style-hover="transform:scale(1.05)">
+                    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(17,24,39,0.1),transparent)"></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;padding:0 1.5rem 1.5rem;flex:1 1 auto">
+                  <h3 style="margin:0 0 0.25rem;font-size:1.5rem;font-weight:700;color:#111827;line-height:1.2">{{ m.name }}</h3>
+                  <p style="margin:0 0 0.25rem;display:inline-block;align-self:flex-start;font-size:1rem;font-weight:500;color:#2563eb;background:#eff6ff;padding:0.25rem 0.75rem;border-radius:9999px">{{ m.title }}</p>
+                  <p style="margin:0 0 0.5rem;font-size:0.875rem;color:#6b7280">{{ m.designation }}</p>
+                  <p style="margin:0 0 0.5rem;font-size:1rem;line-height:1.45;color:#4b5563">{{ m.bio }}</p>
+                  <p style="margin:0 0 0.5rem;font-size:0.875rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;line-height:1.45">Expertise: <span style="font-weight:400;text-transform:none;color:#374151">{{ m.expertise }}</span></p>
+                  <div style="margin-top:auto;padding-top:0.5rem;border-top:1px solid #f3f4f6">
+                    <a href="#" style="display:flex;align-items:center;gap:0.5rem;font-size:0.875rem;color:#6b7280" style-hover="color:#2563eb">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                      <span>{{ m.email }}</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────── SPONSORS ─────────── -->
+    <section data-screen-label="Sponsors" style="padding:6rem 0;background:transparent">
+      <div style="display:flex;flex-direction:row;align-items:stretch;gap:0.5rem;max-width:72rem;margin:0 auto;padding:0 2rem">
+        <aside style="flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;width:2.75rem;padding-top:0.35rem">
+          <div style="display:inline-flex;align-items:center;justify-content:center;padding:0.65rem 0.5rem;border-radius:9999px;background:rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(15,23,42,0.14),inset 0 0 0 1px rgba(255,255,255,0.5);backdrop-filter:blur(8px)">
+            <div style="display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:0.35rem;writing-mode:vertical-rl;transform:rotate(180deg)">
+              <span aria-hidden="true" style="width:0.5rem;height:1.25rem;border-radius:0.25rem;background:#facc15;flex-shrink:0"></span>
+              <p style="margin:0;font-size:0.875rem;line-height:1.25;letter-spacing:0.02em;white-space:nowrap;color:#0f172a;font-weight:600">Sponsors</p>
+            </div>
+          </div>
+        </aside>
+        <div style="flex:1 1 0%;min-width:0">
+          <div style="text-align:center;margin-bottom:3rem">
+            <h2 style="margin:0 0 1rem;font-size:2.25rem;font-weight:700;color:#0f172a">
+              <span style="text-shadow:0 1px 3px rgba(255,255,255,0.78),0 0 12px rgba(255,255,255,0.5)">Our</span>
+              <span style="font-weight:500;background:linear-gradient(90deg,#2563eb 0%,#9333ea 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 5px rgba(255,255,255,0.55))">Sponsors</span>
+            </h2>
+            <p style="margin:0 auto;max-width:42rem;font-size:1.125rem;line-height:1.7;color:#1e293b;background:rgba(255,255,255,0.92);padding:1rem 1.25rem;border-radius:0.75rem;box-shadow:0 2px 12px rgba(15,23,42,0.1),inset 0 0 0 1px rgba(255,255,255,0.6);backdrop-filter:blur(6px)">Grateful for the support of our amazing sponsors who make our events and community initiatives possible</p>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2rem;align-items:stretch;margin-bottom:2rem">
+            <sc-for list="{{ sponsors }}" as="sp" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;height:100%;border-radius:1rem;overflow:hidden;background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75);cursor:pointer;transition:box-shadow 0.3s ease,border-color 0.3s ease" style-hover="border-color:rgba(255,255,255,0.9);box-shadow:0 10px 28px rgba(76,29,149,0.22),inset 0 1px 0 rgba(255,255,255,0.9)">
+                <div style="height:9rem;width:100%;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center">
+                  <img src="{{ sp.image }}" alt="{{ sp.name }}" style="width:100%;height:100%;object-fit:cover">
+                </div>
+                <div style="display:flex;gap:1rem;padding:1.25rem;flex:1 1 auto">
+                  <div style="flex:1 1 0%;min-width:0">
+                    <h3 style="margin:0 0 0.25rem;font-size:1.0625rem;font-weight:700;color:#1e1b4b">{{ sp.name }}</h3>
+                    <p style="margin:0 0 0.5rem;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#4c1d95">{{ sp.tier }}</p>
+                    <p style="margin:0;font-size:0.875rem;line-height:1.55;color:#312e81">{{ sp.description }}</p>
+                  </div>
+                  <div style="flex-shrink:0;display:flex;align-items:flex-start">
+                    <span style="display:inline-flex;align-items:center;gap:0.375rem;font-size:0.8125rem;font-weight:600;color:#1d4ed8;background:#eff6ff;border:1px solid rgba(191,219,254,0.9);padding:0.375rem 0.625rem;border-radius:0.5rem;white-space:nowrap">
+                      Visit
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7v9"></path></svg>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="text-align:center">
+            <a href="#" title="See All Sponsors" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.625rem 1.25rem;border-radius:0.75rem;background:rgba(15,23,42,0.78);color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.28);box-shadow:0 4px 16px rgba(15,23,42,0.4);backdrop-filter:blur(10px) saturate(120%)" style-hover="background:rgba(109,40,217,0.92);border-color:rgba(196,181,253,0.55)">
+              <span>See All Sponsors</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M9 5l7 7-7 7"></path></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── CONTACT ─────────── -->
+    <div id="contact" data-screen-label="Contact" style="padding:6rem 0;background:transparent">
+      <div style="display:flex;flex-direction:row;align-items:stretch;gap:0.5rem;max-width:72rem;margin:0 auto;padding:0 2rem">
+        <aside style="flex-shrink:0;display:flex;align-items:flex-start;justify-content:center;width:2.75rem;padding-top:0.35rem">
+          <div style="display:inline-flex;align-items:center;justify-content:center;padding:0.65rem 0.5rem;border-radius:9999px;background:rgba(255,255,255,0.9);box-shadow:0 2px 12px rgba(15,23,42,0.14),inset 0 0 0 1px rgba(255,255,255,0.5);backdrop-filter:blur(8px)">
+            <div style="display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:0.35rem;writing-mode:vertical-rl;transform:rotate(180deg)">
+              <span aria-hidden="true" style="width:0.5rem;height:1.25rem;border-radius:0.25rem;background:#facc15;flex-shrink:0"></span>
+              <p style="margin:0;font-size:0.875rem;line-height:1.25;letter-spacing:0.02em;white-space:nowrap;color:#0f172a;font-weight:600">Contact</p>
+            </div>
+          </div>
+        </aside>
+        <div style="flex:1 1 0%;min-width:0">
+          <div style="margin-bottom:4rem">
+            <h2 style="margin:0;text-align:center;font-size:2.25rem;font-weight:700;color:#0f172a">
+              <span style="text-shadow:0 1px 3px rgba(255,255,255,0.78),0 0 12px rgba(255,255,255,0.5)">Get in</span>
+              <span style="font-weight:500;background:linear-gradient(90deg,#2563eb 0%,#9333ea 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 5px rgba(255,255,255,0.55))">Touch</span>
+            </h2>
+          </div>
+          <p style="margin:0 auto 4rem;max-width:42rem;text-align:center;font-size:1.125rem;line-height:1.7;color:#1e293b;background:rgba(255,255,255,0.92);padding:1rem 1.25rem;border-radius:0.75rem;box-shadow:0 2px 12px rgba(15,23,42,0.1),inset 0 0 0 1px rgba(255,255,255,0.6);backdrop-filter:blur(6px)">Connect with us to learn more about our community initiatives and how you can get involved in preserving and promoting Malayali culture across the United States. Join us in fostering cultural exchange and building stronger connections within our diverse communities.</p>
+
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3rem 2rem">
+            <div style="border-radius:1rem;padding:2rem;background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75)">
+              <div style="display:flex;align-items:flex-start;gap:1.5rem">
+                <div style="flex-shrink:0;width:3rem;height:3rem;border-radius:0.75rem;background:#dbeafe;display:flex;align-items:center;justify-content:center;transition:transform 0.3s ease" style-hover="transform:scale(1.1)">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><circle cx="12" cy="11" r="3"></circle></svg>
+                </div>
+                <div style="flex:1 1 0%">
+                  <h3 style="margin:0 0 0.75rem;font-size:1.25rem;font-weight:700;color:#1e1b4b">Location</h3>
+                  <p style="margin:0;font-size:1rem;line-height:1.6;color:#312e81">MCEFEE<br>New Jersey, USA</p>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-radius:1rem;padding:2rem;background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75)">
+              <div style="display:flex;align-items:flex-start;gap:1.5rem">
+                <div style="flex-shrink:0;width:3rem;height:3rem;border-radius:0.75rem;background:#dcfce7;display:flex;align-items:center;justify-content:center;transition:transform 0.3s ease" style-hover="transform:scale(1.1)">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                </div>
+                <div style="flex:1 1 0%">
+                  <h3 style="margin:0 0 0.75rem;font-size:1.25rem;font-weight:700;color:#1e1b4b">Phone</h3>
+                  <p style="margin:0;font-size:1rem;line-height:1.6"><a href="tel:+19085168781" style="color:#1d4ed8" style-hover="text-decoration:underline">(908) 516-8781</a></p>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-radius:1rem;padding:2rem;background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75)">
+              <div style="display:flex;align-items:flex-start;gap:1.5rem">
+                <div style="flex-shrink:0;width:3rem;height:3rem;border-radius:0.75rem;background:#ffedd5;display:flex;align-items:center;justify-content:center;transition:transform 0.3s ease" style-hover="transform:scale(1.1)">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </div>
+                <div style="flex:1 1 0%">
+                  <h3 style="margin:0 0 0.75rem;font-size:1.25rem;font-weight:700;color:#1e1b4b">Email</h3>
+                  <p style="margin:0;font-size:1rem;line-height:1.6"><a href="mailto:Contactus@mcefee.org" style="color:#1d4ed8" style-hover="text-decoration:underline">Contactus@mcefee.org</a></p>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-radius:1rem;padding:2rem;background:linear-gradient(145deg,rgba(196,181,253,0.96) 0%,rgba(167,139,250,0.94) 48%,rgba(183,148,252,0.95) 100%);border:1px solid rgba(237,233,254,0.82);box-shadow:0 4px 14px rgba(76,29,149,0.16),inset 0 1px 0 rgba(255,255,255,0.75)">
+              <div style="display:flex;align-items:flex-start;gap:1.5rem">
+                <div style="flex-shrink:0;width:3rem;height:3rem;border-radius:0.75rem;background:#f3e8ff;display:flex;align-items:center;justify-content:center;transition:transform 0.3s ease" style-hover="transform:scale(1.1)">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2"></path></svg>
+                </div>
+                <div style="flex:1 1 0%">
+                  <h3 style="margin:0 0 0.75rem;font-size:1.25rem;font-weight:700;color:#1e1b4b">Social Media</h3>
+                  <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+                    <a href="#" title="Follow us on Facebook" style="flex-shrink:0;width:2.5rem;height:2.5rem;border-radius:0.5rem;background:#dbeafe;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease" style-hover="background:#bfdbfe;transform:scale(1.1)">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#2563eb"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"></path></svg>
+                    </a>
+                    <a href="#" title="Follow us on Instagram" style="flex-shrink:0;width:2.5rem;height:2.5rem;border-radius:0.5rem;background:#fce7f3;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease" style-hover="background:#fbcfe8;transform:scale(1.1)">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="#db2777"></circle></svg>
+                    </a>
+                    <a href="#" title="Follow us on X (Twitter)" style="flex-shrink:0;width:2.5rem;height:2.5rem;border-radius:0.5rem;background:#e0f2fe;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease" style-hover="background:#bae6fd;transform:scale(1.1)">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#0284c7"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                    </a>
+                    <a href="#" title="Subscribe to our YouTube channel" style="flex-shrink:0;width:2.5rem;height:2.5rem;border-radius:0.5rem;background:#fee2e2;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease" style-hover="background:#fecaca;transform:scale(1.1)">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="#dc2626"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path></svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:4rem;text-align:center">
+            <div style="display:inline-flex;align-items:center;gap:0.5rem;background:#eff6ff;color:#1d4ed8;padding:0.75rem 1.5rem;border-radius:9999px;font-size:0.875rem;font-weight:500">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              <span>Ready to connect? Reach out and join our vibrant community</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ─────────── FOOTER ─────────── -->
+  <footer data-screen-label="Footer" role="contentinfo" style="position:relative;z-index:1;background:#111827;color:#d1d5db;margin-top:5rem;width:100%">
+    <div style="width:100%;background:#111827">
+      <div style="max-width:80rem;margin:0 auto;padding:4rem 2rem 3rem">
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3rem">
+
+          <div>
+            <a href="#" style="display:inline-block;margin-bottom:1.5rem">
+              <img src="assets/mcefee/mcefee_logo.png" alt="MCEFEE" style="height:3rem;width:auto">
+            </a>
+            <p style="margin:0 0 1.5rem;color:#9ca3af;font-size:0.875rem;line-height:1.6">Making a difference in communities worldwide through compassionate action and sustainable impact.</p>
+            <div style="margin-bottom:1.5rem">
+              <p style="margin:0 0 1rem;color:#fff;font-weight:500;font-size:0.875rem">Follow our journey</p>
+              <ul style="display:flex;flex-wrap:wrap;gap:0.5rem;list-style:none;margin:0;padding:0">
+                <li><a href="#" aria-label="Follow us on Facebook" style="display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;color:#9ca3af;background:#1f2937;border-radius:0.5rem;transition:all 0.3s ease" style-hover="color:#fff;background:#2563eb;transform:scale(1.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"></path></svg></a></li>
+                <li><a href="#" aria-label="Follow us on Instagram" style="display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;color:#9ca3af;background:#1f2937;border-radius:0.5rem;transition:all 0.3s ease" style-hover="color:#fff;background:#db2777;transform:scale(1.1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1" fill="currentColor"></circle></svg></a></li>
+                <li><a href="#" aria-label="Follow us on X (Twitter)" style="display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;color:#9ca3af;background:#1f2937;border-radius:0.5rem;transition:all 0.3s ease" style-hover="color:#fff;background:#60a5fa;transform:scale(1.1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg></a></li>
+                <li><a href="#" aria-label="Connect with us on LinkedIn" style="display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;color:#9ca3af;background:#1f2937;border-radius:0.5rem;transition:all 0.3s ease" style-hover="color:#fff;background:#1d4ed8;transform:scale(1.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a></li>
+                <li><a href="#" aria-label="Subscribe to our YouTube channel" style="display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;color:#9ca3af;background:#1f2937;border-radius:0.5rem;transition:all 0.3s ease" style-hover="color:#fff;background:#dc2626;transform:scale(1.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19c1.72.42 8.6.42 8.6.42s6.88 0 8.6-.42a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.33z"></path><path d="M9.75 15.02l5.75-3.27-5.75-3.27v6.54z"></path></svg></a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <h6 style="margin:0 0 1.5rem;color:#fff;font-weight:600;font-size:1.125rem;letter-spacing:0.025em">Get in Touch</h6>
+            <div style="display:flex;flex-direction:column;gap:1rem">
+              <div style="display:flex;align-items:flex-start;gap:0.75rem">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="margin-top:0.25rem;flex-shrink:0"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1116 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <p style="margin:0;color:#9ca3af;font-size:0.875rem;line-height:1.6;white-space:pre-wrap">MCEFEE
+Malayali Cultural Exchange Foundation for Education and Events
+New Jersey, USA</p>
+              </div>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.9.36 1.78.7 2.61a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.47-1.27a2 2 0 012.11-.45c.83.34 1.71.57 2.61.7A2 2 0 0122 16.92z"></path></svg>
+                <p style="margin:0"><a href="tel:+19085168781" style="color:#d1d5db;font-size:0.875rem" style-hover="color:#fff">(908) 516-8781</a></p>
+              </div>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="flex-shrink:0"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M22 6l-10 7L2 6"></path></svg>
+                <p style="margin:0"><a href="mailto:Contactus@mcefee.org" style="color:#60a5fa;font-size:0.875rem" style-hover="color:#93c5fd">Contactus@mcefee.org</a></p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h6 style="margin:0 0 1.5rem;color:#fff;font-weight:600;font-size:1.125rem;letter-spacing:0.025em">Quick Links</h6>
+            <nav>
+              <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0.75rem">
+                <li><a href="#" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#fff">Home</a></li>
+                <li><a href="#about-us" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#fff">About Us</a></li>
+                <li><a href="#" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#fff">Our Causes</a></li>
+                <li><a href="#" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#fff">Events</a></li>
+                <li><a href="#contact" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#fff">Contact</a></li>
+              </ul>
+            </nav>
+          </div>
+
+          <div>
+            <h6 style="margin:0 0 1.5rem;color:#fff;font-weight:600;font-size:1.125rem;letter-spacing:0.025em">Ways to Help</h6>
+            <nav>
+              <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0.75rem">
+                <li><a href="#" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#60a5fa">Make a Donation</a></li>
+                <li><a href="#" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#60a5fa">Become a Volunteer</a></li>
+                <li><a href="#" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#60a5fa">Start a Fundraiser</a></li>
+                <li><a href="#" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#60a5fa">Corporate Sponsorship</a></li>
+                <li><a href="#" style="display:block;color:#d1d5db;font-size:0.875rem" style-hover="color:#60a5fa">Newsletter Signup</a></li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#111827;border-top:1px solid #1f2937;width:100%">
+      <div style="max-width:80rem;margin:0 auto;padding:2rem;display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:1rem">
+        <p style="margin:0;color:#9ca3af;font-size:0.875rem">© 2024 <a href="#" style="color:#fff" style-hover="color:#60a5fa">Malayalees US Charity Organization</a>. All rights reserved. Making hope happen.</p>
+        <nav style="display:flex;flex-direction:row;align-items:center;gap:1.5rem">
+          <a href="#" style="color:#9ca3af;font-size:0.875rem" style-hover="color:#fff">Privacy Policy</a>
+          <a href="#" style="color:#9ca3af;font-size:0.875rem" style-hover="color:#fff">Terms of Service</a>
+          <a href="#" style="color:#9ca3af;font-size:0.875rem" style-hover="color:#fff">Accessibility</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <button type="button" onClick="{{ scrollTop }}" aria-label="Back to top" style="{{ backToTopStyle }}">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+  </button>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440}}">
+const PARTICLE_COLORS = [[251,191,36],[236,72,153],[168,85,247],[99,102,241],[56,189,248],[244,114,182]];
+const PARTICLE_COUNT = 220;
+const CROSSFADE_MS = 420;
+const HERO_IMAGES = [
+  'assets/mcefee/spark_kerala_2026_wide.jpg',
+  'assets/mcefee/veena_concert_2026_wide.jpg',
+  'assets/mcefee/hero_cloud_1.webp',
+  'assets/mcefee/hero_cloud_2.webp',
+  'assets/mcefee/hero_cloud_3.webp'
+];
+
+function icon(stroke, d) {
+  return React.createElement('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: stroke, strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, React.createElement('path', { d: d }));
+}
+
+class Component extends DCLogic {
+  state = {
+    scrolled: false,
+    featuresOpen: false,
+    slideA: 0, slideB: 1, showA: true,
+    paused: false,
+    heroHover: false,
+    showBackToTop: false
+  };
+
+  canvasRef = React.createRef();
+
+  componentDidMount() {
+    this.startCanvas();
+    this.scheduleRotate();
+    this.onScroll = () => {
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      this.setState({ scrolled: y > 24, showBackToTop: y > 300 });
+    };
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+    window.removeEventListener('resize', this.resize);
+    window.removeEventListener('scroll', this.onScroll);
+    clearTimeout(this.rotateTimer);
+    clearTimeout(this.fadeTimer);
+  }
+
+  startCanvas() {
+    const canvas = this.canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let width = 0, height = 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const spread = Math.min(window.innerWidth, window.innerHeight);
+    const particles = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
+      angle: Math.random() * Math.PI * 2,
+      radius: 60 + Math.random() * spread * 0.42,
+      speed: 0.0006 + Math.random() * 0.0018,
+      size: 0.8 + Math.random() * 2.2,
+      colorIndex: i % PARTICLE_COLORS.length,
+      wobble: Math.random() * Math.PI * 2,
+      layer: Math.random()
+    }));
+
+    this.resize = () => {
+      width = window.innerWidth; height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr); canvas.height = Math.floor(height * dpr);
+      canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    const draw = (time) => {
+      const cx = width * 0.52, cy = height * 0.48, t = time * 0.001;
+      const bg = ctx.createLinearGradient(0, 0, width, height);
+      bg.addColorStop(0, '#1a0a2e'); bg.addColorStop(0.35, '#2d1b4e');
+      bg.addColorStop(0.7, '#1e1b4b'); bg.addColorStop(1, '#0f172a');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = 'rgba(139, 92, 246, 0.12)';
+      for (let gx = 22; gx < width; gx += 44) {
+        for (let gy = 22; gy < height; gy += 44) {
+          ctx.beginPath(); ctx.arc(gx, gy, 1.2, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.angle += p.speed * (0.7 + p.layer * 0.6);
+        const r = p.radius + Math.sin(t * 1.2 + p.wobble) * 35 + Math.sin(p.angle * 2.5 + t) * 25;
+        const squash = 0.62 + p.layer * 0.12;
+        const x = cx + Math.cos(p.angle + t * 0.15) * r;
+        const y = cy + Math.sin(p.angle + t * 0.12) * r * squash;
+        const c = PARTICLE_COLORS[p.colorIndex];
+        const alpha = 0.25 + Math.sin(t * 2 + p.wobble) * 0.2 + p.layer * 0.15;
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + alpha + ')';
+        if (i % 4 === 0) { ctx.shadowBlur = 12; ctx.shadowColor = 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',0.5)'; }
+        else { ctx.shadowBlur = 0; }
+        ctx.arc(x, y, p.size, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      this.raf = requestAnimationFrame(draw);
+    };
+
+    this.resize();
+    window.addEventListener('resize', this.resize);
+    this.raf = requestAnimationFrame(draw);
+  }
+
+  scheduleRotate() {
+    clearTimeout(this.rotateTimer);
+    this.rotateTimer = setTimeout(() => {
+      if (!this.state.paused) this.crossfadeTo(this.currentIndex() + 1);
+      this.scheduleRotate();
+    }, 8000);
+  }
+
+  currentIndex() {
+    return this.state.showA ? this.state.slideA : this.state.slideB;
+  }
+
+  crossfadeTo(next) {
+    const n = HERO_IMAGES.length;
+    const idx = ((next % n) + n) % n;
+    if (this.state.showA) this.setState({ slideB: idx, showA: false });
+    else this.setState({ slideA: idx, showA: true });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const layer = (visible, active) => 'position:absolute;inset:0;opacity:' + (visible ? 1 : 0) + ';transition:opacity ' + CROSSFADE_MS + 'ms ease-in-out;overflow:hidden';
+    const img = (active, key) => 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:center center;' + (active ? 'animation:mcKenBurns 8000ms linear forwards;' : '');
+
+    return {
+      canvasRef: this.canvasRef,
+
+      headerStyle: 'position:fixed;top:0;left:0;right:0;z-index:50;'
+        + (s.scrolled
+          ? 'background:linear-gradient(180deg,rgba(26,10,46,0.97) 0%,rgba(26,10,46,0.9) 72%,rgba(26,10,46,0.72) 100%);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);'
+          : 'background:transparent;')
+        + 'transition:background 0.4s cubic-bezier(0.4,0,0.2,1),backdrop-filter 0.4s cubic-bezier(0.4,0,0.2,1)',
+
+      featureItems: [
+        { name: 'Polls' }, { name: 'Focus Groups' }, { name: 'Profile' }, { name: 'Members' },
+        { name: 'Membership' }, { name: 'MOSC' }, { name: 'MOSC_Redesign' }
+      ],
+      featuresMenuStyle: 'position:absolute;top:100%;right:0;margin-top:0.5rem;width:14rem;background:rgba(30,27,75,0.96);border:1px solid rgba(196,181,253,0.35);border-radius:0.5rem;box-shadow:0 10px 40px rgba(0,0,0,0.35);backdrop-filter:blur(12px);z-index:50;transition:opacity 0.2s ease,transform 0.2s ease;'
+        + (s.featuresOpen ? 'opacity:1;visibility:visible;transform:translateY(0)' : 'opacity:0;visibility:hidden;transform:translateY(-6px)'),
+      openFeatures: () => this.setState({ featuresOpen: true }),
+      closeFeatures: () => this.setState({ featuresOpen: false }),
+      toggleFeatures: () => this.setState((p) => ({ featuresOpen: !p.featuresOpen })),
+
+      slideASrc: HERO_IMAGES[s.slideA],
+      slideBSrc: HERO_IMAGES[s.slideB],
+      slideAStyle: layer(s.showA),
+      slideBStyle: layer(!s.showA),
+      slideAImgStyle: img(s.showA),
+      slideBImgStyle: img(!s.showA),
+      heroHoverOn: () => this.setState({ heroHover: true }),
+      heroHoverOff: () => this.setState({ heroHover: false }),
+      heroControlsStyle: 'position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 1rem;z-index:20;pointer-events:none;transition:opacity 0.3s ease;opacity:' + (s.heroHover ? 1 : 0),
+      goPrev: () => { this.crossfadeTo(this.currentIndex() - 1); this.scheduleRotate(); },
+      goNext: () => { this.crossfadeTo(this.currentIndex() + 1); this.scheduleRotate(); },
+      togglePlay: () => this.setState((p) => ({ paused: !p.paused })),
+      playTitle: s.paused ? 'Play' : 'Pause',
+      playIcon: s.paused
+        ? React.createElement('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: '#a5f3fc' }, React.createElement('path', { d: 'M8 5v14l11-7z' }))
+        : React.createElement('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: '#a5f3fc' }, React.createElement('path', { d: 'M6 5h4v14H6zM14 5h4v14h-4z' })),
+
+      liveEvents: [
+        { title: 'MCEFEE Spark of Kerala', image: 'assets/mcefee/spark_kerala_2026_wide.jpg', date: 'Sun, Aug 24, 2026', time: '05:00 PM', location: 'IKCC Knanaya Community Center, Stony Point, NY' }
+      ],
+
+      featuredEvents: [
+        { title: 'Onam Celebration 2026', image: 'assets/mcefee/veena_concert_2026_wide.jpg', date: 'Mon, Aug 24, 2026', time: '10:00 AM', location: 'New York' },
+        { title: 'MCEFEE Spark of Kerala', image: 'assets/mcefee/spark_kerala_2026_wide.jpg', date: 'Fri, Aug 14, 2026', time: '06:30 PM', location: 'Jo Ann Arts Center, East Brunswick, NJ' }
+      ],
+
+      services: [
+        {
+          title: 'Traditional Dance & Music',
+          description: 'Experience the rich heritage of Kerala through dance and music workshops.',
+          iconBg: 'rgba(220,252,231,0.85)', iconBorder: 'rgba(187,247,208,0.5)',
+          icon: icon('#22c55e', 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3')
+        },
+        {
+          title: 'Art & Craft Workshops',
+          description: 'Learn traditional Kerala art forms and crafts through hands-on workshops.',
+          iconBg: 'rgba(255,237,213,0.85)', iconBorder: 'rgba(254,215,170,0.5)',
+          icon: icon('#f97316', 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z')
+        },
+        {
+          title: 'Kerala Folklore and Tribal Traditions',
+          description: 'Introduce lesser-known folk dances like Theyyam, Padayani, and Poothan Thira.',
+          iconBg: 'rgba(219,234,254,0.85)', iconBorder: 'rgba(191,219,254,0.5)',
+          icon: icon('#3b82f6', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z')
+        },
+        {
+          title: 'Kerala Cuisine Classes',
+          description: 'Master the art of traditional Kerala cooking with expert chefs.',
+          iconBg: 'rgba(254,249,195,0.85)', iconBorder: 'rgba(254,240,138,0.5)',
+          icon: icon('#eab308', 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4')
+        }
+      ],
+
+      upcomingEvents: [
+        { title: 'Onam Celebration 2026', caption: 'Celebrate this onam with us', image: 'assets/mcefee/cause_1.jpg', date: 'Mon, Aug 24, 2026', time: '10:00 AM – 01:00 PM', location: 'New York', cta: 'Register' },
+        { title: 'Cochin Carnival', caption: 'Cochin Carnival is hosted by GCDA', image: 'assets/mcefee/cause_2.jpg', date: 'Tue, Jun 9, 2026', time: '10:00 AM – 09:00 PM', location: 'Kochi', cta: 'Donate' },
+        { title: 'Malayalee Association', caption: 'Charity event · Givebutter', image: 'assets/mcefee/cause_3.jpg', date: 'Mon, May 4, 2026', time: '02:02 PM – 05:00 PM', location: 'Chicago, IL', cta: 'Donate' },
+        { title: 'Fundraiser Registration Required', caption: 'Fundraiser Registration Required', image: 'assets/mcefee/veena_concert_2026_wide.jpg', date: 'Thu, Mar 26, 2026', time: '12:38 PM – 04:38 PM', location: 'Sydney, AU', cta: 'Register' }
+      ],
+
+      teamMembers: [
+        { name: 'Executive Committee Member', title: 'President', designation: 'MCEFEE Executive Committee', bio: 'Leads MCEFEE\u2019s cultural and educational programming across the North-East US chapters.', expertise: 'Community leadership, Event programming', email: 'Contactus@mcefee.org', image: 'assets/mcefee/team_1.jpg', headerGradient: 'linear-gradient(90deg,#2563eb,#9333ea)' },
+        { name: 'Executive Committee Member', title: 'Secretary', designation: 'MCEFEE Executive Committee', bio: 'Coordinates membership, communications and the annual general body meeting.', expertise: 'Operations, Member relations', email: 'Contactus@mcefee.org', image: 'assets/mcefee/team_2.jpg', headerGradient: 'linear-gradient(90deg,#f59e0b,#ea580c)' },
+        { name: 'Executive Committee Member', title: 'Treasurer', designation: 'MCEFEE Executive Committee', bio: 'Oversees fundraising, sponsorships and financial reporting for all chapter events.', expertise: 'Finance, Sponsorship', email: 'Contactus@mcefee.org', image: 'assets/mcefee/team_3.jpg', headerGradient: 'linear-gradient(90deg,#22c55e,#0d9488)' }
+      ],
+
+      sponsors: [
+        { name: 'Community Sponsor', tier: 'Platinum sponsor', description: 'Supporting MCEFEE cultural programming across New Jersey and New York.', image: 'assets/mcefee/team_4.jpg' },
+        { name: 'Event Partner', tier: 'Gold sponsor', description: 'Partnering on Onam, Spark of Kerala and the annual stage show series.', image: 'assets/mcefee/cause_2.jpg' }
+      ],
+
+      backToTopStyle: 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:60;width:3.5rem;height:3.5rem;background:#2563eb;color:#fff;border:0;border-radius:9999px;display:flex;align-items:center;justify-content:center;box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);cursor:pointer;transition:all 0.3s ease-in-out;'
+        + (s.showBackToTop ? 'transform:translateY(0);opacity:1;visibility:visible' : 'transform:translateY(1rem);opacity:0;visibility:hidden'),
+      scrollTop: () => window.scrollTo({ top: 0, behavior: 'smooth' })
+    };
+  }
+}
+
+</script>
+</body>
+</html>
