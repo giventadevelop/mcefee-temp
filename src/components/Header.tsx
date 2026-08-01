@@ -761,8 +761,11 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     performSignOut();
   }, [pendingSignOut, isLoaded, signOut]);
 
+  /* Transparent → frost header (modernist) on home and events listing */
   const isHomePage =
-    pathname === '/' || pathname === '/charity-theme';
+    pathname === '/' ||
+    pathname === '/charity-theme' ||
+    pathname === '/events';
 
   // Frosted header when content scrolls under the sticky bar (homepage + all pages)
   useEffect(() => {

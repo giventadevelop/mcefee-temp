@@ -56,9 +56,9 @@ export default function HomePageClient({
   const [hasCheckedRedirect, setHasCheckedRedirect] = useState(false);
 
   useEffect(() => {
-    document.body.classList.add('home-page-background', 'modernist-home');
+    document.body.classList.add('modernist-home');
     return () => {
-      document.body.classList.remove('home-page-background', 'modernist-home');
+      document.body.classList.remove('modernist-home');
     };
   }, []);
 

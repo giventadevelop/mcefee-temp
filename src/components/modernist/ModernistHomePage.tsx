@@ -9,11 +9,25 @@ import { getTenantId } from '@/lib/env';
 import { parseExecutiveCommitteeTeamMembersResponse } from '@/lib/parseExecutiveCommitteeTeamMembersResponse';
 import GivebutterDonateButton from '@/components/GivebutterDonateButton';
 import { useTenantSettings } from '@/components/TenantSettingsProvider';
-import HeroSection from '@/components/HeroSection';
 import '@/styles/modernist-homepage.css';
 
-const HERO_IMAGE = '/images/modernist/mcefee/kerala_riverside.jpeg';
+/** Claude Design Modernist assets (Malayalees.US Redesign) */
+const HERO_IMAGE = '/images/modernist/mcefee/kathakali_hero.png';
 const FALLBACK_POSTER = '/images/modernist/mcefee/spark_kerala_2026_wide.jpg';
+const CULTURE_STRIP = [
+  {
+    src: '/images/modernist/mcefee/deepam_chirad.jpg',
+    alt: 'Deepam chirad — traditional Kerala oil lamps',
+  },
+  {
+    src: '/images/modernist/mcefee/spark_kerala_2026_wide.jpg',
+    alt: 'MCEFEE Spark of Kerala — performance arts and rhythm',
+  },
+  {
+    src: '/images/modernist/mcefee/kerala_riverside.jpeg',
+    alt: 'Kerala backwaters — wooden boat under a coconut tree',
+  },
+] as const;
 
 const SERVICES = [
   {
@@ -300,16 +314,16 @@ export default function ModernistHomePage({
 
   return (
     <main className="modernist-home">
-      {/* 1b — Poster hero */}
+      {/* 1b — Poster hero (Claude Design: Malayalees.US Redesign Modernist) */}
       <section className="mh-poster-hero" aria-label="Homepage hero">
         <figure className="mh-poster-hero-media mh-grayscale">
           <Image
             src={HERO_IMAGE}
-            alt="Kerala backwaters — wooden boat under a coconut tree"
+            alt="Kathakali — Malayali cultural performance"
             fill
             priority
             sizes="100vw"
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: 'cover', objectPosition: 'center top' }}
           />
         </figure>
         <div className="mh-poster-hero-scrim" aria-hidden />
@@ -320,10 +334,13 @@ export default function ModernistHomePage({
           </div>
           <h1>
             <span className="mh-poster-hero-title" style={{ display: 'block' }}>
-              Connecting Cultures, Empowering Generations –
+              Onam. Theyyam.
+            </span>
+            <span className="mh-poster-hero-title" style={{ display: 'block' }}>
+              Thiruvathira.
             </span>
             <span className="mh-accent-line mh-poster-hero-sub" style={{ display: 'block' }}>
-              Celebrating Malayali Roots in the USA.
+              All of it, here.
             </span>
           </h1>
           <p className="mh-poster-hero-lede">
@@ -353,10 +370,20 @@ export default function ModernistHomePage({
         </section>
       )}
 
-      {/* Legacy hero slider — same tenant homepage-hero rules as admin settings */}
-      <div className="home-hero-viewport-filler mh-legacy-hero-slider">
-        <HeroSection />
-      </div>
+      {/* Design assets strip — deepam / Spark of Kerala / Kerala riverside */}
+      <section className="mh-culture-strip" aria-label="Cultural imagery">
+        {CULTURE_STRIP.map((item) => (
+          <figure key={item.src} className="mh-culture-strip-frame mh-grayscale">
+            <Image
+              src={item.src}
+              alt={item.alt}
+              fill
+              sizes="(min-width: 1024px) 33vw, 100vw"
+              style={{ objectFit: 'cover' }}
+            />
+          </figure>
+        ))}
+      </section>
 
       {/* 1a — Upcoming timetable */}
       {showEventsSection !== false && (
@@ -408,7 +435,7 @@ export default function ModernistHomePage({
       {/* 1a — Featured event */}
       {featuredEvent && (
         <section className="mh-featured" aria-label="Featured event">
-          <figure className="mh-featured-media mh-grayscale">
+          <figure className="mh-featured-media">
             {featuredImageIsLocal ? (
               <Image
                 src={featuredImage}
@@ -546,7 +573,7 @@ export default function ModernistHomePage({
                 const name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.title;
                 return (
                   <div key={m.id ?? name} className="mh-team-card">
-                    <figure className="mh-team-photo mh-grayscale">
+                    <figure className="mh-team-photo">
                       {m.profileImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={m.profileImageUrl} alt={name} />

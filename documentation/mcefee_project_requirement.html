@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MCEFEE project requirements — organization identity, homepage redesign, header/footer, team section, and technical constraints for the Malayali Cultural Exchange Foundation for Education and Events site.">
+    <title>MCEFEE Project Requirements</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+        }
+        h1 {
+            font-size: 2.5em;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+        }
+        h2 {
+            font-size: 1.8em;
+            border-left: 4px solid #0066cc;
+            padding-left: 15px;
+            margin-top: 28px;
+            margin-bottom: 16px;
+        }
+        h3 { font-size: 1.4em; color: #333; margin-top: 20px; margin-bottom: 10px; }
+        h4 { font-size: 1.2em; color: #555; margin-top: 16px; margin-bottom: 8px; }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 12px 0 12px 24px; }
+        li { margin-bottom: 8px; }
+        a { color: #0066cc; }
+        a:focus { outline: 2px solid #0066cc; outline-offset: 2px; }
+
+        .toc {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+            border-left: 4px solid #0066cc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        .toc h2 { margin-top: 0; border: none; padding: 0; font-size: 1.3em; }
+        .toc ul { margin: 12px 0 0 20px; }
+        .toc a { font-weight: 600; }
+
+        .section-intro {
+            background: linear-gradient(135deg, #e8f4f8 0%, #d1e7f0 100%);
+            border-left: 4px solid #0066cc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+        }
+        .section-intro code {
+            background-color: #e8f4f8;
+            color: #0d3b66;
+            padding: 3px 8px;
+            border-radius: 3px;
+            border: 1px solid #b8d4e3;
+            font-family: 'Courier New', monospace;
+        }
+
+        .section-container {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+            border-left: 4px solid #0066cc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+        }
+        .section-container.usage {
+            background: linear-gradient(135deg, #f0e6ff 0%, #e6ccff 100%);
+            border-left-color: #9c27b0;
+        }
+        .section-container.parameters {
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
+            border-left-color: #ff9800;
+        }
+        .section-container.output {
+            background: linear-gradient(135deg, #e6ffe6 0%, #ccffcc 100%);
+            border-left-color: #28a745;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+            color: white;
+            padding: 12px 20px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-header.usage {
+            background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+        }
+        .section-header.parameters {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+        .section-header.output {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+
+        .parameters-list {
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
+            border-left: 4px solid #ff9800;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 15px 0;
+        }
+        .parameters-list strong { color: #ff9800; font-weight: bold; }
+        .parameters-list code {
+            background-color: #e8f4f8;
+            color: #0d3b66;
+            padding: 3px 8px;
+            border-radius: 3px;
+            border: 1px solid #b8d4e3;
+            font-family: 'Courier New', monospace;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #0c5460;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .info code, .info .code-highlight {
+            background-color: #e8f4f8;
+            color: #0d3b66;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #b8d4e3;
+            font-family: 'Courier New', monospace;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .warning code, .warning .code-highlight {
+            background-color: #e8f4f8;
+            color: #0d3b66;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #b8d4e3;
+            font-family: 'Courier New', monospace;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .success code, .success .code-highlight {
+            background-color: #e8f4f8;
+            color: #0d3b66;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #b8d4e3;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-block, pre, pre code {
+            background-color: #e8f4f8;
+            color: #0d3b66;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #b8d4e3;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .code-block { line-height: 1.5; }
+
+        code {
+            background-color: #e8f4f8;
+            color: #0d3b66;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #b8d4e3;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .script-name {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #e3f2fd; transition: background-color 0.2s ease; }
+        td code {
+            background-color: #e8f4f8;
+            color: #0d3b66;
+            padding: 3px 8px;
+            border-radius: 3px;
+            border: 1px solid #b8d4e3;
+        }
+
+        .fb-link-card {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 16px;
+            background: linear-gradient(135deg, #e8f0fe 0%, #d2e3fc 100%);
+            border: 2px solid #1877f2;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .fb-link-card a {
+            font-weight: 700;
+            font-size: 1.05em;
+            word-break: break-all;
+        }
+        .fb-badge {
+            display: inline-block;
+            background: #1877f2;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.75em;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 999px;
+        }
+
+        .meta {
+            color: #555;
+            font-size: 0.95em;
+            margin-bottom: 8px;
+        }
+
+        .fb-link-lead {
+            margin-bottom: 4px;
+        }
+
+        .doc-footer-note {
+            margin-top: 32px;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            h1 { font-size: 1.75em; }
+        }
+    </style>
+</head>
+<body>
+    <h1>MCEFEE Project Requirements</h1>
+    <p class="meta"><strong>Document:</strong> <code>documentation/mcefee_project_requirement.html</code></p>
+    <p class="meta"><strong>Scope:</strong> Current MCEFEE (Malayali Cultural Exchange Foundation for Education and Events) Next.js site — documentation and product requirements only.</p>
+    <p class="meta"><strong>Last updated:</strong> July 2026</p>
+
+    <div class="section-intro">
+        <p>
+            This document captures the <strong>current project requirements</strong> for the MCEFEE tenant site:
+            organization identity, public homepage redesign (Modernist), header/footer behavior, executive team display,
+            and technical constraints that other pages must not break.
+        </p>
+        <p>
+            Official community presence:
+            <strong>MCEFEE Facebook page</strong> —
+            <a href="https://www.facebook.com/profile.php?id=61573944338286"
+               target="_blank"
+               rel="noopener noreferrer"
+               title="MCEFEE Facebook page">
+                https://www.facebook.com/profile.php?id=61573944338286
+            </a>
+        </p>
+    </div>
+
+    <div class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#org">1. Organization &amp; brand</a></li>
+            <li><a href="#channels">2. Official channels</a></li>
+            <li><a href="#stack">3. Platform &amp; tech stack</a></li>
+            <li><a href="#homepage">4. Homepage (Modernist) requirements</a></li>
+            <li><a href="#header">5. Header requirements</a></li>
+            <li><a href="#team">6. Executive team section</a></li>
+            <li><a href="#footer">7. Footer requirements</a></li>
+            <li><a href="#hero-slider">8. Legacy hero slider on homepage</a></li>
+            <li><a href="#scope">9. Scope &amp; non-goals</a></li>
+            <li><a href="#acceptance">10. Acceptance checklist</a></li>
+            <li><a href="#refs">11. Key code references</a></li>
+        </ul>
+    </div>
+
+    <!-- 1. Organization -->
+    <h2 id="org">1. Organization &amp; brand</h2>
+    <div class="section-container">
+        <div class="section-header">🏛️ Organization identity</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Short name</td>
+                    <td><strong>MCEFEE</strong></td>
+                </tr>
+                <tr>
+                    <td>Legal / full name</td>
+                    <td>Malayali Cultural Exchange Foundation for Education and Events</td>
+                </tr>
+                <tr>
+                    <td>Location</td>
+                    <td>New Jersey, USA</td>
+                </tr>
+                <tr>
+                    <td>Phone</td>
+                    <td><a href="tel:+19085168781">(908) 516-8781</a></td>
+                </tr>
+                <tr>
+                    <td>Email</td>
+                    <td><a href="mailto:Contactus@mcefee.org">Contactus@mcefee.org</a></td>
+                </tr>
+                <tr>
+                    <td>Mission (homepage copy)</td>
+                    <td>Connecting Cultures, Empowering Generations — Celebrating Malayali Roots in the USA.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="info">
+            <strong>💡 Brand note:</strong>
+            Public copyright and legal naming should use <strong>MCEFEE</strong> and the full foundation name,
+            not legacy “Malayalees US Charity Organization” wording in the footer.
+        </div>
+    </div>
+
+    <!-- 2. Channels -->
+    <h2 id="channels">2. Official channels</h2>
+    <div class="section-container usage">
+        <div class="section-header usage">📣 Community &amp; social</div>
+        <p>
+            The official <strong>MCEFEE Facebook page</strong> is the primary social reference for this project.
+            Link it from documentation, admin content, and (when product asks) public UI.
+        </p>
+        <div class="fb-link-card">
+            <span class="fb-badge">Facebook</span>
+            <div>
+                <p class="fb-link-lead"><strong>This is the MCEFEE Facebook page:</strong></p>
+                <a href="https://www.facebook.com/profile.php?id=61573944338286"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   aria-label="Open MCEFEE Facebook page">
+                    https://www.facebook.com/profile.php?id=61573944338286
+                </a>
+            </div>
+        </div>
+        <div class="parameters-list">
+            <p><strong>Reference URL:</strong></p>
+            <ul>
+                <li>
+                    <code>https://www.facebook.com/profile.php?id=61573944338286</code>
+                    — MCEFEE Facebook page (profile id <code>61573944338286</code>)
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 3. Stack -->
+    <h2 id="stack">3. Platform &amp; tech stack</h2>
+    <div class="section-container">
+        <div class="section-header">⚙️ Technical platform</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Layer</th>
+                    <th>Choice</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Framework</td>
+                    <td>Next.js 15+ (App Router)</td>
+                </tr>
+                <tr>
+                    <td>Language</td>
+                    <td>TypeScript</td>
+                </tr>
+                <tr>
+                    <td>Auth</td>
+                    <td>Clerk (primary + satellite domain patterns)</td>
+                </tr>
+                <tr>
+                    <td>Payments</td>
+                    <td>Stripe (+ Givebutter donate where configured)</td>
+                </tr>
+                <tr>
+                    <td>API</td>
+                    <td>Backend REST via <code>/api/proxy/*</code> + JWT; tRPC where used</td>
+                </tr>
+                <tr>
+                    <td>Multi-tenant</td>
+                    <td><code>NEXT_PUBLIC_TENANT_ID</code> / Amplify-prefixed env</td>
+                </tr>
+                <tr>
+                    <td>Styling</td>
+                    <td>Tailwind + homepage-scoped Modernist CSS</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="warning">
+            <strong>⚠️ Constraint:</strong>
+            Homepage Modernist styles must remain scoped to
+            <code class="code-highlight">body.modernist-home</code>
+            so other routes keep their existing layouts.
+        </div>
+    </div>
+
+    <!-- 4. Homepage -->
+    <h2 id="homepage">4. Homepage (Modernist) requirements</h2>
+    <div class="section-intro">
+        <p>
+            Route <code>/</code> uses the Modernist homepage composition:
+            <strong>1b poster hero</strong> + on-sale band + optional legacy hero slider +
+            <strong>1a body</strong> (timetable, featured event, What we do, about, team, sponsors, CTA).
+        </p>
+    </div>
+    <div class="section-container usage">
+        <div class="section-header usage">🏠 Homepage structure</div>
+        <ol>
+            <li><strong>Poster hero (1b)</strong> — grayscale Kerala imagery, mission headline, primary CTAs.</li>
+            <li><strong>On-sale band</strong> — ticketed / featured sale messaging when data available.</li>
+            <li><strong>Legacy hero slider</strong> — existing <code>HeroSection</code> under admin Homepage Hero rules (mid-page).</li>
+            <li><strong>Upcoming events timetable</strong> — next dates from event APIs.</li>
+            <li><strong>Featured event split</strong> — large banner with <code>object-contain</code> (no crop).</li>
+            <li><strong>What we do</strong> — interactive 2×2 service cards.</li>
+            <li><strong>About</strong> — foundation mission and contact.</li>
+            <li><strong>Team</strong> — executive committee members (<code>#team-section</code>).</li>
+            <li><strong>Sponsors</strong> — when configured.</li>
+            <li><strong>Closing CTA</strong> — tickets / donate.</li>
+        </ol>
+        <div class="success">
+            <strong>✅ Key files:</strong>
+            <code class="code-highlight">src/components/modernist/ModernistHomePage.tsx</code>,
+            <code class="code-highlight">src/styles/modernist-homepage.css</code>,
+            <code class="code-highlight">src/app/HomePageClient.tsx</code>
+        </div>
+    </div>
+
+    <!-- 5. Header -->
+    <h2 id="header">5. Header requirements</h2>
+    <div class="section-container parameters">
+        <div class="section-header parameters">📌 Sticky transparent header</div>
+        <ul>
+            <li><strong>Sticky / fixed</strong> at top of viewport for the homepage.</li>
+            <li><strong>At page top:</strong> fully transparent over the dark poster hero; light nav text.</li>
+            <li><strong>On scroll:</strong> translucent frosted glass (dark tint + blur) so logo and nav stay readable; <strong>no border</strong>.</li>
+            <li><strong>No black Admin strip</strong> — auth cluster background must stay transparent (no purple/black opaque block).</li>
+            <li>Nav contrast adapts: light labels over dark frost; Admin / avatar / search remain readable.</li>
+        </ul>
+        <div class="info">
+            <strong>💡 Implementation:</strong>
+            Styles live under <code class="code-highlight">body.modernist-home</code> in
+            <code class="code-highlight">modernist-homepage.css</code>;
+            the shared <code class="code-highlight">Header</code> component keeps <code>position: fixed</code>.
+        </div>
+    </div>
+
+    <!-- 6. Team -->
+    <h2 id="team">6. Executive team section</h2>
+    <div class="section-container">
+        <div class="section-header">👥 Team section (#team-section)</div>
+        <ul>
+            <li>Section heading: <strong>“The people who run the year”</strong> (do <em>not</em> show the eyebrow text “Executive committee”).</li>
+            <li>Do <em>not</em> repeat “Executive committee” on each card.</li>
+            <li>Photos: reduced size (approx. 180px wide), cards centered in a constrained grid.</li>
+            <li>Section content centered (heading, intro, grid).</li>
+            <li><strong>Name</strong> on one line (<code>white-space: nowrap</code>).</li>
+            <li><strong>Designation</strong> on the next line (prefer <code>designation</code>, fallback <code>title</code>).</li>
+            <li>Data source: <code>/api/proxy/executive-committee-team-members?isActive.equals=true&amp;sort=priorityOrder,asc</code></li>
+        </ul>
+        <div class="warning">
+            <strong>⚠️ Data quality:</strong>
+            If cards show honorifics like “Mr.” under the name, update <strong>Designation</strong> in
+            Admin → Executive Committee so the public line shows the real role.
+        </div>
+    </div>
+
+    <!-- 7. Footer -->
+    <h2 id="footer">7. Footer requirements</h2>
+    <div class="section-container output">
+        <div class="section-header output">🦶 Footer (homepage light theme)</div>
+        <ul>
+            <li>On Modernist homepage: <strong>light background</strong> (aligned with <code>#f3f2f2</code> / <code>--mh-bg</code>), dark readable text — not charcoal navy.</li>
+            <li>Copyright (centered), replace legacy charity wording with:</li>
+        </ul>
+        <div class="code-block">© 2026 MCEFEE
+Malayali Cultural Exchange Foundation
+for Education and Events</div>
+        <ul>
+            <li>Remove footer links: Privacy Policy, Terms of Service, Accessibility (copyright row only).</li>
+            <li>Shared component: <code>src/components/Footer.tsx</code>; light theme overrides scoped via <code>body.modernist-home</code>.</li>
+        </ul>
+    </div>
+
+    <!-- 8. Hero slider -->
+    <h2 id="hero-slider">8. Legacy hero slider on homepage</h2>
+    <div class="section-container">
+        <div class="section-header">🖼️ Mid-page HeroSection</div>
+        <p>
+            The existing <code>HeroSection</code> remains available after the on-sale band and still respects
+            tenant Homepage Hero admin settings (default slides, event media, rotation).
+        </p>
+        <div class="parameters-list">
+            <p><strong>Hidden on Modernist homepage only:</strong></p>
+            <ul>
+                <li><code>.hero-left-cta-card</code> — Unite India / Our Mission / Donate Now strip</li>
+                <li><code>.hero-browse-container</code> — “Browse all upcoming events” control</li>
+            </ul>
+        </div>
+        <div class="info">
+            <strong>💡 Why hide:</strong>
+            Those controls duplicate Modernist CTAs and clutter the mid-page slider.
+            Hiding is CSS-scoped under <code class="code-highlight">.mh-legacy-hero-slider</code>
+            so other themes using <code>HeroSection</code> are unchanged.
+        </div>
+    </div>
+
+    <!-- 9. Scope -->
+    <h2 id="scope">9. Scope &amp; non-goals</h2>
+    <div class="section-container parameters">
+        <div class="section-header parameters">🎯 In / out of scope</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>In scope</th>
+                    <th>Out of scope (unless requested)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Homepage <code>/</code> Modernist redesign</td>
+                    <td>Redesigning all inner pages (events, gallery, admin) to Modernist</td>
+                </tr>
+                <tr>
+                    <td>Header/footer behavior on homepage</td>
+                    <td>Changing Clerk satellite auth architecture</td>
+                </tr>
+                <tr>
+                    <td>Team section layout/copy</td>
+                    <td>Backend schema changes for team members</td>
+                </tr>
+                <tr>
+                    <td>Documenting FB page as official channel</td>
+                    <td>Building a new Facebook integration product</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 10. Acceptance -->
+    <h2 id="acceptance">10. Acceptance checklist</h2>
+    <div class="section-container output">
+        <div class="section-header output">✅ Verify before release</div>
+        <ul>
+            <li>Homepage loads Modernist layout; other routes unchanged.</li>
+            <li>Header sticky; transparent at top; frosted on scroll; no black Admin block; no header border.</li>
+            <li>Nav readable over dark and light sections while scrolling.</li>
+            <li><code>#team-section</code>: no “Executive committee” eyebrow/card label; names single-line; designation separate; photos smaller; section centered.</li>
+            <li>Hero slider: Mission/Donate strip and Browse-events control hidden on <code>/</code>.</li>
+            <li>Footer: light on homepage; copyright centered as © 2026 MCEFEE + foundation name lines; no Privacy/Terms/Accessibility links in that row.</li>
+            <li>Facebook URL documented and reachable:
+                <a href="https://www.facebook.com/profile.php?id=61573944338286" target="_blank" rel="noopener noreferrer">MCEFEE FB page</a>.
+            </li>
+        </ul>
+    </div>
+
+    <!-- 11. Refs -->
+    <h2 id="refs">11. Key code references</h2>
+    <div class="section-container">
+        <div class="section-header">📁 Implementation map</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Area</th>
+                    <th>Path</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Modernist page</td>
+                    <td><code>src/components/modernist/ModernistHomePage.tsx</code></td>
+                </tr>
+                <tr>
+                    <td>Modernist CSS</td>
+                    <td><code>src/styles/modernist-homepage.css</code></td>
+                </tr>
+                <tr>
+                    <td>Home client bootstrap</td>
+                    <td><code>src/app/HomePageClient.tsx</code></td>
+                </tr>
+                <tr>
+                    <td>Shared header</td>
+                    <td><code>src/components/Header.tsx</code></td>
+                </tr>
+                <tr>
+                    <td>Shared footer</td>
+                    <td><code>src/components/Footer.tsx</code></td>
+                </tr>
+                <tr>
+                    <td>Legacy hero slider</td>
+                    <td><code>src/components/HeroSection.tsx</code></td>
+                </tr>
+                <tr>
+                    <td>This requirements doc</td>
+                    <td><code>documentation/mcefee_project_requirement.html</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="success doc-footer-note">
+        <strong>📌 Official Facebook page (MCEFEE):</strong>
+        <a href="https://www.facebook.com/profile.php?id=61573944338286"
+           target="_blank"
+           rel="noopener noreferrer">
+            https://www.facebook.com/profile.php?id=61573944338286
+        </a>
+    </div>
+</body>
+</html>
