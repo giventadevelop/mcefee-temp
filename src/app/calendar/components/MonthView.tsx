@@ -21,14 +21,17 @@ export function MonthView({
   month,
   theme = 'default',
   calendarBasePath = '/calendar',
+  homepageDesign = false,
 }: {
   events: CalendarEvent[];
   year: number;
   month: number;
   theme?: 'default' | 'syro';
   calendarBasePath?: string;
+  homepageDesign?: boolean;
 }) {
   const isSyro = theme === 'syro';
+  const isMh = homepageDesign && !isSyro;
   const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
   const [tooltipAnchor, setTooltipAnchor] = useState<DOMRect | null>(null);
 
@@ -70,15 +73,23 @@ export function MonthView({
     : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   return (
-    <div className={`bg-white rounded-lg overflow-hidden ${isSyro ? 'border border-gray-200' : ''}`}>
-      <div className="grid grid-cols-7 gap-px bg-gray-200">
+    <div
+      className={
+        isMh
+          ? 'mh-calendar-panel'
+          : `bg-white rounded-lg overflow-hidden ${isSyro ? 'border border-gray-200' : ''}`
+      }
+    >
+      <div className={isMh ? 'mh-calendar-grid' : 'grid grid-cols-7 gap-px bg-gray-200'}>
         {dayHeaders.map((h) => (
           <div
             key={h}
             className={
-              isSyro
-                ? 'bg-[#f0f4f8] text-xs sm:text-sm font-bold text-syro-blue text-center py-3 px-1'
-                : 'bg-gradient-to-br from-indigo-50 to-indigo-100 text-xs sm:text-sm font-bold text-indigo-700 text-center py-3 px-1'
+              isMh
+                ? 'mh-calendar-dow'
+                : isSyro
+                  ? 'bg-[#f0f4f8] text-xs sm:text-sm font-bold text-syro-blue text-center py-3 px-1'
+                  : 'bg-gradient-to-br from-indigo-50 to-indigo-100 text-xs sm:text-sm font-bold text-indigo-700 text-center py-3 px-1'
             }
           >
             <span className="hidden sm:inline">
@@ -111,21 +122,31 @@ export function MonthView({
           return (
             <div
               key={idx}
-              className={`min-h-[100px] sm:min-h-[120px] p-2 bg-white ${
-                !c.day ? 'bg-gray-50' : ''
-              } ${isTodayCell ? (isSyro ? 'bg-syro-red/5' : 'bg-gradient-to-br from-blue-50 to-purple-50') : ''} hover:bg-gray-50 transition-colors`}
+              className={
+                isMh
+                  ? `mh-calendar-cell${!c.day ? ' is-empty' : ''}${isTodayCell ? ' is-today' : ''}`
+                  : `min-h-[100px] sm:min-h-[120px] p-2 bg-white ${
+                      !c.day ? 'bg-gray-50' : ''
+                    } ${isTodayCell ? (isSyro ? 'bg-syro-red/5' : 'bg-gradient-to-br from-blue-50 to-purple-50') : ''} hover:bg-gray-50 transition-colors`
+              }
             >
               {c.day && (
                 <>
-                  <div className={`text-xs sm:text-sm font-bold mb-1 ${
-                    isTodayCell
-                      ? isSyro
-                        ? 'inline-flex items-center justify-center w-7 h-7 rounded-full bg-syro-red text-white'
-                        : 'inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white'
-                      : isSyro
-                        ? 'text-syro-dark-gray'
-                        : 'text-gray-700'
-                  }`}>
+                  <div
+                    className={
+                      isMh
+                        ? `mh-calendar-daynum${isTodayCell ? ' is-today' : ''}`
+                        : `text-xs sm:text-sm font-bold mb-1 ${
+                            isTodayCell
+                              ? isSyro
+                                ? 'inline-flex items-center justify-center w-7 h-7 rounded-full bg-syro-red text-white'
+                                : 'inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white'
+                              : isSyro
+                                ? 'text-syro-dark-gray'
+                                : 'text-gray-700'
+                          }`
+                    }
+                  >
                     {c.day}
                   </div>
 
@@ -136,16 +157,18 @@ export function MonthView({
                         key={event.id}
                         href={`/events/${event.id}`}
                         className={
-                          isSyro
-                            ? 'group text-xs truncate px-2 py-1.5 rounded-lg bg-syro-red/10 hover:bg-syro-red/20 text-syro-red transition-all duration-300 hover:scale-105 cursor-pointer shadow-sm text-left'
-                            : 'group text-xs truncate px-2 py-1.5 rounded-lg bg-gradient-to-br from-teal-50 to-teal-100 hover:from-teal-100 hover:to-teal-200 text-teal-800 transition-all duration-300 hover:scale-105 cursor-pointer shadow-sm'
+                          isMh
+                            ? 'mh-calendar-event'
+                            : isSyro
+                              ? 'group text-xs truncate px-2 py-1.5 rounded-lg bg-syro-red/10 hover:bg-syro-red/20 text-syro-red transition-all duration-300 hover:scale-105 cursor-pointer shadow-sm text-left'
+                              : 'group text-xs truncate px-2 py-1.5 rounded-lg bg-gradient-to-br from-teal-50 to-teal-100 hover:from-teal-100 hover:to-teal-200 text-teal-800 transition-all duration-300 hover:scale-105 cursor-pointer shadow-sm'
                         }
                         onMouseEnter={(e) => handleEventMouseEnter(event, e)}
                         onMouseLeave={handleEventMouseLeave}
                       >
                         <div className="flex items-center gap-1">
                           <svg
-                            className={`w-3 h-3 flex-shrink-0 ${isSyro ? 'text-syro-red' : 'text-teal-600'}`}
+                            className={`w-3 h-3 flex-shrink-0 ${isMh ? '' : isSyro ? 'text-syro-red' : 'text-teal-600'}`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -161,9 +184,11 @@ export function MonthView({
                       <Link
                         href={`${calendarBasePath}?view=day&date=${dateStr}`}
                         className={
-                          isSyro
-                            ? 'text-xs px-2 py-1 text-syro-blue hover:text-syro-red font-semibold hover:underline transition-colors cursor-pointer flex items-center gap-1'
-                            : 'text-xs px-2 py-1 text-indigo-600 hover:text-indigo-800 font-semibold hover:underline transition-colors cursor-pointer flex items-center gap-1'
+                          isMh
+                            ? 'mh-calendar-more'
+                            : isSyro
+                              ? 'text-xs px-2 py-1 text-syro-blue hover:text-syro-red font-semibold hover:underline transition-colors cursor-pointer flex items-center gap-1'
+                              : 'text-xs px-2 py-1 text-indigo-600 hover:text-indigo-800 font-semibold hover:underline transition-colors cursor-pointer flex items-center gap-1'
                         }
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

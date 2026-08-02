@@ -14,6 +14,192 @@ import { getTenantId } from '@/lib/env';
 import { useDeferredFetch } from '@/hooks/usePageReady';
 import { getHomepageCacheKey } from '@/lib/homepageCacheKeys';
 
+export type UpcomingEventsSectionVariant = 'default' | 'modernist';
+
+function admissionLabel(event: EventDetailsDTO | EventWithMedia): string {
+  const raw = (event.admissionType || '').toUpperCase();
+  if (raw.includes('DONAT') || raw.includes('CHARITY')) return 'Charity';
+  if (raw.includes('TICKET') || raw.includes('PAID')) return 'Ticketed';
+  if (raw.includes('FREE') || !raw) return 'Free';
+  return event.admissionType || 'Free';
+}
+
+function ticketCheckoutHref(event: EventWithMedia): string {
+  if (
+    event.manualPaymentEnabled === true &&
+    (event.paymentFlowMode === 'MANUAL_ONLY' || event.paymentFlowMode === 'HYBRID')
+  ) {
+    return `/events/${event.id}/manual-checkout`;
+  }
+  return `/events/${event.id}/checkout`;
+}
+
+function IconDetails() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  );
+}
+
+function IconTicket() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+    </svg>
+  );
+}
+
+function IconRegister() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+    </svg>
+  );
+}
+
+function IconDonate() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
+  );
+}
+
+function ModernistUpcomingEventCard({
+  event,
+  isUpcomingEvents,
+  formatDate,
+  formatTime,
+}: {
+  event: EventWithMedia;
+  isUpcomingEvents: boolean;
+  formatDate: (dateString: string, timezone?: string) => string;
+  formatTime: (time: string) => string;
+}) {
+  const showRegister = isUpcomingEvents && event.isRegistrationRequired === true;
+  const showTickets =
+    isUpcomingEvents &&
+    event.admissionType?.toUpperCase() === 'TICKETED' &&
+    !isTicketedFundraiserEvent(event) &&
+    !isTicketedEventCube(event);
+  const showDonation =
+    isUpcomingEvents && isDonationBasedEvent(event) && !isTicketedFundraiserEvent(event);
+
+  return (
+    <article className="mh-event-card">
+      <figure className="mh-event-card-media">
+        <Image
+          src={event.thumbnailUrl || '/images/default event image.png'}
+          alt={event.title || 'Event image'}
+          width={1600}
+          height={900}
+          sizes="100vw"
+          className="mh-event-card-media-img"
+        />
+        {!isUpcomingEvents && <span className="mh-event-card-badge">Past Event</span>}
+      </figure>
+
+      <div className="mh-event-card-body">
+        <div className="mh-event-card-meta">
+          <span className="mh-event-card-date">{formatDate(event.startDate, event.timezone)}</span>
+          <span className="mh-event-card-admission">{admissionLabel(event)}</span>
+        </div>
+
+        <h3>{event.title}</h3>
+
+        {event.caption && <p className="mh-event-card-caption">{event.caption}</p>}
+
+        {(event.location || event.startTime) && (
+          <p className="mh-event-card-where">
+            {event.location}
+            {event.location && event.startTime && ' · '}
+            {event.startTime &&
+              `${formatTime(event.startTime)}${event.endTime ? ` – ${formatTime(event.endTime)}` : ''}`}
+          </p>
+        )}
+
+        {event.description && (
+          <p className="mh-event-card-desc mh-event-card-desc--clamp">{event.description}</p>
+        )}
+
+        <div className="mh-event-card-actions">
+          <Link
+            href={`/events/${event.id}`}
+            className="mh-btn mh-btn-details"
+            title="See Event Details"
+            aria-label="See Event Details"
+          >
+            <IconDetails />
+            See Event Details
+          </Link>
+
+          {showRegister && (
+            <Link
+              href={`/events/${event.id}/register`}
+              className="mh-btn mh-btn-register"
+              title="Register"
+              aria-label="Register"
+            >
+              <IconRegister />
+              Register
+            </Link>
+          )}
+
+          {isUpcomingEvents && isTicketedEventCube(event) && (
+            <Link
+              href={`/events/${event.id}/eventcube-checkout`}
+              className="mh-btn mh-btn-tickets"
+              title="Buy Tickets"
+              aria-label="Buy Tickets"
+            >
+              <IconTicket />
+              Get tickets
+            </Link>
+          )}
+
+          {isUpcomingEvents && isTicketedFundraiserEvent(event) && (
+            <Link
+              href={`/events/${event.id}/givebutter-checkout`}
+              className="mh-btn mh-btn-tickets"
+              title="Buy Tickets"
+              aria-label="Buy Tickets"
+            >
+              <IconTicket />
+              Get tickets
+            </Link>
+          )}
+
+          {showTickets && (
+            <Link
+              href={ticketCheckoutHref(event)}
+              className="mh-btn mh-btn-tickets"
+              title="Buy Tickets"
+              aria-label="Buy Tickets"
+            >
+              <IconTicket />
+              Get tickets
+            </Link>
+          )}
+
+          {showDonation && (
+            <Link
+              href={`/events/${event.id}/donation`}
+              className="mh-btn mh-btn-donate"
+              title="Make a Donation"
+              aria-label="Make a Donation"
+            >
+              <IconDonate />
+              Donate
+            </Link>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 // Component to handle event image loading errors and hide container when image fails
 function EventImageWithErrorHandling({
   src,
@@ -346,18 +532,22 @@ function UpcomingEventGlassCard({
   );
 }
 
-const UpcomingEventsSection: React.FC = () => {
+const UpcomingEventsSection: React.FC<{ variant?: UpcomingEventsSectionVariant }> = ({
+  variant = 'default',
+}) => {
+  const isModernist = variant === 'modernist';
   const [events, setEvents] = useState<EventWithMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [isUpcomingEvents, setIsUpcomingEvents] = useState(true);
+  const [hasMoreEvents, setHasMoreEvents] = useState(false);
 
   // Defer upcoming events API call until page ready + 300ms
   // This section mounts after TenantSettings loads, adding natural delay on top
   const shouldFetch = useDeferredFetch(300);
 
-  // Cache key for sessionStorage (env-prefixed so local/dev/prod are separate)
-  const CACHE_KEY = getHomepageCacheKey('homepage_events_cache');
+  // Bump version when event hero media is reseeded so cards pick up new image URLs
+  const CACHE_KEY = getHomepageCacheKey('homepage_events_cache', 3);
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   // Run cache read before paint so cached data shows immediately (no delay on refresh)
@@ -365,10 +555,11 @@ const UpcomingEventsSection: React.FC = () => {
     try {
       const cachedData = sessionStorage.getItem(CACHE_KEY);
       if (cachedData) {
-        const { data, timestamp, isUpcoming } = JSON.parse(cachedData);
+        const { data, timestamp, isUpcoming, hasMore } = JSON.parse(cachedData);
         if (Date.now() - timestamp < CACHE_DURATION) {
           setEvents(data ?? []);
           setIsUpcomingEvents(isUpcoming !== false);
+          setHasMoreEvents(hasMore === true);
           setLoading(false);
         }
       }
@@ -400,11 +591,12 @@ const UpcomingEventsSection: React.FC = () => {
       try {
         const cachedData = sessionStorage.getItem(CACHE_KEY);
         if (cachedData) {
-          const { data, timestamp, isUpcoming } = JSON.parse(cachedData);
+          const { data, timestamp, isUpcoming, hasMore } = JSON.parse(cachedData);
           if (Date.now() - timestamp < CACHE_DURATION) {
             console.log('✅ Using cached events data');
             setEvents(data);
             setIsUpcomingEvents(isUpcoming);
+            setHasMoreEvents(hasMore === true);
             setLoading(false);
             return;
           }
@@ -514,6 +706,7 @@ const UpcomingEventsSection: React.FC = () => {
 
           // Limit to 6 events for display after processing
           const limitedEvents = processedEvents.slice(0, 6);
+          const moreThanSix = processedEvents.length > 6;
 
           console.log(`[UpcomingEventsSection] Processed ${processedEvents.length} events (${recurringSeriesMap.size} recurring series, ${processedEvents.length - recurringSeriesMap.size} non-recurring), displaying ${limitedEvents.length} events`);
 
@@ -545,7 +738,8 @@ const UpcomingEventsSection: React.FC = () => {
             sessionStorage.setItem(CACHE_KEY, JSON.stringify({
               data: eventsWithMedia,
               timestamp: Date.now(),
-              isUpcoming: true
+              isUpcoming: true,
+              hasMore: moreThanSix,
             }));
           } catch (error) {
             console.warn('Failed to cache events data:', error);
@@ -553,6 +747,7 @@ const UpcomingEventsSection: React.FC = () => {
 
           setEvents(eventsWithMedia);
           setIsUpcomingEvents(true);
+          setHasMoreEvents(moreThanSix);
         } else {
           // No upcoming events, try to get past events
           // Fetch more events (15) to account for recurring events being grouped into single occurrences
@@ -645,6 +840,7 @@ const UpcomingEventsSection: React.FC = () => {
 
           // Limit to 6 events for display after processing
           const limitedPastEvents = processedPastEvents.slice(0, 6);
+          const moreThanSixPast = processedPastEvents.length > 6;
 
           console.log(`[UpcomingEventsSection] Processed ${processedPastEvents.length} past events (${recurringSeriesMap.size} recurring series, ${processedPastEvents.length - recurringSeriesMap.size} non-recurring), displaying ${limitedPastEvents.length} events`);
 
@@ -676,7 +872,8 @@ const UpcomingEventsSection: React.FC = () => {
             sessionStorage.setItem(CACHE_KEY, JSON.stringify({
               data: eventsWithMedia,
               timestamp: Date.now(),
-              isUpcoming: false
+              isUpcoming: false,
+              hasMore: moreThanSixPast,
             }));
           } catch (error) {
             console.warn('Failed to cache events data:', error);
@@ -684,6 +881,7 @@ const UpcomingEventsSection: React.FC = () => {
 
           setEvents(eventsWithMedia);
           setIsUpcomingEvents(false);
+          setHasMoreEvents(moreThanSixPast);
         }
       } catch (err) {
         setFetchError(true);
@@ -693,7 +891,7 @@ const UpcomingEventsSection: React.FC = () => {
       }
     }
     fetchEvents();
-  }, [shouldFetch]);
+  }, [shouldFetch, CACHE_KEY, CACHE_DURATION]);
 
   // Helper to format time with AM/PM
   function formatTime(time: string): string {
@@ -722,6 +920,20 @@ const UpcomingEventsSection: React.FC = () => {
 
   // Handle fetch error state - return complete section with header
   if (fetchError) {
+    if (isModernist) {
+      return (
+        <section className="mh-section mh-home-events" aria-label="Upcoming events">
+          <div className="mh-section-head">
+            <span className="mh-eyebrow">Events</span>
+            <Link href="/events" className="mh-link">
+              View calendar
+            </Link>
+          </div>
+          <h2 className="mh-h2">Upcoming Events</h2>
+          <p className="mh-empty">Event listings are temporarily unavailable. Please check back soon.</p>
+        </section>
+      );
+    }
     return (
       <section className="py-24 bg-green-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -748,6 +960,20 @@ const UpcomingEventsSection: React.FC = () => {
 
   // Handle no events state - return complete section with header
   if (events.length === 0) {
+    if (isModernist) {
+      return (
+        <section className="mh-section mh-home-events" aria-label="Upcoming events">
+          <div className="mh-section-head">
+            <span className="mh-eyebrow">Events</span>
+            <Link href="/events" className="mh-link">
+              View calendar
+            </Link>
+          </div>
+          <h2 className="mh-h2">Upcoming Events</h2>
+          <p className="mh-empty">No events to show right now. Browse the full calendar for more.</p>
+        </section>
+      );
+    }
     return (
       <section className="py-24 bg-green-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -773,6 +999,49 @@ const UpcomingEventsSection: React.FC = () => {
   }
 
   // Normal render with events
+  if (isModernist) {
+    const title = isUpcomingEvents ? 'Upcoming Events' : 'Recent Events';
+    const lede = isUpcomingEvents
+      ? 'Join cultural celebrations and community gatherings — up to six events.'
+      : 'Recent cultural celebrations and community gatherings — up to six events.';
+
+    return (
+      <section className="mh-section mh-home-events" aria-label={title}>
+        <div className="mh-section-head">
+          <span className="mh-eyebrow">Events</span>
+          <Link href="/events" className="mh-link">
+            View calendar
+          </Link>
+        </div>
+        <h2 className="mh-h2 mh-home-events-heading">{title}</h2>
+        <p className="mh-home-events-lede">{lede}</p>
+        <div className="mh-home-events-grid">
+          {events.map((event) => (
+            <ModernistUpcomingEventCard
+              key={event.id}
+              event={event}
+              isUpcomingEvents={isUpcomingEvents}
+              formatDate={formatDate}
+              formatTime={formatTime}
+            />
+          ))}
+        </div>
+        {hasMoreEvents && (
+          <div className="mh-home-events-more">
+            <Link
+              href="/events"
+              className="mh-btn mh-btn-readmore"
+              title="See more events"
+              aria-label="See more events"
+            >
+              See more events
+            </Link>
+          </div>
+        )}
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-green-50">
       <HomeSectionRail eyebrow="Events" containerClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -879,5 +1148,4 @@ const UpcomingEventsSection: React.FC = () => {
     </section>
   );
 };
-
 export default UpcomingEventsSection;

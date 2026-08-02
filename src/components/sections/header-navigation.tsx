@@ -216,7 +216,8 @@ export default function HeaderNavigation() {
             <button className="w-full text-center py-3 px-4 bg-primary text-white rounded-md font-medium hover:bg-primary/90 transition-colors">
               Donate
             </button>
-            <button className="w-full text-center py-3 px-4 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors">
+            <button className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors" aria-label="Search">
+              <Search size={16} aria-hidden="true" />
               Search
             </button>
           </div>

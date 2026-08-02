@@ -112,6 +112,87 @@ body.modernist-home .mh-btn-on-dark:hover {
   background: color-mix(in srgb, var(--mh-bg) 12%, transparent);
 }
 
+/* Event-card action buttons — solid bright fills (same weight as mh-btn-primary) */
+body.modernist-home .mh-btn-details {
+  background: #15803d;
+  border-color: #15803d;
+  color: #fff;
+}
+
+body.modernist-home .mh-btn-details:hover {
+  background: #166534;
+  border-color: #166534;
+}
+
+body.modernist-home .mh-btn-calendar {
+  background: #ea580c;
+  border-color: #ea580c;
+  color: #fff;
+}
+
+body.modernist-home .mh-btn-calendar:hover {
+  background: #c2410c;
+  border-color: #c2410c;
+}
+
+body.modernist-home .mh-btn-readmore {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff;
+}
+
+body.modernist-home .mh-btn-readmore:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+body.modernist-home .mh-btn-register {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+body.modernist-home .mh-btn-register:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+body.modernist-home .mh-btn-tickets {
+  background: #db2777;
+  border-color: #db2777;
+  color: #fff;
+}
+
+body.modernist-home .mh-btn-tickets:hover {
+  background: #be185d;
+  border-color: #be185d;
+}
+
+body.modernist-home .mh-btn-donate {
+  background: #0d9488;
+  border-color: #0d9488;
+  color: #fff;
+}
+
+body.modernist-home .mh-btn-donate:hover {
+  background: #0f766e;
+  border-color: #0f766e;
+}
+
+body.modernist-home .mh-btn svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Events card action icons — larger + inherit solid button color */
+body.modernist-home .mh-events-page .mh-event-card-actions .mh-btn svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  color: #fff;
+  stroke: currentColor;
+}
+
 body.modernist-home .mh-tag {
   display: inline-flex;
   align-items: center;
@@ -180,16 +261,24 @@ body.modernist-home .mh-poster-hero-media {
   margin: 0;
 }
 
-body.modernist-home .mh-poster-hero-media img {
+body.modernist-home .mh-poster-hero-media img,
+body.modernist-home .mh-poster-hero-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+body.modernist-home .mh-poster-hero-img.is-visible {
+  opacity: 1;
 }
 
 body.modernist-home .mh-poster-hero-scrim {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background: linear-gradient(
     90deg,
     rgba(32, 30, 29, 0.86) 0%,
@@ -198,18 +287,169 @@ body.modernist-home .mh-poster-hero-scrim {
   );
 }
 
+/*
+ * Transparent logo — flush left (clear of centered nav), shorter height,
+ * extra bottom reserve so it stops above overlay title/CTA.
+ */
+body.modernist-home .mh-poster-hero-logo {
+  position: absolute;
+  left: 0.35rem;
+  top: 0.35rem;
+  /* Larger bottom reserve — keep clear of overlay text */
+  bottom: clamp(17rem, 46vh, 28rem);
+  z-index: 60;
+  height: auto;
+  max-height: 42%;
+  width: auto;
+  /* Narrower so it stays left of desktop menu items */
+  max-width: min(28vw, 300px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  body.modernist-home .mh-poster-hero-logo {
+    left: 0.5rem;
+    max-width: min(26vw, 320px);
+    max-height: 40%;
+  }
+}
+
+@media (min-width: 1024px) {
+  body.modernist-home .mh-poster-hero-logo {
+    left: 0.4rem;
+    bottom: clamp(18rem, 44vh, 26rem);
+    max-width: min(22vw, 340px);
+    max-height: 38%;
+  }
+}
+
+@media (min-width: 1280px) {
+  body.modernist-home .mh-poster-hero-logo {
+    left: 0.5rem;
+    max-width: min(20vw, 360px);
+    max-height: 36%;
+  }
+}
+
+body.modernist-home .mh-poster-hero-logo-link {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+body.modernist-home .mh-poster-hero-logo-img {
+  width: auto !important;
+  height: 100% !important;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left top;
+  display: block;
+  background: transparent !important;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
+}
+
+/* Legacy plate class — keep transparent if referenced elsewhere */
+body.modernist-home .mh-poster-hero-logo-plate {
+  display: contents;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+}
+
 body.modernist-home .mh-poster-hero-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   height: 100%;
   min-height: inherit;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  /* Top padding clears fixed header logo so kicker never sits under it */
-  padding: var(--mh-header-clearance) 72px 72px;
-  max-width: 920px;
+  /* Bottom stack only — leaves upper-left for large transparent logo */
+  padding: calc(var(--mh-header-clearance) + 1rem) 72px 72px;
+  max-width: min(920px, 58%);
   box-sizing: border-box;
+}
+
+/* Buy Tickets / fundraiser CTA — bottom-right (hero_section_image_rotation.mdc) */
+body.modernist-home .mh-poster-hero-ticket-overlay {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 5;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+body.modernist-home .mh-poster-hero-ticket-overlay img {
+  transition: transform 0.3s ease;
+}
+
+body.modernist-home .mh-poster-hero-ticket-overlay a:hover img {
+  transform: scale(1.06);
+}
+
+@media (min-width: 768px) {
+  body.modernist-home .mh-poster-hero-ticket-overlay {
+    bottom: 2rem;
+    right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  body.modernist-home .mh-poster-hero-ticket-overlay {
+    bottom: 2.5rem;
+    right: 2.5rem;
+  }
+}
+
+/* Prev / play-pause / next — hover/touch (hero_section_image_rotation.mdc) */
+body.modernist-home .mh-poster-hero-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  pointer-events: none;
+}
+
+body.modernist-home .mh-poster-hero-control {
+  pointer-events: auto;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #201e1d;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+body.modernist-home .mh-poster-hero-control:hover {
+  transform: scale(1.08);
+  background: #fff;
+}
+
+body.modernist-home .mh-poster-hero-controls .mh-poster-hero-control:nth-child(2) {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+body.modernist-home .mh-poster-hero-controls .mh-poster-hero-control:nth-child(2):hover {
+  transform: translateX(-50%) scale(1.08);
 }
 
 body.modernist-home .mh-poster-hero-kicker {
@@ -359,6 +599,45 @@ body.modernist-home .mh-h2 {
   font-size: clamp(28px, 3.2vw, 40px);
   line-height: 1.1;
   letter-spacing: -0.015em;
+}
+
+/* —— Homepage upcoming events (reuses mh-event-card from events page) —— */
+body.modernist-home .mh-home-events-heading {
+  margin-bottom: 12px;
+}
+
+body.modernist-home .mh-home-events-lede {
+  margin: 0 0 40px;
+  max-width: 48ch;
+  font-size: 15.5px;
+  line-height: 28px;
+  color: var(--mh-neutral-800);
+}
+
+/* One event per row: full-width flyer on top, details below */
+body.modernist-home .mh-home-events-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+body.modernist-home .mh-home-events-grid > .mh-event-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.modernist-home .mh-home-events .mh-event-card-desc--clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+body.modernist-home .mh-home-events-more {
+  margin-top: 36px;
+  display: flex;
+  justify-content: center;
 }
 
 /* —— 1a Timetable —— */
@@ -781,12 +1060,12 @@ body.modernist-home #team-section > p {
 }
 
 body.modernist-home .mh-team-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 40px;
-  max-width: 920px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 48px 40px;
+  max-width: 1280px;
   margin: 0 auto;
-  justify-items: center;
 }
 
 body.modernist-home .mh-team-card {
@@ -794,17 +1073,19 @@ body.modernist-home .mh-team-card {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  flex: 0 1 calc((100% - 80px) / 3);
   width: 100%;
-  max-width: 280px;
+  max-width: 340px;
   border-top: 2px solid var(--mh-divider);
   padding-top: 24px;
 }
 
+/* Profile portraits: clearly visible headshots, still smaller than event/featured media */
 body.modernist-home .mh-team-photo {
-  margin: 0 auto 20px;
+  margin: 0 auto 18px;
   width: 100%;
-  max-width: 180px;
-  aspect-ratio: 4 / 5;
+  max-width: 295px;
+  aspect-ratio: 3 / 4;
   background: var(--mh-surface);
   overflow: hidden;
 }
@@ -813,6 +1094,7 @@ body.modernist-home .mh-team-photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center top;
   display: block;
 }
 
@@ -964,9 +1246,17 @@ body.modernist-home .mh-close .mh-btn {
   }
 
   body.modernist-home .mh-team-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 32px;
-    max-width: 560px;
+    gap: 40px 32px;
+    max-width: 760px;
+  }
+
+  body.modernist-home .mh-team-photo {
+    max-width: 260px;
+  }
+
+  body.modernist-home .mh-team-card {
+    flex: 0 1 calc((100% - 32px) / 2);
+    max-width: 300px;
   }
 
   body.modernist-home .mh-sponsor-row {
@@ -988,9 +1278,23 @@ body.modernist-home .mh-close .mh-btn {
     padding-right: 24px;
   }
 
+  body.modernist-home .mh-poster-hero-logo {
+    left: 0.35rem;
+    top: 0.3rem;
+    bottom: clamp(15rem, 48vh, 22rem);
+    max-width: min(36vw, 220px);
+    max-height: 34%;
+  }
+
   body.modernist-home .mh-poster-hero-content {
-    padding-top: var(--mh-header-clearance);
+    padding-top: calc(var(--mh-header-clearance) + 1rem);
     padding-bottom: 48px;
+    max-width: 100%;
+  }
+
+  body.modernist-home .mh-poster-hero-ticket-overlay {
+    bottom: 0.75rem;
+    right: 0.75rem;
   }
 
   body.modernist-home .mh-poster-hero-title {
@@ -1032,8 +1336,16 @@ body.modernist-home .mh-close .mh-btn {
   }
 
   body.modernist-home .mh-team-grid {
-    grid-template-columns: 1fr;
-    max-width: 240px;
+    max-width: 300px;
+  }
+
+  body.modernist-home .mh-team-photo {
+    max-width: 250px;
+  }
+
+  body.modernist-home .mh-team-card {
+    flex: 0 1 100%;
+    max-width: 300px;
   }
 
   body.modernist-home .mh-sponsor-row {
@@ -1047,8 +1359,38 @@ body.modernist-home .mh-close .mh-btn {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Header — sticky frosted glass; readable nav; no border / no black Admin strip */
+/* Header — homepage: transparent over hero; other pages: solid opaque bar     */
 /* -------------------------------------------------------------------------- */
+
+/* Non-home public pages: solid header so banner/ribbon never shows through */
+body.modernist-home .header-glass:not(.header-glass--home) {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--mh-bg, #f3f2f2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  border-bottom: 1px solid var(--mh-neutral-300, #d7d3d3) !important;
+  box-shadow: 0 1px 0 rgba(32, 30, 29, 0.06) !important;
+}
+
+body.modernist-home .header-glass:not(.header-glass--home).header-glass--scrolled {
+  background: var(--mh-bg, #f3f2f2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid var(--mh-neutral-300, #d7d3d3) !important;
+  box-shadow: 0 2px 12px rgba(32, 30, 29, 0.08) !important;
+}
+
+body.modernist-home .header-glass:not(.header-glass--home) .header-nav-link,
+body.modernist-home .header-glass:not(.header-glass--home) .header-search-btn,
+body.modernist-home .header-glass:not(.header-glass--home) .header-chevron,
+body.modernist-home .header-glass:not(.header-glass--home) .header-cta {
+  text-shadow: none !important;
+}
 
 body.modernist-home .header-glass.header-glass--home {
   position: fixed !important;
@@ -1056,7 +1398,7 @@ body.modernist-home .header-glass.header-glass--home {
   left: 0;
   right: 0;
   z-index: 50;
-  /* Clear over dark hero at top */
+  /* Clear over dark hero at top — homepage only */
   background: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -1239,9 +1581,11 @@ body.modernist-home .mh-events-page {
 }
 
 body.modernist-home .mh-events-hero {
-  --mh-header-clearance: calc(8rem + 1.5rem);
+  /* Sit fully below the fixed solid header (not under / behind it) */
+  --mh-header-clearance: 1.25rem;
   position: relative;
-  min-height: 280px;
+  margin-top: var(--header-bar-height, 8rem);
+  min-height: 160px;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
@@ -1279,7 +1623,7 @@ body.modernist-home .mh-events-hero-content {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: var(--mh-header-clearance) 72px 48px;
+  padding: var(--mh-header-clearance) 72px 1.5rem;
 }
 
 body.modernist-home .mh-events-hero-kicker {
@@ -1297,17 +1641,17 @@ body.modernist-home .mh-events-hero h1 {
   margin: 0;
   font-family: var(--mh-font);
   font-weight: 800;
-  font-size: clamp(36px, 5vw, 56px);
+  font-size: clamp(28px, 4vw, 42px);
   line-height: 1.05;
   letter-spacing: -0.015em;
   color: var(--mh-bg);
 }
 
 body.modernist-home .mh-events-hero-lede {
-  margin: 16px 0 0;
+  margin: 10px 0 0;
   max-width: 48ch;
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.5;
   color: rgba(243, 242, 242, 0.88);
 }
 
@@ -1328,7 +1672,7 @@ body.modernist-home .mh-events-toolbar {
 
 body.modernist-home .mh-events-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 24px;
   flex-wrap: wrap;
 }
@@ -1343,62 +1687,110 @@ body.modernist-home .mh-events-head h2 {
   color: var(--mh-text);
 }
 
+/* Events toggle — gallery-style green (Future) / blue (Past) */
 body.modernist-home .mh-events-toggle {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
+  padding: 12px 16px;
+  border-radius: 0;
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid #15803d;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 8px 20px rgba(21, 128, 61, 0.16);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+body.modernist-home .mh-events-toggle--past {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #2563eb;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 8px 20px rgba(37, 99, 235, 0.18);
 }
 
 body.modernist-home .mh-events-toggle-label {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--mh-neutral-500);
   transition: color 0.2s ease;
 }
 
-body.modernist-home .mh-events-toggle-label.is-active {
-  color: var(--mh-text);
+body.modernist-home .mh-events-toggle-label--future.is-active {
+  color: #15803d;
+}
+
+body.modernist-home .mh-events-toggle-label--past.is-active {
+  color: #2563eb;
 }
 
 body.modernist-home .mh-events-toggle-btn {
   position: relative;
   display: inline-flex;
-  height: 36px;
-  width: 64px;
+  height: 56px;
+  width: 104px;
   align-items: center;
   border-radius: 0;
-  border: 1px solid var(--mh-divider);
-  background: var(--mh-surface);
+  border: 2px solid #166534;
+  background: linear-gradient(180deg, #22c55e 0%, #15803d 55%, #14532d 100%);
   cursor: pointer;
   padding: 0;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2),
+    0 6px 14px rgba(21, 128, 61, 0.4);
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease, border-color 0.25s ease;
+}
+
+body.modernist-home .mh-events-toggle-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.22),
+    0 8px 18px rgba(21, 128, 61, 0.48);
 }
 
 body.modernist-home .mh-events-toggle-btn.is-past {
-  background: var(--mh-accent);
-  border-color: var(--mh-accent);
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 55%, #1d4ed8 100%);
+  border-color: #1e3a8a;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.22),
+    0 6px 14px rgba(37, 99, 235, 0.45);
 }
 
 body.modernist-home .mh-events-toggle-thumb {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  width: 28px;
-  transform: translateX(4px);
-  background: var(--mh-bg);
-  border: 1px solid var(--mh-divider);
-  transition: transform 0.25s ease;
-  color: var(--mh-text);
+  height: 44px;
+  width: 44px;
+  border-radius: 0;
+  transform: translateX(5px);
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+  border: 2px solid #15803d;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition: transform 0.25s ease, color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  color: #15803d;
+}
+
+body.modernist-home .mh-events-toggle-thumb svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke: currentColor;
 }
 
 body.modernist-home .mh-events-toggle-btn.is-past .mh-events-toggle-thumb {
-  transform: translateX(32px);
-  color: var(--mh-accent);
-  border-color: transparent;
+  transform: translateX(51px);
+  background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+  color: #2563eb;
+  border-color: #2563eb;
 }
 
 body.modernist-home .mh-events-hint {
@@ -1489,10 +1881,11 @@ body.modernist-home .mh-events-banner p {
   color: var(--mh-neutral-800);
 }
 
+/* One event per row: flyer image full-width on top, details below */
 body.modernist-home .mh-events-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
 }
 
 body.modernist-home .mh-event-card {
@@ -1501,27 +1894,43 @@ body.modernist-home .mh-event-card {
   border-top: 2px solid var(--mh-text);
   background: transparent;
   min-width: 0;
+  gap: 0;
+  padding-top: 28px;
+  width: 100%;
 }
 
+/* Full-width flyer — h-auto + object-contain (image_containment_prevention_hero_images_cards) */
 body.modernist-home .mh-event-card-media {
   position: relative;
   margin: 0;
-  aspect-ratio: 3 / 2;
+  width: 100%;
+  height: auto;
   overflow: hidden;
   background: var(--mh-neutral-200);
+  line-height: 0;
 }
 
-body.modernist-home .mh-event-card-media img {
+body.modernist-home .mh-event-card-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+body.modernist-home .mh-event-card-media img,
+body.modernist-home .mh-event-card-media .mh-event-card-media-img {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover !important;
-  filter: grayscale(1) contrast(1.08);
-  transition: transform 0.35s ease, filter 0.35s ease;
+  height: auto;
+  object-fit: contain !important;
+  object-position: center center;
+  transition: transform 0.35s ease;
+  background: transparent;
 }
 
-body.modernist-home .mh-event-card:hover .mh-event-card-media img {
-  transform: scale(1.03);
-  filter: grayscale(0.35) contrast(1.05);
+body.modernist-home .mh-event-card:hover .mh-event-card-media img,
+body.modernist-home .mh-event-card:hover .mh-event-card-media .mh-event-card-media-img {
+  transform: scale(1.01);
 }
 
 body.modernist-home .mh-event-card-badge {
@@ -1529,12 +1938,14 @@ body.modernist-home .mh-event-card-badge {
   top: 12px;
   left: 12px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 6px 10px;
-  background: var(--mh-text);
-  color: var(--mh-bg);
+  padding: 7px 12px;
+  background: #2563eb;
+  border: 2px solid #1e3a8a;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
 body.modernist-home .mh-event-card-meta {
@@ -1556,10 +1967,43 @@ body.modernist-home .mh-event-card-date {
 
 body.modernist-home .mh-event-card-admission {
   margin-left: auto;
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  padding: 6px 10px;
+  border: 2px solid transparent;
+  border-radius: 0;
   color: var(--mh-neutral-700);
+  background: var(--mh-neutral-200);
+}
+
+body.modernist-home .mh-event-card-admission svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-event-card-admission--ticketed {
+  color: #fff;
+  background: #db2777;
+  border-color: #be185d;
+}
+
+body.modernist-home .mh-event-card-admission--free {
+  color: #fff;
+  background: #15803d;
+  border-color: #166534;
+}
+
+body.modernist-home .mh-event-card-admission--default {
+  color: #fff;
+  background: #2563eb;
+  border-color: #1d4ed8;
 }
 
 body.modernist-home .mh-event-card h3 {
@@ -1603,6 +2047,9 @@ body.modernist-home .mh-event-card-actions {
 
 body.modernist-home .mh-event-card-actions .mh-btn {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 body.modernist-home .mh-event-card-loc-tools {
@@ -1612,21 +2059,49 @@ body.modernist-home .mh-event-card-loc-tools {
   vertical-align: middle;
 }
 
+/* Match mh-event-detail-meta-icon: 48×48 solid square, white glyph */
 body.modernist-home .mh-event-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--mh-divider);
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border: 2px solid transparent;
+  border-radius: 0;
   background: transparent;
-  color: var(--mh-text);
+  color: #fff;
   cursor: pointer;
   text-decoration: none;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-body.modernist-home .mh-event-icon-btn:hover {
-  background: color-mix(in srgb, var(--mh-text) 7%, transparent);
+body.modernist-home .mh-event-icon-btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-event-icon-btn--copy {
+  color: #fff;
+  background: #2563eb;
+  border-color: #1d4ed8;
+}
+
+body.modernist-home .mh-event-icon-btn--copy:hover {
+  filter: brightness(1.08);
+  transform: scale(1.05);
+}
+
+body.modernist-home .mh-event-icon-btn--maps {
+  color: #fff;
+  background: #15803d;
+  border-color: #166534;
+}
+
+body.modernist-home .mh-event-icon-btn--maps:hover {
+  filter: brightness(1.08);
+  transform: scale(1.05);
 }
 
 body.modernist-home .mh-events-pagination {
@@ -1642,16 +2117,42 @@ body.modernist-home .mh-events-pagination-row {
   gap: 16px;
 }
 
+body.modernist-home .mh-events-page-btn {
+  min-height: 48px;
+  min-width: 7.5rem;
+  padding: 14px 22px;
+  font-size: 15px;
+  border-radius: 0;
+  border-width: 2px;
+  box-shadow: 0 4px 12px rgba(32, 30, 29, 0.12);
+}
+
+body.modernist-home .mh-events-page-btn svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  color: #fff;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-events-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 body.modernist-home .mh-events-page-info {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--mh-neutral-700);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  padding: 10px 16px;
+  background: #eef2ff;
+  border: 2px solid #4f46e5;
+  color: #4338ca;
 }
 
 body.modernist-home .mh-events-page-info strong {
-  color: var(--mh-text);
+  color: #3730a3;
   font-weight: 800;
 }
 
@@ -1683,8 +2184,7 @@ body.modernist-home .mh-events-error {
 
 @media (max-width: 1024px) {
   body.modernist-home .mh-events-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 40px 28px;
+    gap: 36px;
   }
 
   body.modernist-home .mh-events-search {
@@ -1713,8 +2213,8 @@ body.modernist-home .mh-events-error {
   }
 
   body.modernist-home .mh-events-hero {
-    --mh-header-clearance: calc(8rem + 0.75rem);
-    min-height: 220px;
+    --mh-header-clearance: 1rem;
+    min-height: 140px;
   }
 
   body.modernist-home .mh-events-hero-content,
@@ -1729,8 +2229,7 @@ body.modernist-home .mh-events-error {
   }
 
   body.modernist-home .mh-events-grid {
-    grid-template-columns: 1fr;
-    gap: 36px;
+    gap: 32px;
   }
 
   body.modernist-home .mh-events-search {
@@ -1740,4 +2239,1173 @@ body.modernist-home .mh-events-error {
   body.modernist-home .mh-events-pagination-row {
     flex-direction: column;
   }
+
+  body.modernist-home .mh-events-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  body.modernist-home .mh-events-toggle-label {
+    font-size: 13px;
+    max-width: 36%;
+    line-height: 1.25;
+  }
+
+  body.modernist-home .mh-events-toggle-btn {
+    height: 52px;
+    width: 92px;
+  }
+
+  body.modernist-home .mh-events-toggle-thumb {
+    height: 40px;
+    width: 40px;
+  }
+
+  body.modernist-home .mh-events-toggle-btn.is-past .mh-events-toggle-thumb {
+    transform: translateX(43px);
+  }
+
+  body.modernist-home .mh-events-page-btn {
+    min-width: 100%;
+  }
+}
+
+/* —— Event detail page (modernist) —— */
+body.modernist-home .mh-event-detail {
+  background: var(--mh-bg);
+  color: var(--mh-text);
+  min-height: 60vh;
+}
+
+body.modernist-home .mh-event-detail-status {
+  padding: 6rem 1.5rem;
+  text-align: center;
+  font-size: 1.05rem;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-event-detail-status--error {
+  color: var(--mh-accent-700);
+  font-weight: 600;
+}
+
+body.modernist-home .mh-event-detail-hero {
+  position: relative;
+  /* Fully below fixed header — banner no longer sits under the nav */
+  margin-top: var(--header-bar-height, 8rem);
+  min-height: min(280px, 38vh);
+  overflow: hidden;
+  background: var(--mh-text);
+}
+
+body.modernist-home .mh-event-detail-hero-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+}
+
+body.modernist-home .mh-event-detail-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(32, 30, 29, 0.35) 0%,
+    rgba(32, 30, 29, 0.15) 45%,
+    rgba(32, 30, 29, 0.55) 100%
+  );
+}
+
+body.modernist-home .mh-event-detail-hero-figure {
+  position: relative;
+  z-index: 2;
+  margin: 0 auto;
+  max-width: 1100px;
+  padding: 1.25rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.modernist-home .mh-event-detail-hero-img {
+  width: 100%;
+  height: auto;
+  max-height: min(360px, 42vh);
+  object-fit: contain;
+  display: block;
+}
+
+body.modernist-home .mh-event-detail-body {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4.5rem;
+}
+
+body.modernist-home .mh-event-detail-panel {
+  border-top: 2px solid var(--mh-text);
+  background: transparent;
+}
+
+body.modernist-home .mh-event-detail-panel-inner {
+  padding: 1.75rem 0 0;
+}
+
+body.modernist-home .mh-event-detail-title {
+  margin: 0 0 0.65rem;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-event-detail-caption {
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-event-detail-back {
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+/* Event detail CTAs — same solid weight as gallery / events list */
+body.modernist-home .mh-event-detail-cta {
+  min-height: 48px;
+  min-width: 8rem;
+  padding: 14px 20px;
+  font-size: 15px;
+  border-radius: 0;
+  border-width: 2px;
+  box-shadow: 0 4px 12px rgba(32, 30, 29, 0.12);
+}
+
+body.modernist-home .mh-event-detail-cta svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #fff;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+body.modernist-home .mh-event-detail-cta-stack .mh-event-detail-cta {
+  width: 100%;
+  justify-content: center;
+}
+
+body.modernist-home .mh-event-detail-actions {
+  align-items: center;
+}
+
+body.modernist-home .mh-event-detail-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  color: var(--mh-text);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  body.modernist-home .mh-event-detail-meta-item {
+    width: auto;
+    min-width: 280px;
+  }
+}
+
+body.modernist-home .mh-event-detail-meta-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  border: 2px solid transparent;
+}
+
+body.modernist-home .mh-event-detail-meta-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-event-detail-meta-icon--date {
+  color: #fff;
+  background: #2563eb;
+  border-color: #1d4ed8;
+}
+
+body.modernist-home .mh-event-detail-meta-icon--time {
+  color: #fff;
+  background: #15803d;
+  border-color: #166534;
+}
+
+body.modernist-home .mh-event-detail-meta-icon--location {
+  color: #fff;
+  background: #7c3aed;
+  border-color: #6d28d9;
+}
+
+@media (max-width: 767px) {
+  body.modernist-home .mh-event-detail-hero {
+    margin-top: var(--header-bar-height, 8rem);
+    min-height: 200px;
+  }
+
+  body.modernist-home .mh-event-detail-hero-figure {
+    padding: 0.75rem 0.75rem;
+  }
+
+  body.modernist-home .mh-event-detail-hero-img {
+    max-height: min(260px, 36vh);
+  }
+
+  body.modernist-home .mh-event-detail-body {
+    padding: 1.75rem 1.25rem 3.5rem;
+  }
+
+  body.modernist-home .mh-event-detail-cta-stack {
+    position: static;
+    margin: 0 0 1rem;
+    width: 100%;
+  }
+
+  body.modernist-home .mh-event-detail-title,
+  body.modernist-home .mh-event-detail-caption {
+    padding-right: 0 !important;
+  }
+
+  body.modernist-home .mh-event-detail-actions .mh-event-detail-cta {
+    width: 100%;
+  }
+}
+
+/* —— Gallery page (shares mh-events-* shell) —— */
+body.modernist-home .mh-gallery-page a.mh-event-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+body.modernist-home .mh-gallery-card-media--clickable {
+  cursor: pointer;
+}
+
+/* Soft warm panel behind transparent album covers (not plain gray) */
+body.modernist-home .mh-gallery-page .mh-event-card-media {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.85) 0%, transparent 55%),
+    linear-gradient(155deg, #fff1e8 0%, #ffe4d6 42%, #f5d0c0 100%);
+  min-height: 200px;
+}
+
+body.modernist-home .mh-gallery-page .mh-event-card-media img,
+body.modernist-home .mh-gallery-page .mh-event-card-media .mh-event-card-media-img {
+  background: transparent !important;
+}
+
+body.modernist-home .mh-gallery-card-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 220px;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.85) 0%, transparent 55%),
+    linear-gradient(155deg, #fff1e8 0%, #ffe4d6 42%, #f5d0c0 100%);
+  color: #c2410c;
+}
+
+body.modernist-home .mh-gallery-card-placeholder svg {
+  width: 3.5rem;
+  height: 3.5rem;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-events-empty h3 {
+  margin: 0 0 8px;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-events-empty p {
+  margin: 0 0 16px;
+}
+
+body.modernist-home .mh-events-empty .mh-btn {
+  margin-top: 8px;
+}
+
+body.modernist-home .mh-events-search-actions .mh-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Gallery toggle — events-page palette: green (Albums) / blue (Event based) */
+body.modernist-home .mh-gallery-toggle {
+  gap: 18px;
+  padding: 12px 16px;
+  border-radius: 0;
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid #15803d;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 8px 20px rgba(21, 128, 61, 0.16);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+body.modernist-home .mh-gallery-toggle--events {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #2563eb;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 8px 20px rgba(37, 99, 235, 0.18);
+}
+
+body.modernist-home .mh-gallery-toggle-label {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--mh-neutral-500);
+  transition: color 0.2s ease;
+}
+
+body.modernist-home .mh-gallery-toggle-label--albums.is-active {
+  color: #15803d;
+}
+
+body.modernist-home .mh-gallery-toggle-label--events.is-active {
+  color: #2563eb;
+}
+
+body.modernist-home .mh-gallery-toggle-btn {
+  height: 56px;
+  width: 104px;
+  border-radius: 0;
+  border: 2px solid #166534;
+  background: linear-gradient(180deg, #22c55e 0%, #15803d 55%, #14532d 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2),
+    0 6px 14px rgba(21, 128, 61, 0.4);
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease, border-color 0.25s ease;
+}
+
+body.modernist-home .mh-gallery-toggle-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.22),
+    0 8px 18px rgba(21, 128, 61, 0.48);
+}
+
+body.modernist-home .mh-gallery-toggle-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 4px 10px rgba(0, 0, 0, 0.28),
+    0 2px 4px rgba(21, 128, 61, 0.28);
+}
+
+body.modernist-home .mh-gallery-toggle-btn.is-past {
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 55%, #1d4ed8 100%);
+  border-color: #1e3a8a;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.22),
+    0 6px 14px rgba(37, 99, 235, 0.45);
+}
+
+body.modernist-home .mh-gallery-toggle-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+body.modernist-home .mh-gallery-toggle-thumb {
+  height: 44px;
+  width: 44px;
+  border-radius: 0;
+  transform: translateX(5px);
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+  border: 2px solid #15803d;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  color: #15803d;
+}
+
+body.modernist-home .mh-gallery-toggle-thumb svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-gallery-toggle-btn.is-past .mh-gallery-toggle-thumb {
+  transform: translateX(51px);
+  background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Gallery action buttons — events page solid palette, larger */
+body.modernist-home .mh-gallery-action-btn {
+  min-height: 48px;
+  min-width: 7.5rem;
+  padding: 14px 22px;
+  font-size: 15px;
+  border-radius: 0;
+  border-width: 2px;
+  box-shadow: 0 4px 12px rgba(32, 30, 29, 0.12);
+}
+
+body.modernist-home .mh-gallery-action-btn svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: currentColor;
+  color: inherit;
+}
+
+body.modernist-home .mh-gallery-search-actions {
+  gap: 12px;
+}
+
+body.modernist-home .mh-gallery-pagination .mh-gallery-action-btn:disabled,
+body.modernist-home .mh-gallery-search-actions .mh-gallery-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+body.modernist-home .mh-gallery-page-info {
+  font-size: 15px;
+  padding: 10px 16px;
+  background: #eef2ff;
+  border: 2px solid #4f46e5;
+  color: #4338ca;
+  font-weight: 700;
+}
+
+/* Album / event card CTA icons inherit button white */
+body.modernist-home .mh-gallery-page .mh-event-card-actions .mh-btn svg {
+  color: #fff;
+  stroke: currentColor;
+}
+
+/* Gallery: tinted search panel (events green/blue) */
+body.modernist-home .mh-gallery-search-panel {
+  margin-top: 8px;
+  padding: 18px 20px 20px;
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(236, 253, 245, 0.95) 0%, rgba(239, 246, 255, 0.95) 100%);
+  border: 1px solid color-mix(in srgb, #15803d 28%, #93c5fd 40%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 10px 28px rgba(32, 30, 29, 0.06);
+}
+
+body.modernist-home .mh-gallery-search-panel-label {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #15803d;
+}
+
+body.modernist-home .mh-gallery-search-panel .mh-events-search {
+  background: rgba(255, 255, 255, 0.72);
+  border-top: 2px solid color-mix(in srgb, #15803d 45%, #2563eb);
+  border-radius: 0 0 12px 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+body.modernist-home .mh-gallery-search-panel .mh-events-search input {
+  background: #fff;
+  border-color: color-mix(in srgb, #2563eb 30%, var(--mh-neutral-300));
+}
+
+@media (max-width: 767px) {
+  body.modernist-home .mh-gallery-toggle {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: 0;
+  }
+
+  body.modernist-home .mh-gallery-toggle-label {
+    font-size: 13px;
+    max-width: 36%;
+    line-height: 1.25;
+  }
+
+  body.modernist-home .mh-gallery-toggle-btn {
+    height: 52px;
+    width: 92px;
+  }
+
+  body.modernist-home .mh-gallery-toggle-thumb {
+    height: 40px;
+    width: 40px;
+  }
+
+  body.modernist-home .mh-gallery-toggle-btn.is-past .mh-gallery-toggle-thumb {
+    transform: translateX(43px);
+  }
+
+  body.modernist-home .mh-gallery-action-btn {
+    min-width: 100%;
+  }
+}
+
+/* —— Polls page (shares mh-events-* shell) —— */
+body.modernist-home .mh-polls-page .mh-poll-card-media {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.85) 0%, transparent 55%),
+    linear-gradient(155deg, #eef2ff 0%, #e0e7ff 42%, #c7d2fe 100%);
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+body.modernist-home .mh-poll-card-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 180px;
+  color: #4338ca;
+}
+
+body.modernist-home .mh-poll-card-placeholder svg {
+  width: 3.25rem;
+  height: 3.25rem;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-poll-card--inactive {
+  opacity: 0.78;
+}
+
+body.modernist-home .mh-poll-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 2px solid;
+  background: #fff;
+}
+
+body.modernist-home .mh-poll-status--active {
+  color: #15803d;
+  border-color: #15803d;
+  background: #ecfdf5;
+}
+
+body.modernist-home .mh-poll-status--upcoming {
+  color: #a16207;
+  border-color: #ca8a04;
+  background: #fefce8;
+}
+
+body.modernist-home .mh-poll-status--ended {
+  color: #b91c1c;
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+body.modernist-home .mh-poll-status--inactive {
+  color: #475569;
+  border-color: #64748b;
+  background: #f8fafc;
+}
+
+body.modernist-home .mh-polls-page .mh-event-card-actions .mh-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+body.modernist-home .mh-polls-page .mh-event-card-actions .mh-btn svg {
+  color: #fff;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-polls-vote-panel {
+  margin-top: 8px;
+  padding: 4px 0 24px;
+}
+
+body.modernist-home .mh-polls-vote-panel .bg-gradient-to-br,
+body.modernist-home .mh-polls-vote-panel .bg-gradient-to-r {
+  background: #fff !important;
+}
+
+body.modernist-home .mh-polls-vote-panel [class*='border-blue'],
+body.modernist-home .mh-polls-vote-panel [class*='border-purple'] {
+  border-color: color-mix(in srgb, var(--mh-text) 14%, transparent) !important;
+}
+
+body.modernist-home .mh-polls-vote-panel [class*='bg-clip-text'] {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  color: var(--mh-text) !important;
+  -webkit-text-fill-color: var(--mh-text) !important;
+}
+
+/* —— Calendar page (shares mh-events-* shell) —— */
+body.modernist-home .mh-calendar-page .mh-events-head {
+  justify-content: space-between;
+  width: 100%;
+}
+
+body.modernist-home .mh-calendar-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+body.modernist-home .mh-calendar-nav .mh-btn svg {
+  color: inherit;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+body.modernist-home .mh-calendar-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+body.modernist-home .mh-calendar-views .mh-btn {
+  opacity: 0.72;
+}
+
+body.modernist-home .mh-calendar-views .mh-btn.is-active {
+  opacity: 1;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+  outline: 2px solid color-mix(in srgb, var(--mh-text) 18%, transparent);
+  outline-offset: 2px;
+}
+
+body.modernist-home .mh-calendar-views .mh-btn svg {
+  color: inherit;
+  stroke: currentColor;
+}
+
+body.modernist-home .mh-calendar-panel {
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--mh-text) 12%, transparent);
+  overflow: hidden;
+}
+
+body.modernist-home .mh-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  background: color-mix(in srgb, var(--mh-text) 12%, transparent);
+}
+
+body.modernist-home .mh-calendar-dow {
+  background: color-mix(in srgb, #4f46e5 10%, #fff);
+  color: #3730a3;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 12px 4px;
+}
+
+body.modernist-home .mh-calendar-cell {
+  min-height: 110px;
+  padding: 8px;
+  background: #fff;
+  transition: background 0.2s ease;
+}
+
+body.modernist-home .mh-calendar-cell--week {
+  min-height: 150px;
+  padding: 10px;
+}
+
+body.modernist-home .mh-calendar-cell.is-empty {
+  background: color-mix(in srgb, var(--mh-text) 4%, #fff);
+}
+
+body.modernist-home .mh-calendar-cell.is-today {
+  background: color-mix(in srgb, #4f46e5 8%, #fff);
+}
+
+body.modernist-home .mh-calendar-cell:hover {
+  background: color-mix(in srgb, var(--mh-accent) 6%, #fff);
+}
+
+body.modernist-home .mh-calendar-daynum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-calendar-daynum.is-today {
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+}
+
+body.modernist-home .mh-calendar-week-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--mh-text);
+  opacity: 0.75;
+}
+
+body.modernist-home .mh-calendar-week-label.is-today {
+  color: #15803d;
+  opacity: 1;
+}
+
+body.modernist-home .mh-calendar-month-label {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--mh-text) 55%, transparent);
+  margin-bottom: 4px;
+}
+
+body.modernist-home .mh-calendar-event {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  padding: 6px 8px;
+  background: color-mix(in srgb, #0d9488 12%, #fff);
+  color: #115e59;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+body.modernist-home .mh-calendar-event:hover {
+  background: color-mix(in srgb, #0d9488 22%, #fff);
+  transform: translateY(-1px);
+}
+
+body.modernist-home .mh-calendar-event svg {
+  color: #0f766e;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+body.modernist-home .mh-calendar-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+body.modernist-home .mh-calendar-more:hover {
+  text-decoration: underline;
+}
+
+body.modernist-home .mh-calendar-day-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+  background: color-mix(in srgb, #4f46e5 10%, #fff);
+  border-bottom: 1px solid color-mix(in srgb, #4f46e5 22%, transparent);
+}
+
+body.modernist-home .mh-calendar-day-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, #4f46e5 16%, #fff);
+  color: #4338ca;
+}
+
+body.modernist-home .mh-calendar-day-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-calendar-day-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--mh-text) 65%, transparent);
+}
+
+body.modernist-home .mh-calendar-day-body {
+  padding: 18px 22px 24px;
+}
+
+body.modernist-home .mh-calendar-day-event {
+  border: 1px solid color-mix(in srgb, var(--mh-text) 12%, transparent);
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.modernist-home .mh-calendar-day-event:hover {
+  border-color: color-mix(in srgb, #4f46e5 35%, transparent);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+body.modernist-home .mh-calendar-day-event-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+body.modernist-home .mh-calendar-day-time {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, #4f46e5 30%, transparent);
+  background: color-mix(in srgb, #4f46e5 10%, #fff);
+  color: #4338ca;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+body.modernist-home .mh-calendar-day-event-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-calendar-day-event-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--mh-text) 65%, transparent);
+}
+
+body.modernist-home .mh-calendar-footer {
+  margin-top: 28px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  body.modernist-home .mh-calendar-nav {
+    width: 100%;
+  }
+
+  body.modernist-home .mh-calendar-nav .mh-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 12px;
+  }
+
+  body.modernist-home .mh-calendar-cell {
+    min-height: 88px;
+    padding: 6px;
+  }
+
+  body.modernist-home .mh-calendar-dow {
+    font-size: 10px;
+    padding: 8px 2px;
+  }
+}
+
+/* —— Team page (/team) — listing shell reuses mh-events-*; cards reuse mh-team-* —— */
+body.modernist-home .mh-team-page .mh-team-photo {
+  position: relative;
+}
+
+body.modernist-home .mh-team-page .mh-team-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--mh-neutral-300);
+}
+
+body.modernist-home .mh-team-page .mh-team-bio {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-align: center;
+  max-width: 100%;
+}
+
+body.modernist-home .mh-team-page .mh-team-readmore {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+body.modernist-home .mh-team-page .mh-team-expertise {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+body.modernist-home .mh-team-page .mh-team-card-contact {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mh-divider);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+body.modernist-home .mh-team-page .mh-team-contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  font-size: 13px;
+  color: var(--mh-neutral-700);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.modernist-home .mh-team-page .mh-team-contact-link:hover {
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-team-page .mh-team-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+body.modernist-home .mh-team-page .mh-team-social-link {
+  color: var(--mh-neutral-700);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+body.modernist-home .mh-team-page .mh-team-social-link:hover {
+  color: var(--mh-text);
+  transform: scale(1.08);
+}
+
+body.modernist-home .mh-team-page .mh-team-modal-photo {
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  background: var(--mh-neutral-300);
+}
+
+body.modernist-home .mh-team-page .mh-team-modal-role {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-team-page .mh-team-modal-designation {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-team-page .mh-team-modal-heading {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-team-page .mh-team-modal-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-team-page .mh-team-modal-contact {
+  padding-top: 16px;
+  border-top: 1px solid var(--mh-divider);
+}
+
+/* —— Sponsors page (shares mh-events-* shell) —— */
+/* Match /events poster media: full-width container, image fills width (no max-height / letterbox) */
+body.modernist-home .mh-sponsors-page .mh-sponsor-card-media {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+  background: var(--mh-neutral-200);
+  line-height: 0;
+}
+
+body.modernist-home .mh-sponsors-page .mh-sponsor-card-media img,
+body.modernist-home .mh-sponsors-page .mh-sponsor-card-media .mh-event-card-media-img {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center;
+  background: transparent !important;
+}
+
+body.modernist-home .mh-sponsors-page .mh-event-card:hover .mh-sponsor-card-media img,
+body.modernist-home .mh-sponsors-page .mh-event-card:hover .mh-sponsor-card-media .mh-event-card-media-img {
+  transform: scale(1.01);
+}
+
+body.modernist-home .mh-sponsors-page .mh-sponsor-card-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--mh-neutral-200);
+}
+
+body.modernist-home .mh-sponsors-page .mh-sponsor-card-tagline {
+  font-style: italic;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-sponsors-page .mh-sponsor-card-contacts {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mh-neutral-300);
+}
+
+body.modernist-home .mh-sponsors-page .mh-sponsor-card-contacts:empty {
+  display: none;
+}
+
+/* —— Sponsor detail page (shares mh-event-detail shell) —— */
+/* Header clearance comes from .mh-events-hero margin-top (same as /events) */
+body.modernist-home .mh-sponsor-detail .mh-event-detail-body {
+  padding-top: 2rem;
+}
+
+/* Spacing only — fill/containment comes from shared .mh-event-card-media (events posters) */
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-banner {
+  margin: 0 0 1.75rem;
+  border-top: 2px solid var(--mh-text);
+}
+
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-banner img,
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-banner .mh-event-card-media-img {
+  max-height: none !important;
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-event-detail-meta-item a {
+  color: var(--mh-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-event-detail-meta-item a:hover {
+  color: var(--mh-accent);
+}
+
+body.modernist-home .mh-sponsor-detail .mh-event-detail-meta-icon--company {
+  color: #fff;
+  background: #2563eb;
+  border-color: #1d4ed8;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-event-detail-meta-icon--email {
+  color: #fff;
+  background: #ea580c;
+  border-color: #c2410c;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-event-detail-meta-icon--phone {
+  color: #fff;
+  background: #7c3aed;
+  border-color: #6d28d9;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-event-detail-meta-icon--website {
+  color: #fff;
+  background: #0f766e;
+  border-color: #115e59;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-tagline {
+  margin: 0 0 1.75rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--mh-neutral-300);
+  border-bottom: 1px solid var(--mh-neutral-300);
+  font-family: var(--mh-font);
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--mh-neutral-800);
+  text-align: center;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-section-title {
+  margin: 0 0 0.85rem;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-prose p {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-prose p:last-child {
+  margin-bottom: 0;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-contacts:empty {
+  display: none;
+}
+
+body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-contacts {
+  padding-top: 0.5rem;
 }

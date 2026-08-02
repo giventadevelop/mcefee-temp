@@ -761,11 +761,11 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     performSignOut();
   }, [pendingSignOut, isLoaded, signOut]);
 
-  /* Transparent → frost header (modernist) on home and events listing */
-  const isHomePage =
-    pathname === '/' ||
-    pathname === '/charity-theme' ||
-    pathname === '/events';
+  /* Transparent frost header only on the true homepage — other public pages use a solid bar */
+  const isHomePage = pathname === '/';
+
+  /** Homepage only: hide header logo — transparent logo is already on the hero overlay */
+  const hideHeaderLogo = pathname === '/';
 
   // Frosted header when content scrolls under the sticky bar (homepage + all pages)
   useEffect(() => {
@@ -1123,22 +1123,26 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
       >
         <div className="w-full max-w-[90rem] mx-auto px-4 sm:px-6 lg:pl-5 lg:pr-8 xl:px-10">
           <div className="header-inner-grid h-[8rem] w-full min-w-0 items-center gap-2 sm:gap-3 lg:gap-3 xl:gap-4">
-            {/* Brand — logo only (wordmark is in the image) */}
-            <div className="header-brand-col flex min-w-0 items-center h-full max-w-[calc(100%-5.75rem)] sm:max-w-[calc(100%-6.25rem)] lg:max-w-none">
-              <Link href="/" className="group flex min-w-0 items-center h-full" aria-label="MCEFEE home">
-                <div className="header-logo-image-wrap flex h-full w-[5.75rem] min-w-[5.75rem] sm:w-[6.75rem] sm:min-w-[6.75rem] lg:w-[6.5rem] lg:min-w-[6.5rem] xl:w-[7.5rem] xl:min-w-[7.5rem] 2xl:w-[9rem] 2xl:min-w-[9rem] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl transition-all duration-300 group-hover:scale-105">
-                  <Image
-                    src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
-                    alt="MCEFEE"
-                    width={168}
-                    height={128}
-                    priority
-                    loading="eager"
-                    className="h-full w-full object-contain object-center"
-                    style={{ width: 'auto', height: '100%' }}
-                  />
-                </div>
-              </Link>
+            {/* Brand — logo only (wordmark is in the image). Hidden on `/` — hero already shows the transparent logo. */}
+            <div
+              className={`header-brand-col flex min-w-0 items-center h-full max-w-[calc(100%-5.75rem)] sm:max-w-[calc(100%-6.25rem)] lg:max-w-none${hideHeaderLogo ? ' header-brand-col--home-hidden' : ''}`}
+            >
+              {!hideHeaderLogo && (
+                <Link href="/" className="group flex min-w-0 items-center h-full" aria-label="MCEFEE home">
+                  <div className="header-logo-image-wrap flex h-full w-[5.75rem] min-w-[5.75rem] sm:w-[6.75rem] sm:min-w-[6.75rem] lg:w-[6.5rem] lg:min-w-[6.5rem] xl:w-[7.5rem] xl:min-w-[7.5rem] 2xl:w-[9rem] 2xl:min-w-[9rem] flex-shrink-0 items-center justify-center overflow-hidden rounded-xl transition-all duration-300 group-hover:scale-105">
+                    <Image
+                      src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
+                      alt="MCEFEE"
+                      width={168}
+                      height={128}
+                      priority
+                      loading="eager"
+                      className="h-full w-full object-contain object-center"
+                      style={{ width: 'auto', height: '100%' }}
+                    />
+                  </div>
+                </Link>
+              )}
             </div>
 
             {/* Main nav (desktop) — middle grid column; scrolls horizontally without overlapping auth */}
@@ -1339,22 +1343,26 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
         <div className="flex h-full min-h-0 w-full max-w-full flex-col overflow-hidden">
           {/* Mobile Menu Header — compact row; close always visible */}
           <div className="flex shrink-0 items-center gap-3 border-b border-[var(--header-border)] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-            <Link
-              href="/"
-              className="group flex min-w-0 flex-1 items-center overflow-hidden"
-              onClick={closeMobileMenu}
-              aria-label="MCEFEE home"
-            >
-              <div className="header-logo-image-wrap flex h-12 w-12 min-w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg sm:h-14 sm:w-14 sm:min-w-14">
-                <Image
-                  src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
-                  alt="MCEFEE"
-                  width={56}
-                  height={56}
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            </Link>
+            {!hideHeaderLogo ? (
+              <Link
+                href="/"
+                className="group flex min-w-0 flex-1 items-center overflow-hidden"
+                onClick={closeMobileMenu}
+                aria-label="MCEFEE home"
+              >
+                <div className="header-logo-image-wrap flex h-12 w-12 min-w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg sm:h-14 sm:w-14 sm:min-w-14">
+                  <Image
+                    src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
+                    alt="MCEFEE"
+                    width={56}
+                    height={56}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              </Link>
+            ) : (
+              <div className="min-w-0 flex-1" aria-hidden="true" />
+            )}
             <button
               onClick={closeMobileMenu}
               className="header-mobile-menu-close flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--header-border)] bg-[var(--header-hover-bg)] text-[var(--header-text-primary)] hover:bg-[var(--header-active-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--header-focus-ring)] transition-all duration-200 touch-manipulation"

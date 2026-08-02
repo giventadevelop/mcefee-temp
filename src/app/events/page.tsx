@@ -389,9 +389,15 @@ export default function EventsPage() {
         <div className="mh-events-toolbar">
           <div className="mh-events-head">
             <h2>{showPastEvents ? 'Past Events' : 'Upcoming Events'}</h2>
-            <div className="mh-events-toggle">
-              <span className={`mh-events-toggle-label ${!showPastEvents ? 'is-active' : ''}`}>
-                Future
+            <div
+              className={`mh-events-toggle ${showPastEvents ? 'mh-events-toggle--past' : 'mh-events-toggle--future'}`}
+              role="group"
+              aria-label="Event time filter"
+            >
+              <span
+                className={`mh-events-toggle-label mh-events-toggle-label--future ${!showPastEvents ? 'is-active' : ''}`}
+              >
+                Future Events
               </span>
               <button
                 type="button"
@@ -402,11 +408,27 @@ export default function EventsPage() {
                 className={`mh-events-toggle-btn ${showPastEvents ? 'is-past' : ''}`}
                 title={showPastEvents ? 'Show Future Events' : 'Show Past Events'}
                 aria-label={showPastEvents ? 'Show Future Events' : 'Show Past Events'}
+                aria-pressed={showPastEvents}
               >
-                <span className="mh-events-toggle-thumb" aria-hidden="true" />
+                <span className="mh-events-toggle-thumb" aria-hidden="true">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d={
+                        showPastEvents
+                          ? 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+                          : 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+                      }
+                    />
+                  </svg>
+                </span>
               </button>
-              <span className={`mh-events-toggle-label ${showPastEvents ? 'is-active' : ''}`}>
-                Past
+              <span
+                className={`mh-events-toggle-label mh-events-toggle-label--past ${showPastEvents ? 'is-active' : ''}`}
+              >
+                Past Events
               </span>
             </div>
           </div>
@@ -460,14 +482,34 @@ export default function EventsPage() {
                 onClick={handleSearch}
                 disabled={loading || isSearching}
                 className="mh-btn mh-btn-primary"
+                title="Search"
+                aria-label="Search"
               >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
                 {loading || isSearching ? 'Searching…' : 'Search'}
               </button>
               <button
                 type="button"
                 onClick={clearSearch}
-                className="mh-btn mh-btn-secondary"
+                className="mh-btn mh-btn-calendar"
+                title="Clear"
+                aria-label="Clear search"
               >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
                 Clear
               </button>
             </div>
@@ -567,18 +609,39 @@ export default function EventsPage() {
                       <Image
                         src={event.thumbnailUrl || "/images/default event image.png"}
                         alt={event.title || "Event image"}
-                        fill
-                        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                        width={1600}
+                        height={900}
+                        sizes="100vw"
+                        className="mh-event-card-media-img"
                       />
                       {showPastEvents && (
                         <span className="mh-event-card-badge">Past Event</span>
                       )}
                     </figure>
 
+                    <div className="mh-event-card-body">
                     <div className="mh-event-card-meta">
                       <span className="mh-event-card-date">{formatDate(event.startDate, event.timezone)}</span>
                       {event.admissionType && (
-                        <span className="mh-event-card-admission">{event.admissionType}</span>
+                        <span
+                          className={`mh-event-card-admission ${
+                            /ticket|paid|paid admission/i.test(event.admissionType)
+                              ? 'mh-event-card-admission--ticketed'
+                              : /free|donation/i.test(event.admissionType)
+                                ? 'mh-event-card-admission--free'
+                                : 'mh-event-card-admission--default'
+                          }`}
+                        >
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                            />
+                          </svg>
+                          {event.admissionType}
+                        </span>
                       )}
                     </div>
 
@@ -601,11 +664,11 @@ export default function EventsPage() {
                                 navigator.clipboard.writeText(event.location || '');
                                 alert('Address copied to clipboard!');
                               }}
-                              className="mh-event-icon-btn"
+                              className="mh-event-icon-btn mh-event-icon-btn--copy"
                               title="Copy Address"
                               aria-label="Copy address to clipboard"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                               </svg>
                             </button>
@@ -613,11 +676,11 @@ export default function EventsPage() {
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || '')}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="mh-event-icon-btn"
+                              className="mh-event-icon-btn mh-event-icon-btn--maps"
                               title="Open in Google Maps"
                               aria-label="Open location in Google Maps"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                               </svg>
                             </a>
@@ -650,10 +713,13 @@ export default function EventsPage() {
                               [event.id!]: !prev[event.id!]
                             }));
                           }}
-                          className="mh-btn mh-btn-secondary"
+                          className="mh-btn mh-btn-readmore"
                           title={expandedDescriptions[event.id!] ? "Show Less" : "Read More"}
                           aria-label={expandedDescriptions[event.id!] ? "Show Less" : "Read More"}
                         >
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                          </svg>
                           {expandedDescriptions[event.id!] ? "Show Less" : "Read More"}
                         </button>
                       )}
@@ -663,30 +729,40 @@ export default function EventsPage() {
                           href={calendarLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mh-btn mh-btn-secondary"
+                          className="mh-btn mh-btn-calendar"
                           title="Add to Calendar"
                           aria-label="Add to Calendar"
                         >
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
                           Add to Calendar
                         </a>
                       )}
 
                       <Link
                         href={`/events/${event.id}`}
-                        className="mh-btn mh-btn-secondary"
+                        className="mh-btn mh-btn-details"
                         title="See Event Details"
                         aria-label="See Event Details"
                       >
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                         See Event Details
                       </Link>
 
                       {showRegisterButton && (
                         <Link
                           href={`/events/${event.id}/register`}
-                          className="mh-btn mh-btn-primary"
+                          className="mh-btn mh-btn-register"
                           title="Register"
                           aria-label="Register"
                         >
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                          </svg>
                           Register
                         </Link>
                       )}
@@ -694,10 +770,13 @@ export default function EventsPage() {
                       {isTicketedEventCubeEvent && (
                         <Link
                           href={`/events/${event.id}/eventcube-checkout`}
-                          className="mh-btn mh-btn-primary"
+                          className="mh-btn mh-btn-tickets"
                           title="Buy Tickets"
                           aria-label="Buy Tickets"
                         >
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                          </svg>
                           Buy Tickets
                         </Link>
                       )}
@@ -705,10 +784,13 @@ export default function EventsPage() {
                       {isTicketedFundraiser && (
                         <Link
                           href={`/events/${event.id}/givebutter-checkout`}
-                          className="mh-btn mh-btn-primary"
+                          className="mh-btn mh-btn-tickets"
                           title="Buy Tickets"
                           aria-label="Buy Tickets"
                         >
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                          </svg>
                           Buy Tickets
                         </Link>
                       )}
@@ -716,10 +798,13 @@ export default function EventsPage() {
                       {showBuyTicketsButton && (
                         <Link
                           href={checkoutRoute}
-                          className="mh-btn mh-btn-primary"
+                          className="mh-btn mh-btn-tickets"
                           title="Buy Tickets"
                           aria-label="Buy Tickets"
                         >
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                          </svg>
                           Buy Tickets
                         </Link>
                       )}
@@ -727,13 +812,17 @@ export default function EventsPage() {
                       {showDonationButton && (
                         <Link
                           href={`/events/${event.id}/donation`}
-                          className="mh-btn mh-btn-primary"
+                          className="mh-btn mh-btn-donate"
                           title="Make a Donation"
                           aria-label="Make a Donation"
                         >
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
                           Make a Donation
                         </Link>
                       )}
+                    </div>
                     </div>
                   </article>
                 );
@@ -747,12 +836,20 @@ export default function EventsPage() {
                   <button
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                     disabled={page === 0 || loading}
-                    className="mh-btn mh-btn-secondary"
+                    className="mh-btn mh-btn-readmore mh-events-page-btn"
                     title="Previous Page"
                     aria-label="Previous Page"
                     type="button"
                   >
-                    ← Previous
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                    Previous
                   </button>
 
                   <div className="mh-events-page-info">
@@ -762,12 +859,20 @@ export default function EventsPage() {
                   <button
                     onClick={() => setPage((p) => p + 1)}
                     disabled={!hasMoreEvents || loading}
-                    className="mh-btn mh-btn-secondary"
+                    className="mh-btn mh-btn-readmore mh-events-page-btn"
                     title="Next Page"
                     aria-label="Next Page"
                     type="button"
                   >
-                    Next →
+                    Next
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
                   </button>
                 </div>
 

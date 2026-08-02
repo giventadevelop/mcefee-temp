@@ -1,0 +1,140 @@
+---
+description: Homepage Upcoming Events section — card layout, upcoming-then-past fallback, deferred fetch
+globs: src/components/UpcomingEventsSection.tsx, src/components/modernist/ModernistHomePage.tsx, src/app/HomePageClient.tsx
+alwaysApply: false
+---
+
+# Homepage Upcoming Events Section
+
+## Overview
+
+The homepage events block shows **up to 6 active events**. Prefer **upcoming** events; if none exist, fall back to **recent (past)** events with a “Past Event” badge. On the modernist home, use `variant="modernist"` so the section follows Archivo / divider / `mh-event-card` language (same as `/events`), not the classic green glass cards. Canonical implementation: [`src/components/UpcomingEventsSection.tsx`](mdc:src/components/UpcomingEventsSection.tsx).
+
+## Problem Solved
+
+- Users always see event cards on the home page when the tenant has any active events
+- Past events appear only when there are no upcoming ones (no empty “no events” when history exists)
+- Recurring series show a single next occurrence within one year
+- Card layout stays consistent with Featured / Services glass-card homepage patterns
+- Fetch is deferred so it does not block first paint ([homepage_deferred_loading_pattern.mdc](mdc:.cursor/rules/homepage_deferred_loading_pattern.mdc))
+
+## When to Use
+
+- ✅ Homepage events section (modernist or classic home)
+- ❌ `/events` list page — use [events_page_filtering_display_rules.mdc](mdc:.cursor/rules/events_page_filtering_display_rules.mdc) instead
+- ❌ Featured strip / hero banners — separate components and rules
+
+## Wiring (MCEFEE modernist home)
+
+```tsx
+// ✅ DO: Gate with tenant settings; pass modernist variant so cards use mh-* design system
+import UpcomingEventsSection from '@/components/UpcomingEventsSection';
+import { useTenantSettings } from '@/components/TenantSettingsProvider';
+
+const { showEventsSection } = useTenantSettings();
+
+{showEventsSection !== false && <UpcomingEventsSection variant="modernist" />}
+```
+
+```tsx
+// ❌ DON'T: Inline a timetable/list that only fetches upcoming and ignores past fallback
+// ❌ DON'T: Reimplement card UI inside ModernistHomePage
+// ❌ DON'T: Use default (green glass) variant on modernist home — it fights Archivo / divider language
+```
+
+- Tenant flag: `showEventsSectionInHomePage` via `useTenantSettings().showEventsSection` (default `true`)
+- Modernist page: [`ModernistHomePage.tsx`](mdc:src/components/modernist/ModernistHomePage.tsx)
+- Classic MOSC pattern: `<UpcomingEventsSection />` (default) or wrap in `ErrorBoundary` + loading fallback in `HomePageClient` when preferred
+
+## Variants
+
+| Variant | Section shell | Cards | CTAs |
+|---------|---------------|-------|------|
+| `modernist` (homepage) | `mh-section` + `mh-section-head` / `mh-eyebrow` / `mh-h2` / `mh-link` | Existing `mh-event-card` (same as `/events`) | Colored `mh-btn-*` with icons |
+| `default` | `bg-green-50` + `HomeSectionRail` / glass | `UpcomingEventGlassCard` | Image CTAs + admin action buttons |
+
+Modernist CSS for the homepage grid: `.mh-home-events-grid` in [`modernist-homepage.css`](mdc:src/styles/modernist-homepage.css) (single-column stacked cards; reuses `.mh-event-card*`).
+
+## Data Rules
+
+### 1. Active only
+
+- Query: `isActive.equals=true`
+
+### 2. Upcoming first
+
+- Query: `startDate.greaterThanOrEqual={today}` (`YYYY-MM-DD`)
+- Sort: `startDate,asc`
+- Fetch size: `15` (then process recurring, display max **6**)
+
+### 3. Past fallback (only if upcoming list is empty after processing)
+
+- Query: `endDate.lessThan={today}`
+- Sort: `startDate,desc` (most recent first)
+- Same size / display limits
+- Set section title to **Recent Events** and `isUpcomingEvents = false`
+
+### 4. Recurring events
+
+- Use `isRecurringEvent` / `getNextOccurrenceDate` from `@/lib/eventUtils`
+- One card per series (earliest next occurrence)
+- Skip if no next occurrence or next occurrence &gt; 1 year from today
+- Skip child rows (`parentEventId` / `recurrenceSeriesId` with `isRecurring === false`)
+
+### 5. Media
+
+- Enrich each card with thumbnail from `/api/proxy/event-medias` (first image) when available
+- Banner uses `event-card-banner-media--upcoming` + `object-contain` / top-center ([image_containment_prevention_hero_images_cards.mdc](mdc:.cursor/rules/image_containment_prevention_hero_images_cards.mdc))
+
+### 6. Cache + deferral
+
+- `useDeferredFetch(300)` before network fetch
+- `sessionStorage` key from `getHomepageCacheKey('homepage_events_cache', 2)` (versioned for cache-bust), TTL **5 minutes**, store `{ data, timestamp, isUpcoming, hasMore }`
+
+**Do not** add `tenantId.equals` when calling `/api/proxy/...` from new code if the proxy already injects it; existing `UpcomingEventsSection` may still pass it for parity with mosc-temp — prefer matching that file’s current fetch helpers.
+
+## Card Layout (required)
+
+### Modernist (`variant="modernist"`)
+
+- Section: `mh-section mh-home-events` with `mh-section-head` (eyebrow + View calendar link) and `mh-h2`
+- Grid: `mh-home-events-grid` — **one event per row**, full width
+- Card: `mh-event-card` — **image on top** (`mh-event-card-media`, full container width), **details below** (`mh-event-card-body`)
+- Actions: colored icon buttons (`mh-btn-details`, `mh-btn-tickets`, `mh-btn-register`, `mh-btn-donate`, etc.) matching [`events/page.tsx`](mdc:src/app/events/page.tsx)
+- When more than 6 events exist after processing: show **See more events** → `/events` (plus header “View calendar”)
+- Past badge: `mh-event-card-badge` when `!isUpcomingEvents`
+- No green glass, no side-by-side image/details layout
+
+### Default (classic / glass)
+
+- Grid: `grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch`
+- Card: `UpcomingEventGlassCard` — rounded-2xl glass face, optional tilt (respects `prefers-reduced-motion`)
+- Tint rotation via `cardBackgrounds` / `getRandomBackground(index)`
+- Header: `HomeSectionRail` + `HomeSectionTitle` — **Upcoming Events** or **Recent Events**
+- Past badge: gray pill when `!isUpcomingEvents`
+- CTAs only for upcoming: Register / Buy Tickets / EventCube / Givebutter / Donation (same admission helpers as events page)
+- Footer link: `/events` (“View All Events”)
+
+## CSS
+
+- Modernist: `.mh-home-events-*` + shared `.mh-event-card*` in [`modernist-homepage.css`](mdc:src/styles/modernist-homepage.css)
+- Default glass: `.upcoming-events-glass-card-wrap`, `.upcoming-events-glass-card-face`, `.event-card-banner-media--upcoming` in [`globals.css`](mdc:src/app/globals.css)
+
+## Related Rules
+
+- [homepage_deferred_loading_pattern.mdc](mdc:.cursor/rules/homepage_deferred_loading_pattern.mdc)
+- [events_page_filtering_display_rules.mdc](mdc:.cursor/rules/events_page_filtering_display_rules.mdc)
+- [hero_featured_event_banner_section.mdc](mdc:.cursor/rules/hero_featured_event_banner_section.mdc)
+- [image_containment_prevention_hero_images_cards.mdc](mdc:.cursor/rules/image_containment_prevention_hero_images_cards.mdc)
+
+## Checklist
+
+- [ ] Uses `UpcomingEventsSection` (not a custom timetable)
+- [ ] Modernist home passes `variant="modernist"`
+- [ ] Upcoming query then past fallback
+- [ ] Max 6 cards after recurring dedupe
+- [ ] Modernist: stacked full-width cards (image top, details bottom); default: glass card grid 1 / 2 columns
+- [ ] See more events when processed count &gt; 6
+- [ ] Deferred fetch + session cache
+- [ ] Gated by `showEventsSection`
+- [ ] Past badge + “Recent Events” title when showing past

@@ -1,33 +1,71 @@
 "use client";
 import type { CalendarView } from '../types/calendar.types';
 
-export function ViewSwitcher({ view, onChange }: { view: CalendarView; onChange: (v: CalendarView) => void }) {
+export function ViewSwitcher({
+  view,
+  onChange,
+  homepageDesign = false,
+}: {
+  view: CalendarView;
+  onChange: (v: CalendarView) => void;
+  homepageDesign?: boolean;
+}) {
   const viewConfigs = [
     {
       value: 'month' as CalendarView,
       label: 'Month',
       color: 'blue',
+      mhBtn: 'mh-btn-register',
       icon: (
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      )
+      ),
     },
     {
       value: 'week' as CalendarView,
       label: 'Week',
       color: 'green',
+      mhBtn: 'mh-btn-details',
       icon: (
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      )
+      ),
     },
     {
       value: 'day' as CalendarView,
       label: 'Day',
       color: 'violet',
+      mhBtn: 'mh-btn-readmore',
       icon: (
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      )
-    }
+      ),
+    },
   ];
+
+  if (homepageDesign) {
+    return (
+      <div className="mh-calendar-views" role="tablist" aria-label="Calendar view">
+        {viewConfigs.map((config) => {
+          const isActive = view === config.value;
+          return (
+            <button
+              key={config.value}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onChange(config.value)}
+              className={`mh-btn ${config.mhBtn}${isActive ? ' is-active' : ''}`}
+              title={config.label}
+              aria-label={config.label}
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                {config.icon}
+              </svg>
+              <span>{config.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="border-b border-gray-200 mb-6">
@@ -43,7 +81,7 @@ export function ViewSwitcher({ view, onChange }: { view: CalendarView; onChange:
               iconTextActive: 'text-blue-500',
               iconTextInactive: 'text-blue-400',
               textActive: 'text-blue-700',
-              textInactive: 'text-blue-500'
+              textInactive: 'text-blue-500',
             },
             green: {
               active: 'bg-green-100 text-green-600 border-green-500',
@@ -53,7 +91,7 @@ export function ViewSwitcher({ view, onChange }: { view: CalendarView; onChange:
               iconTextActive: 'text-green-500',
               iconTextInactive: 'text-green-400',
               textActive: 'text-green-700',
-              textInactive: 'text-green-500'
+              textInactive: 'text-green-500',
             },
             violet: {
               active: 'bg-violet-100 text-violet-600 border-violet-500',
@@ -63,8 +101,8 @@ export function ViewSwitcher({ view, onChange }: { view: CalendarView; onChange:
               iconTextActive: 'text-violet-500',
               iconTextInactive: 'text-violet-400',
               textActive: 'text-violet-700',
-              textInactive: 'text-violet-500'
-            }
+              textInactive: 'text-violet-500',
+            },
           };
 
           const colors = colorClasses[config.color as keyof typeof colorClasses];
@@ -80,9 +118,11 @@ export function ViewSwitcher({ view, onChange }: { view: CalendarView; onChange:
               aria-label={config.label}
               type="button"
             >
-              <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
-                isActive ? colors.iconBgActive : colors.iconBgInactive
-              }`}>
+              <div
+                className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+                  isActive ? colors.iconBgActive : colors.iconBgInactive
+                }`}
+              >
                 <svg
                   className={`w-10 h-10 ${isActive ? colors.iconTextActive : colors.iconTextInactive}`}
                   fill="none"
@@ -93,9 +133,7 @@ export function ViewSwitcher({ view, onChange }: { view: CalendarView; onChange:
                   {config.icon}
                 </svg>
               </div>
-              <span className={isActive ? colors.textActive : colors.textInactive}>
-                {config.label}
-              </span>
+              <span className={isActive ? colors.textActive : colors.textInactive}>{config.label}</span>
             </button>
           );
         })}
@@ -103,5 +141,3 @@ export function ViewSwitcher({ view, onChange }: { view: CalendarView; onChange:
     </div>
   );
 }
-
-

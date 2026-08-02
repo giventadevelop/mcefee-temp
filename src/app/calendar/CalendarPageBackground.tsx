@@ -1,20 +1,18 @@
 'use client';
 
 import { useLayoutEffect } from 'react';
-import HomeParticleBackground from '@/components/HomeParticleBackground';
+import '@/styles/modernist-homepage.css';
 
 /**
- * Applies the homepage design system to the Calendar page (see design.md).
+ * Applies the Modernist design system (same as home / events / gallery) to the Calendar page.
  */
 export default function CalendarPageBackground() {
   useLayoutEffect(() => {
-    document.body.classList.add('home-page-background');
-    document.body.classList.add('calendar-page-background');
+    document.body.classList.add('modernist-home');
     return () => {
-      document.body.classList.remove('home-page-background');
-      document.body.classList.remove('calendar-page-background');
+      document.body.classList.remove('modernist-home');
     };
   }, []);
 
-  return <HomeParticleBackground />;
+  return null;
 }

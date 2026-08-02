@@ -1,19 +1,17 @@
 import { auth } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
+import Image from 'next/image';
 import { PollList } from '@/components/polls/PollList';
 import { fetchUserProfileServer } from '@/app/profile/ApiServerActions';
 import PollsPageBackground from './PollsPageBackground';
-import { HomeSectionEyebrow } from '@/components/HomeSectionEyebrow';
-import { HomeSectionTitle } from '@/components/HomeSectionTitle';
+import '@/styles/modernist-homepage.css';
 
 export default async function PollsPage() {
   // CRITICAL: Next.js 15+ requires headers() to be awaited before calling auth()
   await headers();
-  // Ensure auth() is properly awaited
   const authResult = await auth();
   const { userId } = authResult;
 
-  // Get user profile if logged in
   let userProfile = null;
   if (userId) {
     try {
@@ -26,21 +24,35 @@ export default async function PollsPage() {
   return (
     <>
       <PollsPageBackground />
-      <div className="home-page-layout relative z-[1] min-h-screen w-full overflow-x-hidden">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8" style={{ paddingTop: '120px' }}>
-          {/* Page Header */}
-          <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <HomeSectionEyebrow label="Community" className="mb-4" />
-            <HomeSectionTitle className="mb-4">Polls</HomeSectionTitle>
-            <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto">
-              Participate in interactive polls and share your opinions with our community
+      <main className="mh-events-page modernist-home mh-polls-page">
+        <section className="mh-events-hero" aria-label="Polls">
+          <figure className="mh-events-hero-media mh-grayscale">
+            <Image
+              src="/images/default_placeholder_hero_image.jpeg"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              style={{ objectFit: 'cover' }}
+            />
+          </figure>
+          <div className="mh-events-hero-scrim" aria-hidden="true" />
+          <div className="mh-events-hero-content">
+            <div className="mh-events-hero-kicker">
+              <span className="mh-dot" aria-hidden="true" />
+              <span>Community voice</span>
+            </div>
+            <h1>Polls</h1>
+            <p className="mh-events-hero-lede">
+              Participate in interactive polls and share your opinions with our community.
             </p>
           </div>
+        </section>
 
+        <div className="mh-events-body">
           <PollList userId={userProfile?.id} />
         </div>
-      </div>
+      </main>
     </>
   );
 }
-

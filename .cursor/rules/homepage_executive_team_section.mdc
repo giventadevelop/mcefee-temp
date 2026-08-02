@@ -1,0 +1,58 @@
+---
+description: Homepage executive committee / volunteer team section — data source, fetch, seed
+globs: src/components/modernist/ModernistHomePage.tsx, src/components/TeamSection.tsx, src/app/admin/executive-committee/**/*, scripts/seed-mcefee-executive-team.mjs
+alwaysApply: false
+---
+
+# Homepage Executive Committee (Team) Section
+
+## Overview
+
+Homepage **Team** shows active `executive-committee-team-members` for the current tenant, sorted by `priorityOrder` ascending (lower = higher rank). Modernist home: [`ModernistHomePage.tsx`](mdc:src/components/modernist/ModernistHomePage.tsx) `#team-section`. Classic / MOSC pattern: [`TeamSection.tsx`](mdc:src/components/TeamSection.tsx) (mosc-temp reference).
+
+## Data source (MCEFEE)
+
+Roster + photos for tenant `mcefee_org_nj_7` come from the static charity site:
+
+- HTML: `F:\project_workspace\NJ-Malayalees-MCEEFEE-Charity-Site\index.html` (`#team-section`)
+- Images: `...\images\team_members\`
+
+| Name | Role | Image | Priority |
+|------|------|-------|----------|
+| Shaji Varghese | Head Volunteer | `shaji_varghese.jpeg` | 0 |
+| Sujith Karakkadan | Volunteer | `sujith_karakkadan.jpeg` | 10 |
+| Arun Sadasivan | Volunteer | `arun_sadasivan.jpeg` | 20 |
+| Latha Krishnan | Volunteer | `latha_krishnan.jpeg` | 30 |
+| Varun Lal | Volunteer | `varun_lal.jpeg` | 40 |
+
+Re-seed (deletes existing tenant rows, creates + uploads images):
+
+```bash
+node scripts/seed-mcefee-executive-team.mjs
+```
+
+## Fetch (public homepage)
+
+```tsx
+// ✅ DO: Same-origin proxy, active only, priority ascending
+fetch(
+  '/api/proxy/executive-committee-team-members?isActive.equals=true&sort=priorityOrder,asc',
+  { cache: 'no-store' }
+);
+// Then parseExecutiveCommitteeTeamMembersResponse(data)
+```
+
+- Do **not** add `tenantId.equals` on proxy GETs (proxy injects it).
+- Gate with `useTenantSettings().showExecutiveCommitteeSection` (or `showTeamSection` alias).
+- Admin CRUD + image upload: [`ApiServerActions.ts`](mdc:src/app/admin/executive-committee/ApiServerActions.ts), [`ExecutiveCommitteeUploadActions.ts`](mdc:src/app/admin/executive-committee/ExecutiveCommitteeUploadActions.ts) (`isTeamMemberProfileImage=true`).
+
+## Display
+
+- **Modernist**: `mh-eyebrow` “Team”, heading matching charity copy, `mh-team-grid` / `mh-team-card` / `mh-team-photo`
+- **Classic**: `HomeSectionRail` + glass cards (mosc-temp `TeamSection`)
+- Show `designation` (fallback `title`); photo from `profileImageUrl`
+
+## Related
+
+- [homepage_deferred_loading_pattern.mdc](mdc:.cursor/rules/homepage_deferred_loading_pattern.mdc) — TeamSection deferral (classic)
+- [nextjs_api_routes.mdc](mdc:.cursor/rules/nextjs_api_routes.mdc) — public proxy fetch pattern

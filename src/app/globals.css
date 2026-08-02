@@ -153,6 +153,24 @@ body.home-page-background .home-section-eyebrow-mark {
     grid-column: 3;
     justify-self: end;
   }
+
+  /* Homepage (`/`): logo hidden — two-column header grid */
+  .header-inner-grid:has(.header-brand-col--home-hidden) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
+  }
+
+  .header-inner-grid:has(.header-brand-col--home-hidden) .header-main-nav-wrap {
+    grid-column: 1;
+  }
+
+  .header-inner-grid:has(.header-brand-col--home-hidden) .header-auth-cluster {
+    grid-column: 2;
+  }
+}
+
+/* Homepage (`/`): collapse empty brand column (hero already shows logo) */
+.header-brand-col--home-hidden {
+  display: none !important;
 }
 
 /* Desktop nav: horizontal scroll in middle column only (keeps Contact visible) */
@@ -3789,4 +3807,83 @@ To use a consistent, modern checkbox style with a custom tick mark, use:
 
 .zoom-out {
   animation: zoomOut 0.5s ease-out forwards;
+}
+
+/* ========================================
+   Social / contact icons (non-admin)
+   Matches mh-event-detail-meta-icon: 48×48 solid square, white glyph
+   ======================================== */
+.mh-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+  border: 2px solid transparent;
+  color: #fff;
+  text-decoration: none;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.mh-social-icon:hover {
+  filter: brightness(1.08);
+  transform: scale(1.05);
+}
+
+.mh-social-icon:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.mh-social-icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: block;
+}
+
+.mh-social-icon--email {
+  background: #ea580c;
+  border-color: #c2410c;
+}
+
+.mh-social-icon--phone {
+  background: #7c3aed;
+  border-color: #6d28d9;
+}
+
+.mh-social-icon--website {
+  background: #0f766e;
+  border-color: #115e59;
+}
+
+.mh-social-icon--facebook {
+  background: #2563eb;
+  border-color: #1d4ed8;
+}
+
+.mh-social-icon--instagram {
+  background: #db2777;
+  border-color: #be185d;
+}
+
+.mh-social-icon--twitter {
+  background: #0f172a;
+  border-color: #020617;
+}
+
+.mh-social-icon--linkedin {
+  background: #1d4ed8;
+  border-color: #1e40af;
+}
+
+.mh-social-icon--youtube {
+  background: #dc2626;
+  border-color: #b91c1c;
+}
+
+.mh-social-icon--tiktok {
+  background: #18181b;
+  border-color: #09090b;
 }

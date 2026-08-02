@@ -16,13 +16,16 @@ export function WeekView({
   anchorDate,
   theme = 'default',
   calendarBasePath = '/calendar',
+  homepageDesign = false,
 }: {
   events: CalendarEvent[];
   anchorDate: Date;
   theme?: 'default' | 'syro';
   calendarBasePath?: string;
+  homepageDesign?: boolean;
 }) {
   const isSyro = theme === 'syro';
+  const isMh = homepageDesign && !isSyro;
   const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
   const [tooltipAnchor, setTooltipAnchor] = useState<DOMRect | null>(null);
 
@@ -55,8 +58,14 @@ export function WeekView({
   };
 
   return (
-    <div className={`bg-white rounded-lg overflow-hidden ${isSyro ? 'border border-gray-200' : ''}`}>
-      <div className="grid grid-cols-7 gap-px bg-gray-200">
+    <div
+      className={
+        isMh
+          ? 'mh-calendar-panel'
+          : `bg-white rounded-lg overflow-hidden ${isSyro ? 'border border-gray-200' : ''}`
+      }
+    >
+      <div className={isMh ? 'mh-calendar-grid mh-calendar-grid--week' : 'grid grid-cols-7 gap-px bg-gray-200'}>
         {days.map((d, idx) => {
           const day = d.getDate();
           const evs = eventsByDay.get(day) || [];
@@ -66,33 +75,51 @@ export function WeekView({
           return (
             <div
               key={idx}
-              className={`min-h-[140px] sm:min-h-[160px] p-2 sm:p-3 bg-white ${
-                isTodayCell ? (isSyro ? 'bg-syro-red/5' : 'bg-gradient-to-br from-green-50 to-green-100') : ''
-              } hover:bg-gray-50 transition-colors`}
+              className={
+                isMh
+                  ? `mh-calendar-cell mh-calendar-cell--week${isTodayCell ? ' is-today' : ''}`
+                  : `min-h-[140px] sm:min-h-[160px] p-2 sm:p-3 bg-white ${
+                      isTodayCell ? (isSyro ? 'bg-syro-red/5' : 'bg-gradient-to-br from-green-50 to-green-100') : ''
+                    } hover:bg-gray-50 transition-colors`
+              }
             >
               {/* Day Header */}
               <div className="mb-2">
                 <div
-                  className={`text-xs sm:text-sm font-bold ${
-                    isTodayCell ? (isSyro ? 'text-syro-red' : 'text-green-700') : isSyro ? 'text-syro-dark-gray' : 'text-gray-700'
-                  }`}
+                  className={
+                    isMh
+                      ? `mh-calendar-week-label${isTodayCell ? ' is-today' : ''}`
+                      : `text-xs sm:text-sm font-bold ${
+                          isTodayCell
+                            ? isSyro
+                              ? 'text-syro-red'
+                              : 'text-green-700'
+                            : isSyro
+                              ? 'text-syro-dark-gray'
+                              : 'text-gray-700'
+                        }`
+                  }
                 >
                   {d.toLocaleDateString(undefined, { weekday: 'short' })}
                 </div>
                 <div
-                  className={`text-lg sm:text-xl font-bold ${
-                    isTodayCell
-                      ? isSyro
-                        ? 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-syro-red text-white'
-                        : 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white'
-                      : isSyro
-                        ? 'text-syro-blue'
-                        : 'text-gray-900'
-                  }`}
+                  className={
+                    isMh
+                      ? `mh-calendar-daynum${isTodayCell ? ' is-today' : ''}`
+                      : `text-lg sm:text-xl font-bold ${
+                          isTodayCell
+                            ? isSyro
+                              ? 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-syro-red text-white'
+                              : 'inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white'
+                            : isSyro
+                              ? 'text-syro-blue'
+                              : 'text-gray-900'
+                        }`
+                  }
                 >
                   {day}
                 </div>
-                <div className={`text-xs ${isSyro ? 'text-[#798daf]' : 'text-gray-500'}`}>
+                <div className={isMh ? 'mh-calendar-month-label' : `text-xs ${isSyro ? 'text-[#798daf]' : 'text-gray-500'}`}>
                   {d.toLocaleDateString(undefined, { month: 'short' })}
                 </div>
               </div>
@@ -104,16 +131,18 @@ export function WeekView({
                     key={event.id}
                     href={`/events/${event.id}`}
                     className={
-                      isSyro
-                        ? 'group text-xs truncate px-2 py-1.5 rounded-lg bg-syro-red/10 hover:bg-syro-red/20 text-syro-red transition-all duration-300 hover:scale-105 cursor-pointer shadow-sm'
-                        : 'group text-xs truncate px-2 py-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-800 transition-all duration-300 hover:scale-105 cursor-pointer shadow-sm'
+                      isMh
+                        ? 'mh-calendar-event'
+                        : isSyro
+                          ? 'group text-xs truncate px-2 py-1.5 rounded-lg bg-syro-red/10 hover:bg-syro-red/20 text-syro-red transition-all duration-300 hover:scale-105 cursor-pointer shadow-sm'
+                          : 'group text-xs truncate px-2 py-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-800 transition-all duration-300 hover:scale-105 cursor-pointer shadow-sm'
                     }
                     onMouseEnter={(e) => handleEventMouseEnter(event, e)}
                     onMouseLeave={handleEventMouseLeave}
                   >
                     <div className="flex items-center gap-1">
                       <svg
-                        className={`w-3 h-3 flex-shrink-0 ${isSyro ? 'text-syro-red' : 'text-green-600'}`}
+                        className={`w-3 h-3 flex-shrink-0 ${isMh ? '' : isSyro ? 'text-syro-red' : 'text-green-600'}`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -129,9 +158,11 @@ export function WeekView({
                   <Link
                     href={`${calendarBasePath}?view=day&date=${dateStr}`}
                     className={
-                      isSyro
-                        ? 'text-xs px-2 py-1 text-syro-blue hover:text-syro-red font-semibold hover:underline transition-colors cursor-pointer flex items-center gap-1'
-                        : 'text-xs px-2 py-1 text-indigo-600 hover:text-indigo-800 font-semibold hover:underline transition-colors cursor-pointer flex items-center gap-1'
+                      isMh
+                        ? 'mh-calendar-more'
+                        : isSyro
+                          ? 'text-xs px-2 py-1 text-syro-blue hover:text-syro-red font-semibold hover:underline transition-colors cursor-pointer flex items-center gap-1'
+                          : 'text-xs px-2 py-1 text-indigo-600 hover:text-indigo-800 font-semibold hover:underline transition-colors cursor-pointer flex items-center gap-1'
                     }
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

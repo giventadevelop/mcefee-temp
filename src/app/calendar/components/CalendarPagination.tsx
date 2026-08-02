@@ -1,7 +1,5 @@
 "use client";
 
-import pageStyles from '../CalendarPage.module.css';
-
 export function CalendarPagination({
   totalCount,
   onPrevMonth,
@@ -19,32 +17,39 @@ export function CalendarPagination({
 }) {
   const isSyro = theme === 'syro';
   const useHomepageStyles = homepageDesign && !isSyro;
-  const page = 1;
-  const totalPages = 1;
-  const isPrevDisabled = false;
-  const isNextDisabled = false;
-  const startItem = totalCount > 0 ? 1 : 0;
-  const endItem = totalCount;
 
-  const buttonLabel = view === 'day' ? (view === 'day' ? 'Previous Day' : 'Previous') : 'Previous';
-  const nextButtonLabel = view === 'day' ? 'Next Day' : 'Next';
+  // Keep props for API compatibility (nav lives in the toolbar above).
+  void onPrevMonth;
+  void onNextMonth;
+  void view;
+
+  if (useHomepageStyles) {
+    return (
+      <div className="mh-events-pagination mh-calendar-footer">
+        {totalCount > 0 ? (
+          <div className="mh-events-count">
+            Showing <strong>{totalCount}</strong> {totalCount === 1 ? 'event' : 'events'}
+          </div>
+        ) : (
+          <div className="mh-events-empty">No events found</div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="mt-8">
-      {/* Item Count Text - Moved to top */}
       <div className="text-center mb-4">
         {totalCount > 0 ? (
           <div
             className={
               isSyro
                 ? 'inline-flex items-center gap-2 px-4 py-2 bg-[#f0f4f8] border-2 border-gray-200 rounded-lg shadow-sm'
-                : useHomepageStyles
-                  ? `inline-flex items-center gap-2 px-4 py-2 border-2 rounded-lg shadow-sm ${pageStyles.paginationCount}`
-                  : 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg shadow-sm'
+                : 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg shadow-sm'
             }
           >
             <svg
-              className={`w-5 h-5 ${isSyro ? 'text-syro-red' : useHomepageStyles ? pageStyles.paginationCountAccent : 'text-indigo-500'}`}
+              className={`w-5 h-5 ${isSyro ? 'text-syro-red' : 'text-indigo-500'}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -54,11 +59,7 @@ export function CalendarPagination({
             </svg>
             <span className={`text-sm ${isSyro ? 'text-syro-dark-gray font-syro-primary' : ''}`}>
               Showing{' '}
-              <span
-                className={`font-bold ${isSyro ? 'text-syro-blue' : useHomepageStyles ? pageStyles.paginationCountAccent : 'text-indigo-700'}`}
-              >
-                {totalCount}
-              </span>{' '}
+              <span className={`font-bold ${isSyro ? 'text-syro-blue' : 'text-indigo-700'}`}>{totalCount}</span>{' '}
               {totalCount === 1 ? 'event' : 'events'}
             </span>
           </div>
@@ -67,17 +68,13 @@ export function CalendarPagination({
             className={
               isSyro
                 ? 'inline-flex items-center gap-2 px-4 py-2 bg-orange-50 border-2 border-orange-300 rounded-lg shadow-sm'
-                : useHomepageStyles
-                  ? `inline-flex items-center gap-2 px-4 py-2 border-2 rounded-lg shadow-sm ${pageStyles.emptyEventsBadge}`
-                  : 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-sm'
+                : 'inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-sm'
             }
           >
             <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span
-              className={`text-sm font-semibold ${isSyro ? 'text-orange-700 font-syro-primary' : useHomepageStyles ? '' : 'text-orange-700'}`}
-            >
+            <span className={`text-sm font-semibold ${isSyro ? 'text-orange-700 font-syro-primary' : 'text-orange-700'}`}>
               No events found
             </span>
           </div>
@@ -86,5 +83,3 @@ export function CalendarPagination({
     </div>
   );
 }
-
-

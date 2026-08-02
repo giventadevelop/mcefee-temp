@@ -1,33 +1,16 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
-import type { EventSponsorsDTO, EventMediaDTO } from "@/types";
+'use client';
+
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import type { EventSponsorsDTO, EventMediaDTO } from '@/types';
 import { Camera, Video, Eye } from 'lucide-react';
 import styles from '../../events/[id]/GalleryThumbnails.module.css';
 import { EventMediaSlideshow } from '@/app/gallery/components/EventMediaSlideshow';
+import { SponsorContactSocialIconRow } from '@/components/sponsors/SponsorCard';
+import '@/styles/modernist-homepage.css';
 
-// Array of modern background colors for sponsor cards
-const cardBackgrounds = [
-  'bg-gradient-to-br from-blue-50 to-blue-100',
-  'bg-gradient-to-br from-green-50 to-green-100',
-  'bg-gradient-to-br from-purple-50 to-purple-100',
-  'bg-gradient-to-br from-pink-50 to-pink-100',
-  'bg-gradient-to-br from-yellow-50 to-yellow-100',
-  'bg-gradient-to-br from-indigo-50 to-indigo-100',
-  'bg-gradient-to-br from-teal-50 to-teal-100',
-  'bg-gradient-to-br from-orange-50 to-orange-100',
-  'bg-gradient-to-br from-cyan-50 to-cyan-100',
-  'bg-gradient-to-br from-rose-50 to-rose-100'
-];
-
-// Function to get random background color for each sponsor
-const getSponsorBackground = (sponsorId: number) => {
-  return cardBackgrounds[sponsorId % cardBackgrounds.length];
-};
-
-// Helper functions for media type display
 const getMediaTypeIcon = (mediaType: string) => {
   if (mediaType.startsWith('video/')) {
     return <Video className="w-4 h-4" />;
@@ -35,30 +18,48 @@ const getMediaTypeIcon = (mediaType: string) => {
   return <Camera className="w-4 h-4" />;
 };
 
-const getMediaTypeColor = (mediaType: string) => {
-  if (mediaType.startsWith('video/')) {
-    return 'text-red-600 bg-red-100';
+function parseMediaList(mediaData: unknown): EventMediaDTO[] {
+  if (
+    mediaData &&
+    typeof mediaData === 'object' &&
+    '_embedded' in mediaData &&
+    mediaData._embedded &&
+    typeof mediaData._embedded === 'object' &&
+    'eventMedias' in mediaData._embedded
+  ) {
+    const embedded = (mediaData._embedded as { eventMedias?: unknown }).eventMedias;
+    return Array.isArray(embedded) ? embedded : [];
   }
-  return 'text-blue-600 bg-blue-100';
-};
+  if (Array.isArray(mediaData)) return mediaData;
+  if (mediaData && typeof mediaData === 'object') return [mediaData as EventMediaDTO];
+  return [];
+}
 
 export default function SponsorDetailsPage() {
   const params = useParams();
   const sponsorId = params?.id;
   const [sponsor, setSponsor] = useState<EventSponsorsDTO | null>(null);
   const [media, setMedia] = useState<EventMediaDTO[]>([]);
+  /** Resolved poster/banner URL (sponsor.bannerImageUrl or SPONSOR_BANNER media). */
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSlideshow, setShowSlideshow] = useState(false);
   const [slideshowInitialIndex, setSlideshowInitialIndex] = useState(0);
-  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const [heroImageError, setHeroImageError] = useState(false);
+  const [bannerImageError, setBannerImageError] = useState(false);
+
+  useLayoutEffect(() => {
+    document.body.classList.add('modernist-home');
+    return () => {
+      document.body.classList.remove('modernist-home');
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchSponsorDetails() {
       if (!sponsorId) return;
       setLoading(true);
+      setBannerImageError(false);
       try {
-        // Fetch sponsor details
         const sponsorRes = await fetch(`/api/proxy/event-sponsors/${sponsorId}`);
         if (!sponsorRes.ok) {
           throw new Error('Failed to fetch sponsor');
@@ -66,17 +67,37 @@ export default function SponsorDetailsPage() {
         const sponsorData: EventSponsorsDTO = await sponsorRes.json();
         setSponsor(sponsorData);
 
-        // Fetch sponsor media
-        const mediaRes = await fetch(`/api/proxy/event-medias?sponsorId.equals=${sponsorId}&sort=priorityRanking,asc`);
-        if (mediaRes.ok) {
-          const mediaData = await mediaRes.json();
-          // Handle paginated response (Spring Data REST format)
-          if (mediaData && typeof mediaData === 'object' && '_embedded' in mediaData && 'eventMedias' in mediaData._embedded) {
-            setMedia(Array.isArray(mediaData._embedded.eventMedias) ? mediaData._embedded.eventMedias : []);
-          } else {
-            // Handle direct array response
-            setMedia(Array.isArray(mediaData) ? mediaData : [mediaData]);
+        // Prefer dedicated SPONSOR_BANNER media (same as homepage / list cards)
+        let resolvedBanner = sponsorData.bannerImageUrl?.trim() || null;
+        try {
+          const bannerParams = new URLSearchParams({
+            'sponsorId.equals': String(sponsorId),
+            'eventMediaType.equals': 'SPONSOR_BANNER',
+            sort: 'priorityRanking,asc',
+            size: '1',
+          });
+          const bannerRes = await fetch(
+            `/api/proxy/event-medias?${bannerParams.toString()}`,
+            { cache: 'no-store' }
+          );
+          if (bannerRes.ok) {
+            const bannerMedia = parseMediaList(await bannerRes.json());
+            const firstBanner = bannerMedia.find((m) => m.fileUrl?.trim());
+            if (firstBanner?.fileUrl) {
+              resolvedBanner = firstBanner.fileUrl;
+            }
           }
+        } catch {
+          /* keep sponsor.bannerImageUrl */
+        }
+        setBannerUrl(resolvedBanner);
+
+        // Gallery media (exclude banner type when present)
+        const mediaRes = await fetch(
+          `/api/proxy/event-medias?sponsorId.equals=${sponsorId}&sort=priorityRanking,asc`
+        );
+        if (mediaRes.ok) {
+          setMedia(parseMediaList(await mediaRes.json()));
         } else {
           setMedia([]);
         }
@@ -84,6 +105,7 @@ export default function SponsorDetailsPage() {
         console.error('Error fetching sponsor details:', err);
         setSponsor(null);
         setMedia([]);
+        setBannerUrl(null);
       } finally {
         setLoading(false);
       }
@@ -91,231 +113,284 @@ export default function SponsorDetailsPage() {
     fetchSponsorDetails();
   }, [sponsorId]);
 
-  if (loading) return <div className="p-8 text-center">Loading sponsor details...</div>;
-  if (!sponsor) return <div className="p-8 text-center text-red-500">Sponsor not found.</div>;
+  if (loading) {
+    return (
+      <div className="mh-event-detail-status">Loading sponsor details…</div>
+    );
+  }
+  if (!sponsor) {
+    return (
+      <div className="mh-event-detail-status mh-event-detail-status--error">
+        Sponsor not found.
+      </div>
+    );
+  }
 
-  // Banner (hero): use SPONSOR_BANNER media with lowest priority (media already sorted by priorityRanking,asc)
-  const primaryBannerMedia = media.find((m) => m.fileUrl && (m.eventMediaType === 'SPONSOR_BANNER'));
-  const bannerDisplayUrl = primaryBannerMedia?.fileUrl || sponsor.bannerImageUrl || undefined;
+  const displayBannerUrl =
+    !bannerImageError && bannerUrl ? bannerUrl : null;
 
-  // Gallery: all media with fileUrl, excluding the primary banner so it does not duplicate in the grid
-  const gallery = media.filter((m) => m.fileUrl && (primaryBannerMedia ? m.id !== primaryBannerMedia.id : true));
-
-  // Get preview images (first 12 media items for grid display)
+  const gallery = media.filter((m) => {
+    if (!m.fileUrl) return false;
+    if (m.eventMediaType === 'SPONSOR_BANNER') return false;
+    if (bannerUrl && m.fileUrl === bannerUrl) return false;
+    return true;
+  });
   const previewMedia = gallery.slice(0, 12);
   const remainingCount = Math.max(0, gallery.length - 12);
 
+  const websiteUrl = sponsor.websiteUrl?.trim();
+  const websiteHref =
+    websiteUrl &&
+    (websiteUrl.startsWith('http://') || websiteUrl.startsWith('https://'))
+      ? websiteUrl
+      : websiteUrl
+        ? `https://${websiteUrl}`
+        : null;
+  const websiteLabel = websiteUrl
+    ? websiteUrl.replace(/^https?:\/\//, '')
+    : '';
+
   return (
-    <div className="pt-20">
-      {/* Hero Section - Full width banner image */}
-      <section className="relative w-full bg-transparent">
-        <div className="w-full relative min-h-[200px]">
-          {/* Main hero image container */}
-          {bannerDisplayUrl && !heroImageError ? (
-            <div className="relative w-full flex items-center justify-center min-h-[200px]" style={{ maxWidth: '100%' }}>
-              {/* Blurred background image */}
-              <div className="absolute inset-0 w-full h-full min-h-[200px]" style={{ zIndex: 0 }}>
-                <Image
-                  src={bannerDisplayUrl}
-                  alt="Sponsor banner background"
-                  fill
-                  className="object-cover w-full h-full blur-lg scale-105"
-                  style={{
-                    filter: 'blur(24px) brightness(1.1)',
-                    objectPosition: 'center',
-                  }}
-                  aria-hidden="true"
-                  priority
-                  onError={() => setHeroImageError(true)}
-                />
-              </div>
-
-              {/* Main hero image */}
-              <div className="relative w-full flex items-center justify-center min-h-[200px]" style={{ zIndex: 1, maxWidth: '100%' }}>
-                <Image
-                  src={bannerDisplayUrl}
-                  alt={`${sponsor.name} Banner`}
-                  width={1920}
-                  height={1900}
-                  className="w-full h-auto min-h-[200px]"
-                  style={{
-                    maxHeight: '1900px',
-                    maxWidth: '100%',
-                    objectFit: 'contain',
-                    objectPosition: 'center',
-                    display: 'block',
-                  }}
-                  priority
-                  onError={() => setHeroImageError(true)}
-                />
-              </div>
-
-              {/* Fade overlays */}
-              <div className="pointer-events-none absolute left-0 top-0 w-full h-16" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%)', zIndex: 20 }} />
-              <div className="pointer-events-none absolute left-0 bottom-0 w-full h-16" style={{ background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%)', zIndex: 20 }} />
-            </div>
-          ) : (
-            <div className="w-full min-h-[200px] h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-              <div className="text-center px-4">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-300 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <p className="text-gray-600 font-medium">{sponsor.name}</p>
-              </div>
-            </div>
-          )}
+    <div className="mh-event-detail mh-sponsor-detail">
+      {/* Shared page ribbon under header — same shell as /events and /sponsors */}
+      <section className="mh-events-hero" aria-label="Sponsor">
+        <figure className="mh-events-hero-media mh-grayscale">
+          <Image
+            src="/images/default_placeholder_hero_image.jpeg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            style={{ objectFit: 'cover' }}
+          />
+        </figure>
+        <div className="mh-events-hero-scrim" aria-hidden="true" />
+        <div className="mh-events-hero-content">
+          <div className="mh-events-hero-kicker">
+            <span className="mh-dot" aria-hidden="true" />
+            <span>MCEFEE partners</span>
+          </div>
+          <h1>{sponsor.name}</h1>
+          <p className="mh-events-hero-lede">
+            {sponsor.type
+              ? `${sponsor.type} sponsor supporting our community.`
+              : 'Partner supporting our community initiatives.'}
+          </p>
         </div>
       </section>
 
-      {/* Sponsor Details - Styled like event details page */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 sponsor-details-container">
-        <div
-          className={`sponsor-card ${getSponsorBackground(sponsor.id || 0)} rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 overflow-hidden`}
-          style={{
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)'
-          }}
-        >
-          <div className="flex flex-col h-full">
-            {/* Content Section */}
-            <div className="p-6 border-t border-white/20 relative">
-              {/* Title */}
-              <h1 className="text-2xl font-bold text-gray-800 mb-3">
-                {sponsor.name}
-              </h1>
+      <div className="mh-event-detail-body">
+        {/* Same full-width poster containment as /events mh-event-card-media */}
+        {displayBannerUrl && (
+          <figure
+            className="mh-event-card-media mh-sponsor-detail-banner"
+            aria-label="Sponsor banner"
+          >
+            <Image
+              src={displayBannerUrl}
+              alt={`${sponsor.name} Banner`}
+              width={1600}
+              height={900}
+              className="mh-event-card-media-img"
+              priority
+              sizes="(min-width: 1100px) 1100px, 100vw"
+              onError={() => setBannerImageError(true)}
+            />
+          </figure>
+        )}
 
-              {/* Sponsor Type Badge */}
-              {sponsor.type && (
-                <div className="mb-4">
-                  <span className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-full">
-                    {sponsor.type}
-                  </span>
+        <div className="mh-event-detail-panel">
+          <div className="flex flex-col h-full">
+            <div className="mh-event-detail-panel-inner relative">
+              {websiteHref && (
+                <div className="mh-event-detail-cta-stack absolute top-4 right-4 lg:top-6 lg:right-6 z-10 flex flex-col gap-2">
+                  <a
+                    href={websiteHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mh-btn mh-btn-primary mh-event-detail-cta"
+                    title="Visit Website"
+                    aria-label={`Visit ${sponsor.name} website`}
+                  >
+                    <svg
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                    Visit Website
+                  </a>
                 </div>
               )}
 
-              {/* Sponsor Details - Centered flexbox layout */}
-              <div className="flex flex-wrap justify-center gap-3 mb-6 lg:max-w-4xl lg:mx-auto contact-info">
-                {/* Company Name */}
+              <h1
+                className={`mh-event-detail-title ${websiteHref ? 'sm:pr-48 lg:pr-56' : ''}`}
+              >
+                {sponsor.name}
+              </h1>
+
+              {sponsor.type && (
+                <p
+                  className={`mh-event-detail-caption ${websiteHref ? 'sm:pr-48 lg:pr-56' : ''}`}
+                >
+                  {sponsor.type}
+                </p>
+              )}
+
+              <div className="mh-event-detail-meta flex flex-wrap justify-center gap-3 mb-6 lg:max-w-4xl lg:mx-auto">
                 {sponsor.companyName && (
-                  <div className="flex items-center gap-3 text-gray-700 w-full sm:w-auto sm:min-w-[280px] contact">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  <div className="mh-event-detail-meta-item">
+                    <div
+                      className="mh-event-detail-meta-icon mh-event-detail-meta-icon--company"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
                       </svg>
                     </div>
-                    <span className="text-lg font-semibold">
-                      {sponsor.companyName}
-                    </span>
+                    <span>{sponsor.companyName}</span>
                   </div>
                 )}
 
-                {/* Contact Email */}
                 {sponsor.contactEmail && (
-                  <div className="flex items-center gap-3 text-gray-700 w-full sm:w-auto sm:min-w-[280px]">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-orange-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  <div className="mh-event-detail-meta-item">
+                    <div
+                      className="mh-event-detail-meta-icon mh-event-detail-meta-icon--email"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
                       </svg>
                     </div>
-                    <a
-                      href={`mailto:${sponsor.contactEmail}`}
-                      className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
-                    >
+                    <a href={`mailto:${sponsor.contactEmail}`}>
                       {sponsor.contactEmail}
                     </a>
                   </div>
                 )}
 
-                {/* Contact Phone */}
                 {sponsor.contactPhone && (
-                  <div className="flex items-center gap-3 text-gray-700 w-full sm:w-auto sm:min-w-[280px]">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-10 h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  <div className="mh-event-detail-meta-item">
+                    <div
+                      className="mh-event-detail-meta-icon mh-event-detail-meta-icon--phone"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                        />
                       </svg>
                     </div>
-                    <a
-                      href={`tel:${sponsor.contactPhone}`}
-                      className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
-                    >
+                    <a href={`tel:${sponsor.contactPhone}`}>
                       {sponsor.contactPhone}
                     </a>
                   </div>
                 )}
 
-                {/* Website */}
-                {sponsor.websiteUrl && (
-                  <div className="flex items-center gap-3 text-gray-700 w-full sm:w-auto sm:min-w-[280px]">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-teal-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-10 h-10 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 00-9-9m0 18a9 9 0 009-9M12 3a9 9 0 00-9 9" />
+                {websiteHref && (
+                  <div className="mh-event-detail-meta-item">
+                    <div
+                      className="mh-event-detail-meta-icon mh-event-detail-meta-icon--website"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 00-9-9m0 18a9 9 0 009-9M12 3a9 9 0 00-9 9"
+                        />
                       </svg>
                     </div>
                     <a
-                      href={sponsor.websiteUrl}
+                      href={websiteHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline"
                     >
-                      {sponsor.websiteUrl.replace(/^https?:\/\//, '')}
+                      {websiteLabel}
                     </a>
                   </div>
                 )}
               </div>
 
-              {/* Tagline */}
               {sponsor.tagline && (
-                <div className="mb-8 lg:max-w-3xl lg:mx-auto px-3">
-                  <div className="relative overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-amber-100 shadow-[0_18px_38px_-20px_rgba(146,118,65,0.45)] px-6 sm:px-10 py-8 text-center">
-                    <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
-                      background: 'linear-gradient(130deg, rgba(255,255,255,0.75) 0%, rgba(255,248,235,0.35) 50%, rgba(214,173,96,0.2) 100%)'
-                    }}/>
-                    <p className="relative z-10 font-heading text-xl sm:text-2xl text-amber-800 italic leading-relaxed tracking-wide">
-                      {sponsor.tagline}
-                    </p>
-                  </div>
-                </div>
+                <p className="mh-sponsor-detail-tagline">{sponsor.tagline}</p>
               )}
 
-              {/* Description */}
               {sponsor.description && sponsor.description.trim().length > 0 && (
-                <div className="mb-10 lg:max-w-4xl lg:mx-auto px-3">
-                  <div className="relative rounded-3xl border border-white/70 bg-gradient-to-br from-sky-100 via-white to-sky-50 shadow-[0_22px_45px_-25px_rgba(15,23,42,0.35)] px-8 sm:px-12 py-10 text-center">
-                    <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.1) 40%, rgba(135,206,250,0.15) 100%)'
-                    }}/>
-                    <div className="relative z-10 text-left">
-                      {sponsor.description.split(/\n{2,}|\r\n\r\n/).map((paragraph, idx) => (
-                        <p
-                          key={idx}
-                          className="font-heading text-[1.1rem] sm:text-[1.2rem] text-slate-700 leading-relaxed tracking-[0.01em] mb-4 last:mb-0"
-                        >
-                          {paragraph.trim()}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
+                <div className="mh-sponsor-detail-prose mb-10 lg:max-w-4xl lg:mx-auto">
+                  <h2 className="mh-sponsor-detail-section-title">About</h2>
+                  {sponsor.description
+                    .split(/\n{2,}|\r\n\r\n/)
+                    .map((paragraph, idx) => (
+                      <p key={idx}>{paragraph.trim()}</p>
+                    ))}
                 </div>
               )}
 
-              {/* Action Button - Visit Website */}
-              {sponsor.websiteUrl && (
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="mh-sponsor-detail-contacts mb-6">
+                <SponsorContactSocialIconRow sponsor={sponsor} />
+              </div>
+
+              {websiteHref && (
+                <div className="mh-event-detail-actions flex flex-wrap gap-3 mb-6">
                   <a
-                    href={sponsor.websiteUrl}
+                    href={websiteHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 h-14 rounded-xl bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                    className="mh-btn mh-btn-primary mh-event-detail-cta"
                     title="Visit Website"
                     aria-label={`Visit ${sponsor.name} website`}
                   >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-200 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </div>
-                    <span className="font-semibold text-indigo-700">Visit Website</span>
+                    <svg
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                    Visit Website
                   </a>
                 </div>
               )}
@@ -323,84 +398,108 @@ export default function SponsorDetailsPage() {
           </div>
         </div>
 
-        {/* Gallery Section - Styled like event details page */}
         {gallery.length > 0 && (
-          <div className="mb-6 mt-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Sponsor Gallery</h2>
-                <p className="text-lg text-gray-600">
-                  {gallery.length} {gallery.length === 1 ? 'photo or video' : 'photos and videos'}
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setSlideshowInitialIndex(0);
-                  setShowSlideshow(true);
+          <div className="mb-12 mt-12">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 border border-white/10 shadow-2xl">
+              <div
+                className="absolute inset-0 pointer-events-none opacity-70"
+                style={{
+                  backgroundImage:
+                    'radial-gradient(circle at top left, rgba(255,255,255,0.18), transparent 55%)',
                 }}
-                className="flex items-center justify-center px-6 py-3 h-12 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg shadow-lg hover:shadow-xl border-2 border-blue-400 transform hover:-translate-y-0.5 transition-all duration-200"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                View Full Gallery
-              </button>
-            </div>
-
-            {/* Preview thumbnails grid */}
-            {previewMedia.length > 0 && (
-              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
-                <div className={styles.galleryThumbnailsGrid}>
-                  {previewMedia.map((mediaItem) => (
-                    <button
-                      key={mediaItem.id}
-                      onClick={() => {
-                        const galleryIndex = gallery.findIndex(m => m.id === mediaItem.id);
-                        if (galleryIndex !== -1) {
-                          setSlideshowInitialIndex(galleryIndex);
-                          setShowSlideshow(true);
-                        }
-                      }}
-                      className={`${styles.galleryThumbnail} relative bg-gray-100 rounded overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center`}
-                    >
-                      {mediaItem.fileUrl ? (
-                        <Image
-                          src={mediaItem.fileUrl}
-                          alt={mediaItem.altText || mediaItem.title || 'Media'}
-                          fill
-                          className="object-contain"
-                          sizes="(max-width: 640px) 150px, (max-width: 1024px) 220px, 220px"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-gray-400">
-                          {getMediaTypeIcon(mediaItem.eventMediaType || '')}
-                        </div>
-                      )}
-
-                      {/* Media type indicator */}
-                      <div className={`absolute bottom-0 right-0 ${getMediaTypeColor(mediaItem.eventMediaType || '')} p-1 rounded-tl`}>
-                        {getMediaTypeIcon(mediaItem.eventMediaType || '')}
-                      </div>
-                    </button>
-                  ))}
-
-                  {/* Show remaining count */}
-                  {remainingCount > 0 && (
-                    <button
-                      onClick={() => {
-                        setSlideshowInitialIndex(previewMedia.length);
-                        setShowSlideshow(true);
-                      }}
-                      className={`${styles.galleryThumbnail} flex items-center justify-center bg-gray-100 rounded text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors`}
-                    >
-                      +{remainingCount} more
-                    </button>
-                  )}
+              />
+              <div className="relative px-6 py-10 sm:px-10 lg:px-14">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 text-white mb-10">
+                  <div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Camera className="w-8 h-8 text-purple-200" />
+                      <h2 className="text-3xl md:text-4xl font-heading font-semibold tracking-tight">
+                        Sponsor Gallery
+                      </h2>
+                    </div>
+                    <p className="text-lg text-purple-100 max-w-2xl">
+                      {gallery.length}{' '}
+                      {gallery.length === 1
+                        ? 'photo or video from this partner.'
+                        : 'photos and videos from this partner.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSlideshowInitialIndex(0);
+                      setShowSlideshow(true);
+                    }}
+                    className="mh-btn mh-btn-primary mh-event-detail-cta"
+                    title="View Full Gallery"
+                    aria-label="View Full Gallery"
+                  >
+                    <Eye className="w-5 h-5" aria-hidden="true" />
+                    View Full Gallery
+                  </button>
                 </div>
+
+                {previewMedia.length > 0 && (
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6 shadow-inner">
+                    <div className={styles.galleryThumbnailsGrid}>
+                      {previewMedia.map((mediaItem) => (
+                        <button
+                          key={mediaItem.id}
+                          type="button"
+                          onClick={() => {
+                            const galleryIndex = gallery.findIndex(
+                              (m) => m.id === mediaItem.id
+                            );
+                            if (galleryIndex !== -1) {
+                              setSlideshowInitialIndex(galleryIndex);
+                              setShowSlideshow(true);
+                            }
+                          }}
+                          className={`${styles.galleryThumbnail} relative overflow-hidden cursor-pointer group`}
+                        >
+                          {mediaItem.fileUrl ? (
+                            <Image
+                              src={mediaItem.fileUrl}
+                              alt={
+                                mediaItem.altText ||
+                                mediaItem.title ||
+                                'Media'
+                              }
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-110"
+                              sizes="(min-width: 1024px) 220px, (min-width: 640px) 200px, 160px"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-white/60">
+                              {getMediaTypeIcon(
+                                mediaItem.eventMediaType || ''
+                              )}
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </button>
+                      ))}
+
+                      {remainingCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSlideshowInitialIndex(previewMedia.length);
+                            setShowSlideshow(true);
+                          }}
+                          className={`${styles.galleryThumbnail} flex items-center justify-center bg-white/20 text-white text-sm font-semibold rounded-xl backdrop-blur-sm hover:bg-white/30 transition-colors`}
+                        >
+                          +{remainingCount} more
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
 
-        {/* Slideshow Modal */}
         {showSlideshow && sponsor && (
           <EventMediaSlideshow
             event={{
@@ -424,23 +523,30 @@ export default function SponsorDetailsPage() {
           />
         )}
 
-        <div className="mt-8 text-center">
+        <div className="mh-event-detail-back">
           <Link
             href="/sponsors"
-            className="inline-flex flex-shrink-0 h-14 rounded-xl bg-indigo-100 hover:bg-indigo-200 items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+            className="mh-btn mh-btn-details mh-event-detail-cta"
             title="View All Sponsors"
             aria-label="View All Sponsors"
           >
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-200 flex items-center justify-center">
-              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <span className="font-semibold text-indigo-700">View All Sponsors</span>
+            <svg
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            View all sponsors
           </Link>
         </div>
       </div>
     </div>
   );
 }
-

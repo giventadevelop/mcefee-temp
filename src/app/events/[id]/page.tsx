@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,9 +11,10 @@ import { Camera, Video, Eye } from 'lucide-react';
 import styles from './GalleryThumbnails.module.css';
 import cardGridStyles from './CenteredCardGrid.module.css';
 import { SponsorCard } from '@/components/sponsors/SponsorCard';
-import { InstagramIcon } from '@/components/icons/InstagramIcon';
+import { SocialIconLink } from '@/components/social/SocialIconLink';
 import { isDonationBasedEvent, isTicketedFundraiserEvent } from '@/lib/donation/utils';
 import { isTicketedEventCube } from '@/lib/eventcube/utils';
+import '@/styles/modernist-homepage.css';
 
 // Helper function to get initials from a name
 function getInitials(name: string): string {
@@ -136,6 +137,14 @@ export default function EventDetailsPage() {
   const [eventFocusGroupIdFilter, setEventFocusGroupIdFilter] = useState<number | null>(null);
   const [eventFocusGroupOptions, setEventFocusGroupOptions] = useState<{ id: number; name: string }[]>([]);
   const [focusGroupNameByAssociationId, setFocusGroupNameByAssociationId] = useState<Record<number, string>>({});
+
+  // Match homepage /events list modernist design system
+  useLayoutEffect(() => {
+    document.body.classList.add('modernist-home');
+    return () => {
+      document.body.classList.remove('modernist-home');
+    };
+  }, []);
 
   useEffect(() => {
     async function fetchEventDetails() {
@@ -400,8 +409,12 @@ export default function EventDetailsPage() {
     fetchMedia();
   }, [eventId, eventFocusGroupIdFilter]);
 
-  if (loading) return <div className="p-8 text-center">Loading event details...</div>;
-  if (!event) return <div className="p-8 text-center text-red-500">Event not found.</div>;
+  if (loading) {
+    return <div className="mh-event-detail-status">Loading event details…</div>;
+  }
+  if (!event) {
+    return <div className="mh-event-detail-status mh-event-detail-status--error">Event not found.</div>;
+  }
 
   // Find hero image - Prioritize isHomePageHeroImage, then fallback to eventFlyer
   const heroImage = media.find((m) => m.isHomePageHeroImage && m.fileUrl) ||
@@ -498,65 +511,35 @@ export default function EventDetailsPage() {
   };
 
   return (
-    <div>
-      {/* Hero Section - Full width, no side image */}
-      <section className="relative w-full bg-transparent" style={{ marginTop: '100px', paddingTop: '20px', paddingBottom: '20px' }}>
-        <div className="w-full relative">
-          {/* Main hero image container - Full image display with max height constraint */}
-          <div className="relative w-full flex items-center justify-center" style={{ maxWidth: '100%', minHeight: '200px' }}>
-            {/* Blurred background image for width fill - positioned behind main image */}
-            <div className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }}>
-              <Image
-                src={heroImageUrl}
-                alt="Hero blurred background"
-                fill
-                className="object-cover w-full h-full blur-lg scale-105"
-                style={{
-                  filter: 'blur(24px) brightness(1.1)',
-                  objectPosition: 'center',
-                }}
-                aria-hidden="true"
-                priority
-              />
-            </div>
-
-            {/* Main hero image - Full image display with max height constraint */}
-            <div className="relative w-full flex items-center justify-center" style={{ zIndex: 1, maxWidth: '100%' }}>
-              <Image
-                src={heroImageUrl}
-                alt="Event Hero"
-                width={1920}
-                height={1900}
-                className="w-full h-auto"
-                style={{
-                  maxHeight: '1900px',
-                  maxWidth: '100%',
-                  objectFit: 'contain',
-                  objectPosition: 'center',
-                  display: 'block',
-                }}
-                priority
-              />
-            </div>
-
-            {/* Fade overlays for top and bottom borders */}
-            <div className="pointer-events-none absolute left-0 top-0 w-full h-16" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%)', zIndex: 20 }} />
-            <div className="pointer-events-none absolute left-0 bottom-0 w-full h-16" style={{ background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%)', zIndex: 20 }} />
-          </div>
+    <div className="mh-event-detail">
+      <section className="mh-event-detail-hero" aria-label="Event flyer">
+        <div className="mh-event-detail-hero-bg" aria-hidden>
+          <Image
+            src={heroImageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ filter: 'blur(28px) brightness(0.85)', transform: 'scale(1.08)' }}
+            priority
+          />
         </div>
+        <div className="mh-event-detail-hero-scrim" aria-hidden />
+        <figure className="mh-event-detail-hero-figure">
+          <Image
+            src={heroImageUrl}
+            alt={event.title || 'Event flyer'}
+            width={1920}
+            height={1200}
+            className="mh-event-detail-hero-img"
+            priority
+          />
+        </figure>
       </section>
 
-      {/* Event Details - Styled like events page */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div
-          className={`${getRandomBackground(event.id!)} rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 overflow-hidden`}
-          style={{
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)'
-          }}
-        >
+      <div className="mh-event-detail-body">
+        <div className="mh-event-detail-panel">
           <div className="flex flex-col h-full">
-            {/* Content Section - Styled like events page */}
-            <div className="p-6 border-t border-white/20 relative">
+            <div className="mh-event-detail-panel-inner relative">
               {/* Action Buttons - Register Here and Buy Tickets - Top Right Corner */}
               {(() => {
                 if (!event.startDate) return null;
@@ -602,178 +585,162 @@ export default function EventDetailsPage() {
                   return null;
 
                 return (
-                  <div className="absolute top-4 right-4 lg:top-6 lg:right-6 z-10 flex flex-col gap-2">
-                    {/* Register Here Button - Show if registration is required */}
+                  <div className="mh-event-detail-cta-stack absolute top-4 right-4 lg:top-6 lg:right-6 z-10 flex flex-col gap-2">
                     {showRegisterButton && (
                       <Link
                         href={`/events/${event.id}/register`}
-                        className="flex-shrink-0 h-14 rounded-xl bg-blue-100 hover:bg-blue-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                        className="mh-btn mh-btn-register mh-event-detail-cta"
                         title="Register Here"
                         aria-label="Register Here"
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-200 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                        <span className="font-semibold text-blue-700">Register Here</span>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        Register
                       </Link>
                     )}
 
-                    {/* Event Cube: Buy Tickets → eventcube-checkout */}
                     {isTicketedEventCubeEvent && (
-                    <Link
-                      href={`/events/${event.id}/eventcube-checkout`}
-                      className={`transition-transform hover:scale-105 ${isPast ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title="Buy Tickets"
-                      aria-label="Buy Tickets"
-                    >
-                      <img
-                        alt="Buy Tickets"
-                        className="object-contain w-[150px] h-[52px] sm:w-[200px] sm:h-[70px]"
-                        src="/images/buy_tickets_click_here_red.webp"
-                      />
-                    </Link>
+                      <Link
+                        href={`/events/${event.id}/eventcube-checkout`}
+                        className={`mh-btn mh-btn-tickets mh-event-detail-cta ${isPast ? 'opacity-50 pointer-events-none' : ''}`}
+                        title="Buy Tickets"
+                        aria-label="Buy Tickets"
+                      >
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                        </svg>
+                        Buy Tickets
+                      </Link>
                     )}
 
-                    {/* Fundraiser Image - Show for ticketed fundraiser/charity events (replaces both Buy Tickets and Make a Donation buttons) */}
                     {isTicketedFundraiser && (
-                    <Link
-                      href={`/events/${event.id}/givebutter-checkout`}
-                      className={`transition-transform hover:scale-105 ${isPast ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title="Buy Tickets"
-                      aria-label="Buy Tickets"
-                    >
-                      <img
-                        alt="Buy Tickets"
-                        className="object-contain w-[150px] h-[52px] sm:w-[200px] sm:h-[70px]"
-                        src="/images/buy_tickets_click_here_fundraiser.png"
-                      />
-                    </Link>
+                      <Link
+                        href={`/events/${event.id}/givebutter-checkout`}
+                        className={`mh-btn mh-btn-tickets mh-event-detail-cta ${isPast ? 'opacity-50 pointer-events-none' : ''}`}
+                        title="Buy Tickets"
+                        aria-label="Buy Tickets"
+                      >
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                        </svg>
+                        Buy Tickets
+                      </Link>
                     )}
 
-                    {/* Buy Tickets Image - Show only for TICKETED events (not fundraiser) */}
                     {showBuyTicketsButton && (
-                    <Link
-                      href={`/events/${event.id}/tickets`}
-                      className={`transition-transform hover:scale-105 ${isPast ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title="Buy Tickets"
-                      aria-label="Buy Tickets"
-                    >
-                      <img
-                        alt="Buy Tickets"
-                        className="object-contain w-[150px] h-[52px] sm:w-[200px] sm:h-[70px]"
-                        src="/images/buy_tickets_click_here_red.webp"
-                      />
-                    </Link>
+                      <Link
+                        href={`/events/${event.id}/tickets`}
+                        className={`mh-btn mh-btn-tickets mh-event-detail-cta ${isPast ? 'opacity-50 pointer-events-none' : ''}`}
+                        title="Buy Tickets"
+                        aria-label="Buy Tickets"
+                      >
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                        </svg>
+                        Buy Tickets
+                      </Link>
                     )}
 
-                    {/* Make a Donation Button - Show for donation-based events (not ticketed fundraiser) */}
                     {showDonationButton && (
                       <Link
                         href={`/events/${event.id}/donation`}
-                        className="flex-shrink-0 h-14 rounded-xl bg-teal-100 hover:bg-teal-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                        className="mh-btn mh-btn-donate mh-event-detail-cta"
                         title="Make a Donation"
                         aria-label="Make a Donation"
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-teal-200 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <span className="font-semibold text-teal-700">Make a Donation</span>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        Make a Donation
                       </Link>
                     )}
 
                     {showCompetitionLinks && (
                       <Link
                         href={`/events/${event.id}/competitions`}
-                        className="flex-shrink-0 h-14 rounded-xl bg-rose-100 hover:bg-rose-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                        className="mh-btn mh-btn-readmore mh-event-detail-cta"
                         title="Competitions"
                         aria-label="Competitions"
                       >
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-rose-200 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                          </svg>
-                        </div>
-                        <span className="font-semibold text-rose-700">Competitions</span>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                        Competitions
                       </Link>
                     )}
                   </div>
                 );
               })()}
 
-              {/* Title */}
-              <h1 className="text-2xl font-bold text-gray-800 mb-3 sm:pr-48 lg:pr-56">
+              <h1 className="mh-event-detail-title sm:pr-48 lg:pr-56">
                 {event.title}
               </h1>
 
-              {/* Caption */}
               {event.caption && (
-                <p className="text-gray-600 text-lg mb-4 sm:pr-48 lg:pr-56">
+                <p className="mh-event-detail-caption sm:pr-48 lg:pr-56">
                   {event.caption}
                 </p>
               )}
 
               {/* Event Details - Centered flexbox layout */}
-              <div className="flex flex-wrap justify-center gap-3 mb-6 lg:max-w-4xl lg:mx-auto">
-                <div className="flex items-center gap-3 text-gray-700 w-full sm:w-auto sm:min-w-[280px]">
-                  <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mh-event-detail-meta flex flex-wrap justify-center gap-3 mb-6 lg:max-w-4xl lg:mx-auto">
+                <div className="mh-event-detail-meta-item">
+                  <div className="mh-event-detail-meta-icon mh-event-detail-meta-icon--date" aria-hidden="true">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <span className="text-lg font-semibold">
+                  <span>
                     {formatDate(event.startDate || '', event.timezone || 'America/New_York')}
                   </span>
                 </div>
                 {event.startTime && event.endTime && (
-                  <div className="flex items-center gap-3 text-gray-700 w-full sm:w-auto sm:min-w-[280px]">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-green-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="mh-event-detail-meta-item">
+                    <div className="mh-event-detail-meta-icon mh-event-detail-meta-icon--time" aria-hidden="true">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <span className="text-lg font-semibold">
+                    <span>
                       {formatTime(event.startTime)} - {formatTime(event.endTime)} (EDT)
                     </span>
                   </div>
                 )}
                 {event.location && (
-                  <div className="flex items-center gap-3 text-gray-700 w-full sm:w-auto sm:min-w-[280px]">
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-10 h-10 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="mh-event-detail-meta-item">
+                    <div className="mh-event-detail-meta-icon mh-event-detail-meta-icon--location" aria-hidden="true">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
-                    <span className="text-lg font-semibold">
-                      {event.location}
-                    </span>
-                    {/* Copy and Navigate Icons */}
-                    <div className="flex gap-1 ml-2">
+                    <span>{event.location}</span>
+                    <div className="mh-event-card-loc-tools">
                       <button
+                        type="button"
                         onClick={() => {
                           navigator.clipboard.writeText(event.location || '');
                           alert('Address copied to clipboard!');
                         }}
-                        className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 hover:bg-blue-200 flex items-center justify-center transition-colors group-hover:scale-110 transition-transform duration-300"
+                        className="mh-event-icon-btn mh-event-icon-btn--copy"
                         title="Copy Address"
+                        aria-label="Copy address to clipboard"
                       >
-                        <svg className="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                       </button>
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location || '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-100 hover:bg-green-200 flex items-center justify-center transition-colors group-hover:scale-110 transition-transform duration-300"
+                        className="mh-event-icon-btn mh-event-icon-btn--maps"
                         title="Open in Google Maps"
+                        aria-label="Open location in Google Maps"
                       >
-                        <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                         </svg>
                       </a>
                     </div>
@@ -1015,95 +982,27 @@ export default function EventDetailsPage() {
                             )}
                             {/* Social Links - only show icons when URL is non-null and non-empty */}
                             {(performer.websiteUrl?.trim() || performer.facebookUrl?.trim() || performer.instagramUrl?.trim() || performer.twitterUrl?.trim() || performer.linkedinUrl?.trim() || performer.youtubeUrl?.trim() || performer.tiktokUrl?.trim()) && (
-                              <div className="flex gap-2 pt-4 mt-auto border-t border-white/50">
+                              <div className="mh-social-icon-row flex gap-2 pt-4 mt-auto border-t border-white/50">
                                 {performer.websiteUrl?.trim() && (
-                                  <a
-                                    href={performer.websiteUrl!.trim()}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/70 text-teal-700 flex items-center justify-center transition-all duration-200 hover:bg-white"
-                                    title="Website"
-                                  >
-                                    <svg className="w-5 h-5 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9-9a9 9 0 00-9-9m0 18a9 9 0 009-9M12 3a9 9 0 00-9 9" />
-                                    </svg>
-                                  </a>
+                                  <SocialIconLink platform="website" href={performer.websiteUrl.trim()} />
                                 )}
                                 {performer.facebookUrl?.trim() && (
-                                  <a
-                                    href={performer.facebookUrl.trim()}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/70 text-blue-700 flex items-center justify-center transition-all duration-200 hover:bg-white"
-                                    title="Facebook"
-                                  >
-                                    <svg className="w-5 h-5 text-blue-700" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                    </svg>
-                                  </a>
+                                  <SocialIconLink platform="facebook" href={performer.facebookUrl.trim()} />
                                 )}
                                 {performer.instagramUrl?.trim() && (
-                                  <a
-                                    href={performer.instagramUrl.trim()}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/70 text-pink-600 flex items-center justify-center transition-all duration-200 hover:bg-white"
-                                    title="Instagram"
-                                  >
-                                    <InstagramIcon className="w-5 h-5 text-pink-700" />
-                                  </a>
+                                  <SocialIconLink platform="instagram" href={performer.instagramUrl.trim()} />
                                 )}
                                 {performer.youtubeUrl?.trim() && (
-                                  <a
-                                    href={performer.youtubeUrl.trim()}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/70 text-red-600 flex items-center justify-center transition-all duration-200 hover:bg-white"
-                                    title="YouTube"
-                                  >
-                                    <svg className="w-5 h-5 text-red-700" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                                    </svg>
-                                  </a>
+                                  <SocialIconLink platform="youtube" href={performer.youtubeUrl.trim()} />
                                 )}
                                 {performer.twitterUrl?.trim() && (
-                                  <a
-                                    href={performer.twitterUrl.trim()}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/70 text-sky-600 flex items-center justify-center transition-all duration-200 hover:bg-white"
-                                    title="X (Twitter)"
-                                  >
-                                    <svg className="w-5 h-5 text-sky-700" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                    </svg>
-                                  </a>
+                                  <SocialIconLink platform="twitter" href={performer.twitterUrl.trim()} />
                                 )}
                                 {performer.linkedinUrl?.trim() && (
-                                  <a
-                                    href={performer.linkedinUrl.trim()}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/70 text-blue-700 flex items-center justify-center transition-all duration-200 hover:bg-white"
-                                    title="LinkedIn"
-                                  >
-                                    <svg className="w-5 h-5 text-blue-700" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.047-1.852-3.047-1.853 0-2.136 1.445-2.136 2.939v5.677H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                                    </svg>
-                                  </a>
+                                  <SocialIconLink platform="linkedin" href={performer.linkedinUrl.trim()} />
                                 )}
                                 {performer.tiktokUrl?.trim() && (
-                                  <a
-                                    href={performer.tiktokUrl.trim()}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/70 text-gray-800 flex items-center justify-center transition-all duration-200 hover:bg-white"
-                                    title="TikTok"
-                                  >
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-                                    </svg>
-                                  </a>
+                                  <SocialIconLink platform="tiktok" href={performer.tiktokUrl.trim()} />
                                 )}
                               </div>
                             )}
@@ -1197,118 +1096,95 @@ export default function EventDetailsPage() {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                {/* Calendar Link - Only for upcoming events */}
+              {/* Action Buttons — same solid mh-btn palette as /events and /gallery */}
+              <div className="mh-event-detail-actions flex flex-wrap gap-3 mb-6">
                 {isUpcoming && calendarLink && (
                   <a
                     href={calendarLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 h-14 rounded-xl bg-orange-100 hover:bg-orange-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                    className="mh-btn mh-btn-calendar mh-event-detail-cta"
                     title="Add to Calendar"
                     aria-label="Add to Calendar"
                   >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-orange-200 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <span className="font-semibold text-orange-700">Add to Calendar</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Add to Calendar
                   </a>
                 )}
 
-                {/* Buy Tickets / Fundraiser Image - Same link (givebutter-checkout) for fundraiser events */}
                 {(() => {
                   if (!event.startDate) return null;
 
-                  // Get today's date in YYYY-MM-DD format using local timezone
                   const today = new Date();
                   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-                  // Compare dates as strings to avoid timezone parsing issues
                   const eventDateStr = event.startDate ? event.startDate.split('T')[0] : null;
-
                   if (!eventDateStr) return null;
 
-                  // Check if event date is today or in the future
-                  const isToday = eventDateStr === todayStr;
-                  const isFuture = eventDateStr > todayStr;
-                  const isUpcomingLocal = isToday || isFuture;
-
-                  // Event Cube ticketed: link to eventcube-checkout (priority over Givebutter)
+                  const isUpcomingLocal = eventDateStr === todayStr || eventDateStr > todayStr;
                   const isTicketedEventCubeEvent = isTicketedEventCube(event) && isUpcomingLocal;
-                  // Ticketed fundraiser: both Buy Tickets (center) and Fundraiser badge (top right) point to givebutter-checkout
                   const isTicketedFundraiser = isTicketedFundraiserEvent(event) && isUpcomingLocal;
-                  // Only show red Buy Tickets for TICKETED events that are NOT Event Cube or ticketed fundraiser
                   const showBuyTicketsButton = event.admissionType?.toUpperCase() === 'TICKETED' && isUpcomingLocal && !isTicketedFundraiser && !isTicketedEventCubeEvent;
-                  // Show Make a Donation for donation-based events that are NOT ticketed fundraiser
                   const showDonationButton = isDonationBasedEvent(event) && isUpcomingLocal && !isTicketedFundraiser;
 
                   if (!showBuyTicketsButton && !showDonationButton && !isTicketedFundraiser && !isTicketedEventCubeEvent) return null;
 
                   return (
-                    <div className="flex flex-col gap-2">
-                      {/* Event Cube: Buy Tickets → eventcube-checkout (red image) */}
+                    <>
                       {isTicketedEventCubeEvent && (
                         <Link
                           href={`/events/${event.id}/eventcube-checkout`}
-                          className="transition-transform hover:scale-105"
+                          className="mh-btn mh-btn-tickets mh-event-detail-cta"
                           title="Buy Tickets"
                           aria-label="Buy Tickets"
                         >
-                          <img
-                            alt="Buy Tickets"
-                            className="object-contain w-[150px] h-[52px] sm:w-[200px] sm:h-[70px]"
-                            src="/images/buy_tickets_click_here_red.webp"
-                          />
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                          </svg>
+                          Buy Tickets
                         </Link>
                       )}
-                      {/* Fundraiser: same image and URL as top-right badge → givebutter-checkout */}
                       {isTicketedFundraiser && (
                         <Link
                           href={`/events/${event.id}/givebutter-checkout`}
-                          className="transition-transform hover:scale-105"
+                          className="mh-btn mh-btn-tickets mh-event-detail-cta"
                           title="Buy Tickets"
                           aria-label="Buy Tickets"
                         >
-                          <img
-                            alt="Buy Tickets"
-                            className="object-contain w-[150px] h-[52px] sm:w-[200px] sm:h-[70px]"
-                            src="/images/buy_tickets_click_here_fundraiser.png"
-                          />
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                          </svg>
+                          Buy Tickets
                         </Link>
                       )}
                       {showBuyTicketsButton && (
                         <Link
                           href={`/events/${event.id}/tickets`}
-                          className="transition-transform hover:scale-105"
+                          className="mh-btn mh-btn-tickets mh-event-detail-cta"
                           title="Buy Tickets"
                           aria-label="Buy Tickets"
                         >
-                          <img
-                            alt="Buy Tickets"
-                            className="object-contain w-[150px] h-[52px] sm:w-[200px] sm:h-[70px]"
-                            src="/images/buy_tickets_click_here_red.webp"
-                          />
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                          </svg>
+                          Buy Tickets
                         </Link>
                       )}
                       {showDonationButton && (
                         <Link
                           href={`/events/${event.id}/donation`}
-                          className="flex-shrink-0 h-14 rounded-xl bg-teal-100 hover:bg-teal-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
+                          className="mh-btn mh-btn-donate mh-event-detail-cta"
                           title="Make a Donation"
                           aria-label="Make a Donation"
                         >
-                          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-teal-200 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                          <span className="font-semibold text-teal-700">Make a Donation</span>
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                          Make a Donation
                         </Link>
                       )}
-                    </div>
+                    </>
                   );
                 })()}
               </div>
@@ -1503,19 +1379,12 @@ export default function EventDetailsPage() {
             initialIndex={slideshowInitialIndex}
           />
         )}
-        <div className="mt-8 text-center">
-          <Link
-            href="/events"
-            className="inline-flex flex-shrink-0 h-14 rounded-xl bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 px-6"
-            title="View All Events"
-            aria-label="View All Events"
-          >
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-200 flex items-center justify-center">
-              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-            <span className="font-semibold text-indigo-700">View All Events</span>
+        <div className="mh-event-detail-back">
+          <Link href="/events" className="mh-btn mh-btn-details mh-event-detail-cta" title="View All Events" aria-label="View All Events">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+            View all events
           </Link>
         </div>
       </div>

@@ -2,32 +2,15 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import type { EventDetailsDTO, EventSponsorsDTO, ExecutiveCommitteeTeamMemberDTO } from '@/types';
 import type { FeaturedEventWithMedia } from '@/lib/homepage/featuredEvents';
 import { getTenantId } from '@/lib/env';
 import { parseExecutiveCommitteeTeamMembersResponse } from '@/lib/parseExecutiveCommitteeTeamMembersResponse';
 import GivebutterDonateButton from '@/components/GivebutterDonateButton';
+import UpcomingEventsSection from '@/components/UpcomingEventsSection';
+import ModernistPosterHero from '@/components/modernist/ModernistPosterHero';
 import { useTenantSettings } from '@/components/TenantSettingsProvider';
 import '@/styles/modernist-homepage.css';
-
-/** Claude Design Modernist assets (Malayalees.US Redesign) */
-const HERO_IMAGE = '/images/modernist/mcefee/kathakali_hero.png';
-const FALLBACK_POSTER = '/images/modernist/mcefee/spark_kerala_2026_wide.jpg';
-const CULTURE_STRIP = [
-  {
-    src: '/images/modernist/mcefee/deepam_chirad.jpg',
-    alt: 'Deepam chirad — traditional Kerala oil lamps',
-  },
-  {
-    src: '/images/modernist/mcefee/spark_kerala_2026_wide.jpg',
-    alt: 'MCEFEE Spark of Kerala — performance arts and rhythm',
-  },
-  {
-    src: '/images/modernist/mcefee/kerala_riverside.jpeg',
-    alt: 'Kerala backwaters — wooden boat under a coconut tree',
-  },
-] as const;
 
 const SERVICES = [
   {
@@ -68,21 +51,6 @@ function formatEventDate(dateString?: string, timezone?: string): string {
   }
 }
 
-function formatTimeRange(start?: string, end?: string): string {
-  const fmt = (t?: string) => {
-    if (!t) return '';
-    const [h, m] = t.split(':').map(Number);
-    if (Number.isNaN(h)) return t;
-    const d = new Date();
-    d.setHours(h, m || 0, 0, 0);
-    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-  };
-  const a = fmt(start);
-  const b = fmt(end);
-  if (a && b) return `${a} — ${b}`;
-  return a || b || '—';
-}
-
 function admissionLabel(event: EventDetailsDTO): string {
   const raw = (event.admissionType || '').toUpperCase();
   if (raw.includes('DONAT') || raw.includes('CHARITY')) return 'Charity';
@@ -91,28 +59,8 @@ function admissionLabel(event: EventDetailsDTO): string {
   return event.admissionType || 'Free';
 }
 
-function admissionTagClass(label: string): string {
-  if (label === 'Ticketed') return 'mh-tag mh-tag-accent';
-  if (label === 'Charity') return 'mh-tag mh-tag-outline';
-  return 'mh-tag mh-tag-neutral';
-}
-
 function eventHref(event: EventDetailsDTO): string {
   return event.id ? `/events/${event.id}` : '/events';
-}
-
-function parseEventList(data: unknown): EventDetailsDTO[] {
-  if (Array.isArray(data)) return data;
-  if (data && typeof data === 'object') {
-    const obj = data as Record<string, unknown>;
-    if (Array.isArray(obj.content)) return obj.content as EventDetailsDTO[];
-    if (obj._embedded && typeof obj._embedded === 'object') {
-      const emb = obj._embedded as Record<string, unknown>;
-      const key = Object.keys(emb).find((k) => Array.isArray(emb[k]));
-      if (key) return emb[key] as EventDetailsDTO[];
-    }
-  }
-  return [];
 }
 
 function parseSponsorList(data: unknown): EventSponsorsDTO[] {
@@ -199,62 +147,17 @@ export default function ModernistHomePage({
     showSponsorsSection,
   } = useTenantSettings();
 
-  const [upcoming, setUpcoming] = useState<EventDetailsDTO[]>([]);
   const [team, setTeam] = useState<ExecutiveCommitteeTeamMemberDTO[]>([]);
   const [sponsors, setSponsors] = useState<EventSponsorsDTO[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(true);
 
   const featured = initialFeaturedEvents[0] ?? null;
-  const featuredEvent = featured?.event ?? upcoming[0] ?? null;
-  const featuredImage = featured?.media?.fileUrl || FALLBACK_POSTER;
-  const featuredImageIsLocal = featuredImage.startsWith('/');
+  const featuredEvent = featured?.event ?? null;
 
+  // Prefer a ticketed featured event for the on-sale band; otherwise any featured event
   const onSaleEvent =
-    upcoming.find((e) => admissionLabel(e) === 'Ticketed') ||
+    (featuredEvent && admissionLabel(featuredEvent) === 'Ticketed' ? featuredEvent : null) ||
     featuredEvent ||
-    upcoming[0] ||
     null;
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadEvents() {
-      setEventsLoading(true);
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const tenantId = getTenantId();
-        const params = new URLSearchParams({
-          'tenantId.equals': tenantId,
-          sort: 'startDate,asc',
-          page: '0',
-          size: '8',
-          'startDate.greaterThanOrEqual': today,
-          'isActive.equals': 'true',
-        });
-        const res = await fetch(`/api/proxy/event-details?${params.toString()}`, {
-          cache: 'no-store',
-        });
-        if (!res.ok) throw new Error('events fetch failed');
-        const data = await res.json();
-        if (!cancelled) setUpcoming(parseEventList(data).slice(0, 6));
-      } catch (err) {
-        console.error('[ModernistHomePage] upcoming events:', err);
-        if (!cancelled) setUpcoming([]);
-      } finally {
-        if (!cancelled) setEventsLoading(false);
-      }
-    }
-
-    if (showEventsSection !== false) {
-      loadEvents();
-    } else {
-      setEventsLoading(false);
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [showEventsSection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -314,47 +217,8 @@ export default function ModernistHomePage({
 
   return (
     <main className="modernist-home">
-      {/* 1b — Poster hero (Claude Design: Malayalees.US Redesign Modernist) */}
-      <section className="mh-poster-hero" aria-label="Homepage hero">
-        <figure className="mh-poster-hero-media mh-grayscale">
-          <Image
-            src={HERO_IMAGE}
-            alt="Kathakali — Malayali cultural performance"
-            fill
-            priority
-            sizes="100vw"
-            style={{ objectFit: 'cover', objectPosition: 'center top' }}
-          />
-        </figure>
-        <div className="mh-poster-hero-scrim" aria-hidden />
-        <div className="mh-poster-hero-content">
-          <div className="mh-poster-hero-kicker">
-            <span className="mh-dot" aria-hidden />
-            <span>Est. New Jersey · Malayali culture, kept alive</span>
-          </div>
-          <h1>
-            <span className="mh-poster-hero-title" style={{ display: 'block' }}>
-              Onam. Theyyam.
-            </span>
-            <span className="mh-poster-hero-title" style={{ display: 'block' }}>
-              Thiruvathira.
-            </span>
-            <span className="mh-accent-line mh-poster-hero-sub" style={{ display: 'block' }}>
-              All of it, here.
-            </span>
-          </h1>
-          <p className="mh-poster-hero-lede">
-            MCEFEE runs the calendar the community plans its year around. Tickets, registration and
-            the whole schedule in one place.
-          </p>
-          <div className="mh-cta-row">
-            <Link href="/events" className="mh-btn mh-btn-primary">
-              Browse all events
-            </Link>
-            <GivebutterDonateButton className="mh-btn mh-btn-on-dark">Donate</GivebutterDonateButton>
-          </div>
-        </div>
-      </section>
+      {/* Poster hero — rotation + left logo + media title/description overlays */}
+      <ModernistPosterHero />
 
       {/* 1b — Red on-sale band */}
       {onSaleEvent && (
@@ -370,139 +234,8 @@ export default function ModernistHomePage({
         </section>
       )}
 
-      {/* Design assets strip — deepam / Spark of Kerala / Kerala riverside */}
-      <section className="mh-culture-strip" aria-label="Cultural imagery">
-        {CULTURE_STRIP.map((item) => (
-          <figure key={item.src} className="mh-culture-strip-frame mh-grayscale">
-            <Image
-              src={item.src}
-              alt={item.alt}
-              fill
-              sizes="(min-width: 1024px) 33vw, 100vw"
-              style={{ objectFit: 'cover' }}
-            />
-          </figure>
-        ))}
-      </section>
-
-      {/* 1a — Upcoming timetable */}
-      {showEventsSection !== false && (
-        <section className="mh-section" aria-label="Upcoming events">
-          <div className="mh-section-head">
-            <span className="mh-eyebrow">Upcoming events</span>
-            <Link href="/events" className="mh-link">
-              View all events →
-            </Link>
-          </div>
-          <h2 className="mh-h2">The next six dates</h2>
-
-          {eventsLoading ? (
-            <p className="mh-empty">Loading events…</p>
-          ) : upcoming.length === 0 ? (
-            <p className="mh-empty">No upcoming events right now. Check back soon.</p>
-          ) : (
-            <div className="mh-timetable">
-              {upcoming.map((ev) => {
-                const label = admissionLabel(ev);
-                return (
-                  <Link key={ev.id ?? ev.title} href={eventHref(ev)} className="mh-timetable-row">
-                    <p className="mh-timetable-date">
-                      {formatEventDate(ev.startDate, ev.timezone)}
-                    </p>
-                    <div>
-                      <h3 className="mh-timetable-title">{ev.title}</h3>
-                      {(ev.caption || ev.description) && (
-                        <p className="mh-timetable-caption">
-                          {ev.caption || ev.description}
-                        </p>
-                      )}
-                    </div>
-                    <p className="mh-timetable-meta">{ev.location || '—'}</p>
-                    <p className="mh-timetable-meta">
-                      {formatTimeRange(ev.startTime, ev.endTime)}
-                    </p>
-                    <div className="mh-timetable-tag">
-                      <span className={admissionTagClass(label)}>{label}</span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* 1a — Featured event */}
-      {featuredEvent && (
-        <section className="mh-featured" aria-label="Featured event">
-          <figure className="mh-featured-media">
-            {featuredImageIsLocal ? (
-              <Image
-                src={featuredImage}
-                alt={featuredEvent.title}
-                fill
-                sizes="(min-width: 1024px) 58vw, 100vw"
-                style={{ objectFit: 'contain', objectPosition: 'center center' }}
-              />
-            ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={featuredImage}
-                alt={featuredEvent.title}
-                style={{ objectFit: 'contain', objectPosition: 'center center' }}
-              />
-            )}
-          </figure>
-          <div className="mh-featured-body">
-            <div className="mh-featured-kicker">
-              <span className="mh-dot" aria-hidden />
-              <span className="mh-eyebrow" style={{ margin: 0 }}>
-                Featured event
-              </span>
-            </div>
-            <h2>{featuredEvent.title}</h2>
-            {(featuredEvent.caption || featuredEvent.description) && (
-              <p className="mh-featured-lede">
-                {featuredEvent.caption || featuredEvent.description}
-              </p>
-            )}
-            <div className="mh-featured-meta">
-              <div className="mh-featured-meta-row">
-                <span className="mh-featured-meta-label">Date</span>
-                <span className="mh-featured-meta-value">
-                  {formatEventDate(featuredEvent.startDate, featuredEvent.timezone)}
-                </span>
-              </div>
-              <div className="mh-featured-meta-row">
-                <span className="mh-featured-meta-label">Time</span>
-                <span className="mh-featured-meta-value">
-                  {formatTimeRange(featuredEvent.startTime, featuredEvent.endTime)}
-                </span>
-              </div>
-              <div className="mh-featured-meta-row">
-                <span className="mh-featured-meta-label">Venue</span>
-                <span className="mh-featured-meta-value">
-                  {featuredEvent.location || '—'}
-                </span>
-              </div>
-              <div className="mh-featured-meta-row">
-                <span className="mh-featured-meta-label">Admission</span>
-                <span className="mh-featured-meta-value">
-                  {admissionLabel(featuredEvent)}
-                </span>
-              </div>
-            </div>
-            <div className="mh-featured-actions">
-              <Link href={eventHref(featuredEvent)} className="mh-btn mh-btn-primary">
-                {admissionLabel(featuredEvent) === 'Free' ? 'Register' : 'Get tickets'}
-              </Link>
-              <Link href="/events" className="mh-btn mh-btn-secondary">
-                View calendar
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Upcoming / recent events — modernist card system (homepage_upcoming_events_section.mdc) */}
+      {showEventsSection !== false && <UpcomingEventsSection variant="modernist" />}
 
       {/* 1a — What we do (interactive cards) */}
       <WhatWeDoSection />
@@ -543,16 +276,19 @@ export default function ModernistHomePage({
         </div>
       </section>
 
-      {/* 1a — Team */}
+      {/* Team — executive committee volunteers (charity-site roster) */}
       {showExecutiveCommitteeSection !== false && (
         <section
           id="team-section"
           className="mh-section"
-          aria-label="Executive committee"
+          aria-label="Team"
           style={{ paddingTop: 84, paddingBottom: 84 }}
         >
+          <span className="mh-eyebrow" style={{ marginBottom: 14, display: 'block' }}>
+            Team
+          </span>
           <h2 className="mh-h2" style={{ marginBottom: 16 }}>
-            The people who run the year
+            Meet our the best volunteers team
           </h2>
           <p
             style={{
@@ -563,7 +299,7 @@ export default function ModernistHomePage({
               maxWidth: '60ch',
             }}
           >
-            Committee members from the executive committee — keep the calendar moving.
+            The volunteers who keep MCEFEE&apos;s cultural calendar and community work moving.
           </p>
           {team.length === 0 ? (
             <p className="mh-empty">Team members will appear here when available.</p>
