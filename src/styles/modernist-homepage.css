@@ -2689,7 +2689,8 @@ body.modernist-home .mh-event-detail-hero {
   position: relative;
   /* Fully below fixed header — banner no longer sits under the nav */
   margin-top: var(--header-bar-height, 8rem);
-  min-height: min(280px, 38vh);
+  width: 100%;
+  min-height: 0;
   overflow: hidden;
   background: var(--mh-text);
 }
@@ -2697,37 +2698,40 @@ body.modernist-home .mh-event-detail-hero {
 body.modernist-home .mh-event-detail-hero-bg {
   position: absolute;
   inset: 0;
-  opacity: 0.55;
+  opacity: 0.45;
 }
 
 body.modernist-home .mh-event-detail-hero-scrim {
   position: absolute;
   inset: 0;
   z-index: 1;
+  pointer-events: none;
   background: linear-gradient(
     180deg,
-    rgba(32, 30, 29, 0.35) 0%,
-    rgba(32, 30, 29, 0.15) 45%,
-    rgba(32, 30, 29, 0.55) 100%
+    rgba(32, 30, 29, 0.2) 0%,
+    rgba(32, 30, 29, 0.08) 50%,
+    rgba(32, 30, 29, 0.35) 100%
   );
 }
 
+/* Full-bleed flyer — edge-to-edge page width (not inset ribbon) */
 body.modernist-home .mh-event-detail-hero-figure {
   position: relative;
   z-index: 2;
-  margin: 0 auto;
-  max-width: 1100px;
-  padding: 1.25rem 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  display: block;
+  line-height: 0;
 }
 
 body.modernist-home .mh-event-detail-hero-img {
   width: 100%;
   height: auto;
-  max-height: min(360px, 42vh);
+  max-height: none;
   object-fit: contain;
+  object-position: center top;
   display: block;
 }
 
@@ -2851,15 +2855,15 @@ body.modernist-home .mh-event-detail-meta-icon--location {
 @media (max-width: 767px) {
   body.modernist-home .mh-event-detail-hero {
     margin-top: var(--header-bar-height, 8rem);
-    min-height: 200px;
+    min-height: 0;
   }
 
   body.modernist-home .mh-event-detail-hero-figure {
-    padding: 0.75rem 0.75rem;
+    padding: 0;
   }
 
   body.modernist-home .mh-event-detail-hero-img {
-    max-height: min(260px, 36vh);
+    max-height: none;
   }
 
   body.modernist-home .mh-event-detail-body {

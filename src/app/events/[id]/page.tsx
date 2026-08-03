@@ -531,6 +531,7 @@ export default function EventDetailsPage() {
             width={1920}
             height={1200}
             className="mh-event-detail-hero-img"
+            sizes="100vw"
             priority
           />
         </figure>

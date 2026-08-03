@@ -241,9 +241,6 @@ function FeaturedEventsModernist({ items }: { items: FeaturedEventWithMedia[] })
           </Link>
         </div>
         <h2 className="mh-h2 mh-featured-section-title">Featured Events</h2>
-        <p className="mh-featured-section-lede">
-          Highlighted from the calendar — events marked Featured in admin.
-        </p>
       </div>
 
       {items.map((item) => {
@@ -462,11 +459,11 @@ export default function ModernistHomePage({
         </section>
       )}
 
-      {/* Upcoming / recent events — modernist card system (homepage_upcoming_events_section.mdc) */}
-      {showEventsSection !== false && <UpcomingEventsSection variant="modernist" />}
-
       {/* Featured events — event.isFeaturedEvent checkbox from admin edit */}
       <FeaturedEventsModernist items={featuredItems} />
+
+      {/* Upcoming / recent events — modernist card system (homepage_upcoming_events_section.mdc) */}
+      {showEventsSection !== false && <UpcomingEventsSection variant="modernist" />}
 
       {/* 1a — What we do (interactive cards) */}
       <WhatWeDoSection />
