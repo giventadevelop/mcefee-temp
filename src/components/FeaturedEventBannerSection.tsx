@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useFilteredEvents } from '@/hooks/useFilteredEvents';
 import { getOverlayInfo } from '@/lib/heroOverlay';
+import { getFeaturedEventImageUrl } from '@/lib/homepage/featuredEvents';
 
 /**
  * Single featured-event banner shown directly under the hero when:
@@ -24,7 +25,10 @@ const FeaturedEventBannerSection: React.FC = () => {
       (a, b) => (a.event.featuredEventPriorityRanking ?? 0) - (b.event.featuredEventPriorityRanking ?? 0)
     );
     const { event, media } = sorted[0];
-    const imageUrl = media?.fileUrl;
+    const imageUrl =
+      getFeaturedEventImageUrl({ event, media, imageUrl: null }) ||
+      media?.preSignedUrl ||
+      media?.fileUrl;
     if (!imageUrl) return null;
     return { event, media, imageUrl };
   }, [filteredEvents, isLoading, error]);

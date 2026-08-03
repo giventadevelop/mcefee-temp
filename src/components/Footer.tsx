@@ -66,11 +66,6 @@ const BackToTopButton = () => {
 const Footer = () => {
   const { settings, organizationIdentity } = useTenantSettings();
   const hasAnySocial = settings?.facebookUrl?.trim() || settings?.instagramUrl?.trim() || settings?.twitterUrl?.trim() || settings?.linkedinUrl?.trim() || settings?.youtubeUrl?.trim() || settings?.tiktokUrl?.trim();
-  const formattedAddress = [
-    'MCEFEE',
-    'Malayali Cultural Exchange Foundation for Education and Events',
-    'New Jersey, USA',
-  ].join('\n');
   const contactEmail = settings?.email?.trim() || '';
   const contactPhone = settings?.phoneNumber?.trim() || '';
   const footerDescription =
@@ -78,33 +73,39 @@ const Footer = () => {
     'Making a difference in communities worldwide through compassionate action and sustainable impact.';
 
   return (
-    <footer className="bg-gray-900 text-gray-300 footer-edge-to-edge mt-20" data-testid="main-footer" role="contentinfo">
+    <footer
+      className="bg-gray-900 text-gray-300 footer-edge-to-edge footer-main mt-12 md:mt-20"
+      data-testid="main-footer"
+      role="contentinfo"
+    >
       {/* Main Footer Content */}
-      <div className="w-full bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+      <div className="w-full bg-gray-900 footer-main-inner">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 pb-8 md:pt-16 md:pb-12">
+          <div className="footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 lg:gap-12">
 
-            {/* Column 1: Logo and Social Media - icons only when tenant URLs are set */}
-            <div className="lg:col-span-1">
-              <Link href="/charity-theme" className="inline-block mb-6">
+            {/* Column 1: Logo and Social Media */}
+            <div className="footer-brand flex flex-col items-center text-center md:items-start md:text-left">
+              <Link href="/" className="inline-block mb-4 md:mb-6">
                 <Image
                   src="/images/logos/Mcefee/mcefee_logo_black_border_transparent.png"
                   alt="MCEFEE"
                   width={150}
                   height={150}
                   priority
-                  className="h-12 w-auto"
+                  className="h-14 w-auto md:h-12"
                 />
               </Link>
 
-              <p className="text-gray-400 mb-6 font-inter text-sm leading-relaxed">
+              <p className="footer-brand-desc text-gray-400 mb-5 md:mb-6 font-inter text-sm leading-relaxed max-w-[34ch] md:max-w-none">
                 {footerDescription}
               </p>
 
               {hasAnySocial && (
-                <div className="mb-6">
-                  <p className="text-white font-inter font-medium text-sm mb-4">Follow our journey</p>
-                  <ul className="mh-social-icon-row flex flex-wrap gap-2">
+                <div className="mb-2 md:mb-0 w-full">
+                  <p className="text-white font-inter font-medium text-sm mb-3 md:mb-4">
+                    Follow our journey
+                  </p>
+                  <ul className="mh-social-icon-row flex flex-wrap justify-center md:justify-start gap-2">
                     {settings?.facebookUrl?.trim() && (
                       <li>
                         <SocialIconLink
@@ -165,143 +166,150 @@ const Footer = () => {
             </div>
 
             {/* Column 2: Contact Information */}
-            <div>
-              <h6 className="text-white font-inter font-semibold text-lg mb-6 tracking-wide">Get in Touch</h6>
+            <div className="footer-contact">
+              <h6 className="footer-heading text-white font-inter font-semibold text-base md:text-lg mb-4 md:mb-6 tracking-wide">
+                Get in Touch
+              </h6>
 
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <MapPin size={18} className="text-blue-400 mt-1 flex-shrink-0" strokeWidth={2} />
-                  <p className="text-gray-400 font-inter text-sm leading-relaxed whitespace-pre-wrap">
-                    {formattedAddress}
+              <div className="space-y-3.5 md:space-y-4">
+                <div className="flex items-start gap-3">
+                  <MapPin size={18} className="footer-contact-icon text-blue-400 mt-0.5 flex-shrink-0" strokeWidth={2} />
+                  <p className="footer-address text-gray-400 font-inter text-sm leading-relaxed text-left">
+                    <span className="block font-medium text-gray-300">MCEFEE</span>
+                    <span className="block">
+                      Malayali Cultural Exchange Foundation for Education and Events
+                    </span>
+                    <span className="block mt-1">New Jersey, USA</span>
                   </p>
                 </div>
 
                 {contactPhone && (
-                  <div className="flex items-center space-x-3">
-                    <Phone size={18} className="text-blue-400 flex-shrink-0" strokeWidth={2} />
-                    <p>
-                      <a
-                        href={`tel:${contactPhone.replace(/\s/g, '')}`}
-                        className="text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white"
-                      >
-                        {contactPhone}
-                      </a>
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <Phone size={18} className="footer-contact-icon text-blue-400 flex-shrink-0" strokeWidth={2} />
+                    <a
+                      href={`tel:${contactPhone.replace(/\s/g, '')}`}
+                      className="text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white"
+                    >
+                      {contactPhone}
+                    </a>
                   </div>
                 )}
 
                 {contactEmail && (
-                  <div className="flex items-center space-x-3">
-                    <Mail size={18} className="text-blue-400 flex-shrink-0" strokeWidth={2} />
-                    <p>
-                      <a
-                        href={`mailto:${contactEmail}`}
-                        className="text-blue-400 hover:text-blue-300 font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-blue-300"
-                      >
-                        {contactEmail}
-                      </a>
-                    </p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Mail size={18} className="footer-contact-icon text-blue-400 flex-shrink-0" strokeWidth={2} />
+                    <a
+                      href={`mailto:${contactEmail}`}
+                      className="text-blue-400 hover:text-blue-300 font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-blue-300 break-all"
+                    >
+                      {contactEmail}
+                    </a>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Column 3: Quick Links */}
-            <div>
-              <h6 className="text-white font-inter font-semibold text-lg mb-6 tracking-wide">Quick Links</h6>
-              <nav>
-                <ul className="space-y-3">
-                  <li>
-                    <Link
-                      href="/charity-theme"
-                      className="text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-white block"
-                    >
-                      Home
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#about"
-                      className="text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-white block"
-                    >
-                      About Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#causes"
-                      className="text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-white block"
-                    >
-                      Our Causes
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#events"
-                      className="text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-white block"
-                    >
-                      Events
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#contact"
-                      className="text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-white block"
-                    >
-                      Contact
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
-            </div>
+            {/* Columns 3–4: link groups — 2-up on mobile, separate grid cells on md+ */}
+            <div className="footer-nav-pair grid grid-cols-2 gap-5 sm:gap-8 md:contents">
+              <div className="footer-quick-links min-w-0">
+                <h6 className="footer-heading text-white font-inter font-semibold text-base md:text-lg mb-4 md:mb-6 tracking-wide">
+                  Quick Links
+                </h6>
+                <nav aria-label="Footer quick links">
+                  <ul className="space-y-2.5 md:space-y-3">
+                    <li>
+                      <Link
+                        href="/"
+                        className="footer-link text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white block py-0.5"
+                      >
+                        Home
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/about"
+                        className="footer-link text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white block py-0.5"
+                      >
+                        About Us
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/events"
+                        className="footer-link text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white block py-0.5"
+                      >
+                        Events
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/gallery"
+                        className="footer-link text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white block py-0.5"
+                      >
+                        Gallery
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/contact"
+                        className="footer-link text-gray-300 hover:text-white font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-white block py-0.5"
+                      >
+                        Contact
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
 
-            {/* Column 4: Support & Resources */}
-            <div>
-              <h6 className="text-white font-inter font-semibold text-lg mb-6 tracking-wide">Ways to Help</h6>
-              <nav>
-                <ul className="space-y-3">
-                  <li>
-                    <Link
-                      href="#donate"
-                      className="text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-blue-400 block"
-                    >
-                      Make a Donation
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#volunteer"
-                      className="text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-blue-400 block"
-                    >
-                      Become a Volunteer
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#fundraise"
-                      className="text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-blue-400 block"
-                    >
-                      Start a Fundraiser
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#sponsor"
-                      className="text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-blue-400 block"
-                    >
-                      Corporate Sponsorship
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#newsletter"
-                      className="text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 hover:translate-x-1 transform focus:outline-none focus:text-blue-400 block"
-                    >
-                      Newsletter Signup
-                    </Link>
-                  </li>
-                </ul>
-              </nav>
+              <div className="footer-ways min-w-0">
+                <h6 className="footer-heading text-white font-inter font-semibold text-base md:text-lg mb-4 md:mb-6 tracking-wide">
+                  Ways to Help
+                </h6>
+                <nav aria-label="Footer ways to help">
+                  <ul className="space-y-2.5 md:space-y-3">
+                    <li>
+                      <Link
+                        href="/donate"
+                        className="footer-link text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-blue-400 block py-0.5"
+                      >
+                        Make a Donation
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/contact"
+                        className="footer-link text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-blue-400 block py-0.5"
+                      >
+                        Become a Volunteer
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/sponsors"
+                        className="footer-link text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-blue-400 block py-0.5"
+                      >
+                        Corporate Sponsorship
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/membership"
+                        className="footer-link text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-blue-400 block py-0.5"
+                      >
+                        Membership
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/contact"
+                        className="footer-link text-gray-300 hover:text-blue-400 font-inter text-sm transition-colors duration-300 focus:outline-none focus:text-blue-400 block py-0.5"
+                      >
+                        Newsletter Signup
+                      </Link>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
             </div>
 
           </div>
@@ -310,19 +318,20 @@ const Footer = () => {
 
       <GoogleAdSenseRegion
         region="footer_strip"
-        className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-4 bg-gray-900"
+        className="mx-auto w-full max-w-7xl px-5 sm:px-6 lg:px-8 py-3 md:py-4 bg-gray-900"
         format="horizontal"
         minHeight={90}
       />
 
       {/* Copyright Section */}
-      <div className="bg-gray-900 border-t border-gray-800 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="footer-bottom bg-gray-900 border-t border-gray-800 w-full">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-6 md:py-8">
           <div className="flex justify-center items-center">
-            <p className="text-gray-400 font-inter text-sm text-center">
+            <p className="text-gray-400 font-inter text-xs md:text-sm text-center leading-relaxed max-w-[28ch] md:max-w-none">
               © 2026 MCEFEE
-              <span className="block">Malayali Cultural Exchange Foundation</span>
-              <span className="block">for Education and Events</span>
+              <span className="block md:inline md:before:content-['·'] md:before:mx-1.5">
+                Malayali Cultural Exchange Foundation for Education and Events
+              </span>
             </p>
           </div>
         </div>

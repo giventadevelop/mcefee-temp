@@ -3,13 +3,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { EventDetailsDTO, EventSponsorsDTO, ExecutiveCommitteeTeamMemberDTO } from '@/types';
-import type { FeaturedEventWithMedia } from '@/lib/homepage/featuredEvents';
+import {
+  getFeaturedEventImageUrl,
+  MAX_FEATURED_EVENTS_HOMEPAGE,
+  mediaImageUrl,
+  type FeaturedEventWithMedia,
+} from '@/lib/homepage/featuredEvents';
+import { normalizeEventMediasList } from '@/lib/homepage/homepageApiNormalize';
 import { getTenantId } from '@/lib/env';
 import { parseExecutiveCommitteeTeamMembersResponse } from '@/lib/parseExecutiveCommitteeTeamMembersResponse';
 import GivebutterDonateButton from '@/components/GivebutterDonateButton';
 import UpcomingEventsSection from '@/components/UpcomingEventsSection';
 import ModernistPosterHero from '@/components/modernist/ModernistPosterHero';
 import { useTenantSettings } from '@/components/TenantSettingsProvider';
+import { useFilteredEvents } from '@/hooks/useFilteredEvents';
+import { useDeferredFetch } from '@/hooks/usePageReady';
 import '@/styles/modernist-homepage.css';
 
 const SERVICES = [
@@ -70,6 +78,84 @@ function parseSponsorList(data: unknown): EventSponsorsDTO[] {
     if (Array.isArray(obj.content)) return obj.content as EventSponsorsDTO[];
   }
   return [];
+}
+
+function IconSponsorDetails() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+      />
+    </svg>
+  );
+}
+
+function IconSponsorVisit() {
+  return (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+      />
+    </svg>
+  );
+}
+
+function sponsorWebsiteHref(url?: string | null): string | null {
+  const trimmed = url?.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return `https://${trimmed}`;
+}
+
+async function resolveSponsorBanner(sponsor: EventSponsorsDTO): Promise<EventSponsorsDTO> {
+  if (!sponsor.id) {
+    return {
+      ...sponsor,
+      bannerImageUrl:
+        sponsor.bannerImageUrl || sponsor.heroImageUrl || sponsor.logoUrl || undefined,
+    };
+  }
+
+  try {
+    const bannerParams = new URLSearchParams({
+      'sponsorId.equals': String(sponsor.id),
+      'eventMediaType.equals': 'SPONSOR_BANNER',
+      sort: 'priorityRanking,asc',
+      size: '3',
+    });
+    const bannerRes = await fetch(`/api/proxy/event-medias?${bannerParams.toString()}`, {
+      cache: 'no-store',
+    });
+    if (bannerRes.ok) {
+      const media = normalizeEventMediasList(await bannerRes.json());
+      for (const row of media) {
+        const url = mediaImageUrl(row);
+        if (url) {
+          return { ...sponsor, bannerImageUrl: url };
+        }
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+
+  return {
+    ...sponsor,
+    bannerImageUrl:
+      sponsor.bannerImageUrl || sponsor.heroImageUrl || sponsor.logoUrl || undefined,
+  };
 }
 
 function WhatWeDoSection() {
@@ -136,6 +222,126 @@ function WhatWeDoSection() {
   );
 }
 
+function formatEventTime(startTime?: string, endTime?: string): string | null {
+  if (!startTime && !endTime) return null;
+  if (startTime && endTime) return `${startTime} — ${endTime}`;
+  return startTime || endTime || null;
+}
+
+function FeaturedEventsModernist({ items }: { items: FeaturedEventWithMedia[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mh-featured-block">
+      <div className="mh-featured-section-head">
+        <div className="mh-section-head">
+          <span className="mh-eyebrow">Featured</span>
+          <Link href="/events" className="mh-link">
+            All events →
+          </Link>
+        </div>
+        <h2 className="mh-h2 mh-featured-section-title">Featured Events</h2>
+        <p className="mh-featured-section-lede">
+          Highlighted from the calendar — events marked Featured in admin.
+        </p>
+      </div>
+
+      {items.map((item) => {
+        const { event } = item;
+        const imageUrl = getFeaturedEventImageUrl(item);
+        const timeLabel = formatEventTime(event.startTime, event.endTime);
+        const desc = (event.description || '').replace(/<[^>]+>/g, '').trim();
+
+        return (
+          <section
+            key={event.id ?? event.title}
+            className="mh-featured"
+            aria-label={`Featured event: ${event.title}`}
+          >
+            <figure className="mh-featured-media">
+              {imageUrl ? (
+                <Link
+                  href={eventHref(event)}
+                  className="mh-featured-media-link"
+                  title={`View ${event.title}`}
+                  aria-label={`View ${event.title}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- remote event media URLs (S3/presign) */}
+                  <img
+                    src={imageUrl}
+                    alt={item.media?.altText || event.title}
+                  />
+                </Link>
+              ) : (
+                <div className="mh-empty" style={{ padding: 48, textAlign: 'center' }}>
+                  No featured image yet
+                </div>
+              )}
+            </figure>
+
+            <div className="mh-featured-body">
+              <div className="mh-featured-kicker">
+                <span className="mh-dot" aria-hidden />
+                <span className="mh-eyebrow" style={{ margin: 0 }}>
+                  Featured event
+                </span>
+              </div>
+
+              <h2>{event.title}</h2>
+
+              {desc ? (
+                <p className="mh-featured-lede">
+                  {desc.slice(0, 220)}
+                  {desc.length > 220 ? '…' : ''}
+                </p>
+              ) : null}
+
+              <div className="mh-featured-meta">
+                {event.startDate && (
+                  <div className="mh-featured-meta-row">
+                    <span className="mh-featured-meta-label">Date</span>
+                    <span className="mh-featured-meta-value">
+                      {formatEventDate(event.startDate, event.timezone)}
+                    </span>
+                  </div>
+                )}
+                {timeLabel && (
+                  <div className="mh-featured-meta-row">
+                    <span className="mh-featured-meta-label">Time</span>
+                    <span className="mh-featured-meta-value">{timeLabel}</span>
+                  </div>
+                )}
+                {event.location && (
+                  <div className="mh-featured-meta-row">
+                    <span className="mh-featured-meta-label">Venue</span>
+                    <span className="mh-featured-meta-value">{event.location}</span>
+                  </div>
+                )}
+                <div className="mh-featured-meta-row">
+                  <span className="mh-featured-meta-label">Admission</span>
+                  <span className="mh-featured-meta-value">
+                    {admissionLabel(event)}
+                    {event.isRegistrationRequired ? ' · registration required' : ''}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mh-featured-actions">
+                <Link href={eventHref(event)} className="mh-btn mh-btn-primary">
+                  {admissionLabel(event) === 'Ticketed' ? 'Get tickets' : 'View event'}
+                </Link>
+                <Link href="/events" className="mh-btn mh-btn-secondary">
+                  All events
+                </Link>
+              </div>
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ModernistHomePage({
   initialFeaturedEvents,
 }: {
@@ -150,8 +356,17 @@ export default function ModernistHomePage({
   const [team, setTeam] = useState<ExecutiveCommitteeTeamMemberDTO[]>([]);
   const [sponsors, setSponsors] = useState<EventSponsorsDTO[]>([]);
 
-  const featured = initialFeaturedEvents[0] ?? null;
-  const featuredEvent = featured?.event ?? null;
+  const featuredFetchEnabled = useDeferredFetch(400);
+  const { filteredEvents: clientFeatured, isLoading: featuredLoading } = useFilteredEvents(
+    'featured',
+    featuredFetchEnabled
+  );
+
+  const featuredItems =
+    !featuredLoading && clientFeatured.length > 0
+      ? clientFeatured.slice(0, MAX_FEATURED_EVENTS_HOMEPAGE)
+      : initialFeaturedEvents.slice(0, MAX_FEATURED_EVENTS_HOMEPAGE);
+  const featuredEvent = featuredItems[0]?.event ?? null;
 
   // Prefer a ticketed featured event for the on-sale band; otherwise any featured event
   const onSaleEvent =
@@ -203,7 +418,9 @@ export default function ModernistHomePage({
         });
         if (!res.ok) throw new Error('sponsors fetch failed');
         const data = await res.json();
-        if (!cancelled) setSponsors(parseSponsorList(data).slice(0, 8));
+        const limited = parseSponsorList(data).slice(0, 8);
+        const withBanners = await Promise.all(limited.map((s) => resolveSponsorBanner(s)));
+        if (!cancelled) setSponsors(withBanners);
       } catch (err) {
         console.error('[ModernistHomePage] sponsors:', err);
       }
@@ -217,18 +434,29 @@ export default function ModernistHomePage({
 
   return (
     <main className="modernist-home">
-      {/* Poster hero — rotation + left logo + media title/description overlays */}
+      {/* Poster hero — rotation + left logo + fixed design copy (no media title overlays) */}
       <ModernistPosterHero />
 
       {/* 1b — Red on-sale band */}
       {onSaleEvent && (
         <section className="mh-onsale-band" aria-label="On sale now">
-          <h2>
-            On sale now — {onSaleEvent.title}
-            {onSaleEvent.location ? `, ${onSaleEvent.location}` : ''}
-            {onSaleEvent.startDate ? `, ${formatEventDate(onSaleEvent.startDate, onSaleEvent.timezone)}` : ''}
-          </h2>
-          <Link href={eventHref(onSaleEvent)} className="mh-btn mh-btn-on-dark">
+          <div className="mh-onsale-band-copy">
+            <p className="mh-onsale-band-kicker">On sale now</p>
+            <h2>{onSaleEvent.title}</h2>
+            {(onSaleEvent.location || onSaleEvent.startDate) && (
+              <p className="mh-onsale-band-meta">
+                {[
+                  onSaleEvent.location,
+                  onSaleEvent.startDate
+                    ? formatEventDate(onSaleEvent.startDate, onSaleEvent.timezone)
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            )}
+          </div>
+          <Link href={eventHref(onSaleEvent)} className="mh-btn mh-btn-on-dark mh-onsale-band-cta">
             Get tickets
           </Link>
         </section>
@@ -236,6 +464,9 @@ export default function ModernistHomePage({
 
       {/* Upcoming / recent events — modernist card system (homepage_upcoming_events_section.mdc) */}
       {showEventsSection !== false && <UpcomingEventsSection variant="modernist" />}
+
+      {/* Featured events — event.isFeaturedEvent checkbox from admin edit */}
+      <FeaturedEventsModernist items={featuredItems} />
 
       {/* 1a — What we do (interactive cards) */}
       <WhatWeDoSection />
@@ -339,10 +570,10 @@ export default function ModernistHomePage({
         </section>
       )}
 
-      {/* 1a — Sponsors */}
+      {/* Sponsors — same card layout as upcoming events */}
       {showSponsorsSection !== false && (
         <section
-          className="mh-section mh-section-tight-top"
+          className="mh-section mh-home-sponsors mh-section-tight-top"
           aria-label="Sponsors"
           style={{ paddingBottom: 84 }}
         >
@@ -351,7 +582,7 @@ export default function ModernistHomePage({
             style={{
               paddingTop: 42,
               borderTop: '2px solid var(--mh-divider)',
-              marginBottom: 32,
+              marginBottom: 12,
             }}
           >
             <span className="mh-eyebrow">Sponsors</span>
@@ -359,28 +590,90 @@ export default function ModernistHomePage({
               See all sponsors →
             </Link>
           </div>
+          <h2 className="mh-h2 mh-home-events-heading">Our Sponsors</h2>
+          <p className="mh-home-events-lede">
+            Partners who help keep Malayali culture visible — thank you for supporting the calendar.
+          </p>
+
           {sponsors.length === 0 ? (
             <p className="mh-empty">Sponsors will appear here when available.</p>
           ) : (
-            <div className="mh-sponsors-list">
-              {sponsors.map((sp) => (
-                <div key={sp.id ?? sp.name} className="mh-sponsor-row">
-                  <p className="mh-sponsor-tier">{sp.type || 'Sponsor'}</p>
-                  <h3 className="mh-sponsor-name">{sp.companyName || sp.name}</h3>
-                  {sp.websiteUrl ? (
-                    <a
-                      href={sp.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mh-link mh-sponsor-visit"
-                    >
-                      Visit →
-                    </a>
-                  ) : (
-                    <span className="mh-sponsor-visit" />
-                  )}
-                </div>
-              ))}
+            <div className="mh-home-events-grid mh-home-sponsors-grid">
+              {sponsors.map((sp) => {
+                const title = sp.companyName || sp.name;
+                const websiteHref = sponsorWebsiteHref(sp.websiteUrl);
+                const imageSrc =
+                  sp.bannerImageUrl ||
+                  sp.heroImageUrl ||
+                  sp.logoUrl ||
+                  '/images/default event image.png';
+
+                return (
+                  <article key={sp.id ?? sp.name} className="mh-event-card">
+                    <figure className="mh-event-card-media mh-sponsor-card-media">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- sponsor S3/presign URLs */}
+                      <img
+                        src={imageSrc}
+                        alt={title || 'Sponsor'}
+                        className="mh-event-card-media-img"
+                      />
+                      {sp.type ? (
+                        <span className="mh-event-card-badge">{sp.type}</span>
+                      ) : null}
+                    </figure>
+
+                    <div className="mh-event-card-body">
+                      <div className="mh-event-card-meta">
+                        <span className="mh-event-card-date">{sp.type || 'Sponsor'}</span>
+                        {sp.name && sp.companyName ? (
+                          <span className="mh-event-card-admission mh-event-card-admission--default">
+                            {sp.name}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <h3>{title}</h3>
+
+                      {sp.tagline ? (
+                        <p className="mh-event-card-caption">{sp.tagline}</p>
+                      ) : null}
+
+                      {sp.description ? (
+                        <p className="mh-event-card-desc mh-event-card-desc--clamp">
+                          {sp.description.replace(/<[^>]+>/g, '').trim()}
+                        </p>
+                      ) : null}
+
+                      <div className="mh-event-card-actions">
+                        {typeof sp.id !== 'undefined' && (
+                          <Link
+                            href={`/sponsors/${sp.id}`}
+                            className="mh-btn mh-btn-details"
+                            title={`See details for ${title}`}
+                            aria-label={`See details for ${title}`}
+                          >
+                            <IconSponsorDetails />
+                            See Sponsor Details
+                          </Link>
+                        )}
+                        {websiteHref && (
+                          <a
+                            href={websiteHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mh-btn mh-btn-tickets"
+                            title={`Visit ${title}`}
+                            aria-label={`Visit ${title} website`}
+                          >
+                            <IconSponsorVisit />
+                            Visit website
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -388,17 +681,33 @@ export default function ModernistHomePage({
 
       {/* 1a — Red CTA close */}
       <section className="mh-close" aria-label="Call to action">
+        <p className="mh-close-kicker">Join us</p>
         <h3>
           <span style={{ display: 'block' }}>Save your seat at the sadhya.</span>
         </h3>
+        <p className="mh-close-lede">
+          Tickets, community nights, and cultural celebrations — all in one place.
+        </p>
         <div className="mh-cta-row">
           <Link
             href={featuredEvent ? eventHref(featuredEvent) : '/events'}
-            className="mh-btn mh-btn-on-dark"
+            className="mh-btn mh-btn-on-dark mh-close-cta-primary"
+            title={
+              featuredEvent
+                ? `Get tickets for ${featuredEvent.title}`
+                : 'Browse events'
+            }
+            aria-label={
+              featuredEvent
+                ? `Get tickets for ${featuredEvent.title}`
+                : 'Browse events'
+            }
           >
-            {featuredEvent ? `Get tickets for ${featuredEvent.title}` : 'Browse events'}
+            {featuredEvent ? 'Get tickets' : 'Browse events'}
           </Link>
-          <GivebutterDonateButton className="mh-btn mh-btn-on-dark">Donate</GivebutterDonateButton>
+          <GivebutterDonateButton className="mh-btn mh-btn-on-dark mh-close-cta-secondary">
+            Donate
+          </GivebutterDonateButton>
         </div>
       </section>
     </main>

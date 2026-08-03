@@ -89,35 +89,9 @@ function preloadUrls(urls: string[], count = 2) {
     });
 }
 
-function DefaultHeroCopy() {
-  return (
-    <>
-      <div className="mh-poster-hero-kicker">
-        <span className="mh-dot" aria-hidden />
-        <span>Est. New Jersey · Malayali culture, kept alive</span>
-      </div>
-      <h1>
-        <span className="mh-poster-hero-title" style={{ display: 'block' }}>
-          Onam. Theyyam.
-        </span>
-        <span className="mh-poster-hero-title" style={{ display: 'block' }}>
-          Thiruvathira.
-        </span>
-        <span className="mh-accent-line mh-poster-hero-sub" style={{ display: 'block' }}>
-          All of it, here.
-        </span>
-      </h1>
-      <p className="mh-poster-hero-lede">
-        MCEFEE runs the calendar the community plans its year around. Tickets, registration and the
-        whole schedule in one place.
-      </p>
-    </>
-  );
-}
-
 /**
  * Modernist homepage poster hero: rotates event/tenant hero images (same resolver as HeroSection),
- * transparent logo in the header band (top-left of nav), optional text overlay from media title/description, and
+ * transparent logo in the header band (top-left of nav), no headline text overlay, and
  * Buy Tickets / fundraiser image at bottom-right for ticketed upcoming events.
  * @see .cursor/rules/hero_section_image_rotation.mdc — Overlay Logic (Buy Tickets Click Here Image Pattern)
  * @see .cursor/rules/hero_featured_event_banner_section.mdc — same overlay under featured banner
@@ -341,7 +315,6 @@ export default function ModernistPosterHero() {
 
   const current = slides[index] ?? DEFAULT_SLIDE;
   const hasMultiple = ready && slides.length > 1;
-  const hasDynamicText = !!(current.overlayTitle || current.overlayDescription);
   const eventHref = current.eventId != null ? `/events/${current.eventId}` : '/events';
   const currentEvent =
     current.eventId != null ? eventsById[current.eventId] ?? null : null;
@@ -371,7 +344,8 @@ export default function ModernistPosterHero() {
           priority
           sizes="100vw"
           className={`mh-poster-hero-img${fadeIn ? ' is-visible' : ''}`}
-          style={{ objectFit: 'cover', objectPosition: 'center top' }}
+          /* Desktop cover is CSS default; mobile overrides to contain via modernist-homepage.css */
+          style={{ objectPosition: 'center top' }}
         />
       </figure>
       <div className="mh-poster-hero-scrim" aria-hidden />
@@ -390,26 +364,6 @@ export default function ModernistPosterHero() {
       </div>
 
       <div className="mh-poster-hero-content">
-        {hasDynamicText ? (
-          <>
-            <div className="mh-poster-hero-kicker">
-              <span className="mh-dot" aria-hidden />
-              <span>Featured on MCEFEE</span>
-            </div>
-            {current.overlayTitle && (
-              <h1>
-                <span className="mh-poster-hero-title" style={{ display: 'block' }}>
-                  {current.overlayTitle}
-                </span>
-              </h1>
-            )}
-            {current.overlayDescription && (
-              <p className="mh-poster-hero-lede">{current.overlayDescription}</p>
-            )}
-          </>
-        ) : (
-          <DefaultHeroCopy />
-        )}
         <div className="mh-cta-row">
           <Link href={eventHref} className="mh-btn mh-btn-primary">
             {current.eventId != null ? 'View event' : 'Browse all events'}

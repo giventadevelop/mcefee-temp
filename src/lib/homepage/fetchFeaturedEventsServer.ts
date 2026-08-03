@@ -6,6 +6,11 @@ import {
   type EventWithMedia,
   type FeaturedEventWithMedia,
 } from '@/lib/homepage/featuredEvents';
+import {
+  isTruthyApiFlag,
+  normalizeEventDetailsList,
+  normalizeEventMediasList,
+} from '@/lib/homepage/homepageApiNormalize';
 
 function isEventInNextYear(eventDate: string, today: Date): boolean {
   const oneYearFromNow = new Date();
@@ -43,30 +48,76 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
       return [];
     }
 
-    const events: EventDetailsDTO[] = await eventsResponse.json();
+    const events = normalizeEventDetailsList(await eventsResponse.json());
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Prefer upcoming active featured events; if none, still include any featured active event
+    // so a checked Featured Event checkbox always has a chance to surface on the homepage.
     const upcomingEvents = events.filter(
-      (event) => event.startDate && isEventInNextYear(event.startDate, today) && event.isActive
+      (event) => event.startDate && isEventInNextYear(event.startDate, today) && event.isActive !== false
     );
+
+    const featuredCandidates = upcomingEvents.filter(
+      (event) =>
+        isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).isFeaturedEvent) ||
+        isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).is_featured_event)
+    );
+
+    const eventsToLoad =
+      featuredCandidates.length > 0
+        ? featuredCandidates
+        : events.filter(
+            (event) =>
+              event.isActive !== false &&
+              (isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).isFeaturedEvent) ||
+                isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).is_featured_event))
+          );
 
     const eventsWithMedia: EventWithMedia[] = [];
 
-    for (const event of upcomingEvents) {
+    for (const event of eventsToLoad) {
       try {
-        const mediaResponse = await fetch(
-          `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}`,
+        // Prefer dedicated featured-image media, then fall back to all event media
+        let mediaResponse = await fetch(
+          `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isFeaturedEventImage.equals=true`,
           { cache: 'no-store' }
         );
+        let mediaArray = mediaResponse.ok
+          ? normalizeEventMediasList(await mediaResponse.json())
+          : [];
 
-        if (mediaResponse.ok) {
-          const mediaData = await mediaResponse.json();
-          const mediaArray = Array.isArray(mediaData) ? mediaData : mediaData ? [mediaData] : [];
-          eventsWithMedia.push({ event, media: mediaArray });
-        } else {
-          eventsWithMedia.push({ event, media: [] });
+        if (mediaArray.length === 0) {
+          mediaResponse = await fetch(
+            `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isHomePageHeroImage.equals=true`,
+            { cache: 'no-store' }
+          );
+          mediaArray = mediaResponse.ok
+            ? normalizeEventMediasList(await mediaResponse.json())
+            : [];
         }
+
+        if (mediaArray.length === 0) {
+          mediaResponse = await fetch(
+            `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isHeroImage.equals=true`,
+            { cache: 'no-store' }
+          );
+          mediaArray = mediaResponse.ok
+            ? normalizeEventMediasList(await mediaResponse.json())
+            : [];
+        }
+
+        if (mediaArray.length === 0) {
+          mediaResponse = await fetch(
+            `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&size=50`,
+            { cache: 'no-store' }
+          );
+          mediaArray = mediaResponse.ok
+            ? normalizeEventMediasList(await mediaResponse.json())
+            : [];
+        }
+
+        eventsWithMedia.push({ event, media: mediaArray });
       } catch {
         eventsWithMedia.push({ event, media: [] });
       }

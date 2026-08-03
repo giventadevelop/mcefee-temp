@@ -266,6 +266,7 @@ body.modernist-home .mh-poster-hero-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center top;
   display: block;
   opacity: 0;
   transition: opacity 0.35s ease;
@@ -555,21 +556,43 @@ body.modernist-home .mh-onsale-band {
   flex-wrap: wrap;
 }
 
+body.modernist-home .mh-onsale-band-copy {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+body.modernist-home .mh-onsale-band-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
 body.modernist-home .mh-onsale-band h2 {
   margin: 0;
   font-family: var(--mh-font);
   font-weight: 800;
   font-size: clamp(20px, 2.4vw, 28px);
-  line-height: 1.15;
+  line-height: 1.25;
   letter-spacing: -0.015em;
-  flex: 1 1 280px;
 }
 
-body.modernist-home .mh-onsale-band .mh-btn {
+body.modernist-home .mh-onsale-band-meta {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+body.modernist-home .mh-onsale-band .mh-btn,
+body.modernist-home .mh-onsale-band-cta {
   margin-left: auto;
   padding: 12px 20px;
   font-size: 14px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* —— Shared section padding —— */
@@ -708,6 +731,26 @@ body.modernist-home .mh-empty {
 }
 
 /* —— Featured split —— */
+body.modernist-home .mh-featured-block {
+  border-top: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-featured-section-head {
+  padding: 56px 72px 28px;
+}
+
+body.modernist-home .mh-featured-section-title {
+  margin-bottom: 12px;
+}
+
+body.modernist-home .mh-featured-section-lede {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--mh-neutral-800);
+}
+
 body.modernist-home .mh-featured {
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
@@ -715,6 +758,10 @@ body.modernist-home .mh-featured {
   min-height: 640px;
   border-top: 2px solid var(--mh-divider);
   border-bottom: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-featured + .mh-featured {
+  border-top: 0;
 }
 
 body.modernist-home .mh-featured-media {
@@ -729,7 +776,17 @@ body.modernist-home .mh-featured-media {
   overflow: hidden;
 }
 
-body.modernist-home .mh-featured-media img {
+body.modernist-home .mh-featured-media-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 640px;
+}
+
+body.modernist-home .mh-featured-media img,
+body.modernist-home .mh-featured-media-link img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -1127,7 +1184,48 @@ body.modernist-home .mh-team-bio {
   color: var(--mh-neutral-700);
 }
 
-/* —— Sponsors —— */
+/* —— Homepage sponsors (card layout matching upcoming events) —— */
+body.modernist-home .mh-home-sponsors-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+body.modernist-home .mh-home-sponsors-grid > .mh-event-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.modernist-home .mh-home-sponsors .mh-event-card-actions .mh-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+body.modernist-home .mh-home-sponsors .mh-sponsor-card-media {
+  background: var(--mh-surface);
+  width: 100%;
+  height: auto;
+  max-height: none;
+  aspect-ratio: auto;
+  display: block;
+  overflow: hidden;
+  line-height: 0;
+}
+
+body.modernist-home .mh-home-sponsors .mh-sponsor-card-media img,
+body.modernist-home .mh-home-sponsors .mh-sponsor-card-media .mh-event-card-media-img {
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  max-width: 100% !important;
+  margin: 0;
+  object-fit: contain !important;
+  object-position: center center !important;
+  display: block;
+}
+
+/* Legacy text-row sponsors (kept for other pages if referenced) */
 body.modernist-home .mh-sponsors-list {
   display: flex;
   flex-direction: column;
@@ -1172,6 +1270,15 @@ body.modernist-home .mh-close {
   padding: 84px 72px;
 }
 
+body.modernist-home .mh-close-kicker {
+  margin: 0 0 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--mh-bg) 82%, transparent);
+}
+
 body.modernist-home .mh-close h3 {
   margin: 0 0 0 -0.058em;
   font-family: var(--mh-font);
@@ -1179,6 +1286,14 @@ body.modernist-home .mh-close h3 {
   font-size: clamp(32px, 5vw, 60px);
   line-height: 1.08;
   letter-spacing: -0.015em;
+}
+
+body.modernist-home .mh-close-lede {
+  margin: 18px 0 0;
+  max-width: 36ch;
+  font-size: 16px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--mh-bg) 88%, transparent);
 }
 
 body.modernist-home .mh-close .mh-cta-row {
@@ -1218,16 +1333,38 @@ body.modernist-home .mh-close .mh-btn {
 
   body.modernist-home .mh-featured {
     grid-template-columns: 1fr;
+    min-height: 0;
   }
 
+  body.modernist-home .mh-featured-section-head {
+    padding: 42px 24px 20px;
+  }
+
+  /* Hug the banner on mobile — no tall empty gray box around wide images */
   body.modernist-home .mh-featured-media {
     border-right: 0;
     border-bottom: 2px solid var(--mh-divider);
-    min-height: 420px;
+    min-height: 0;
+    height: auto;
+    display: block;
+    line-height: 0;
+    background: var(--mh-surface);
   }
 
-  body.modernist-home .mh-featured {
+  body.modernist-home .mh-featured-media-link {
+    display: block;
+    width: 100%;
+    height: auto;
     min-height: 0;
+  }
+
+  body.modernist-home .mh-featured-media img,
+  body.modernist-home .mh-featured-media-link img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center center;
+    display: block;
   }
 
   body.modernist-home .mh-featured-body {
@@ -1265,9 +1402,40 @@ body.modernist-home .mh-close .mh-btn {
 }
 
 @media (max-width: 768px) {
+  /*
+   * Mobile hero: aspect-ratio box + object-contain so the full slide is visible
+   * (zero heavy crop). Dark bg blends any letterbox bars.
+   */
   body.modernist-home .mh-poster-hero {
-    --mh-header-clearance: calc(8rem + 1rem);
-    min-height: min(680px, 96vh);
+    --mh-header-clearance: calc(5.5rem + 0.5rem);
+    min-height: 0;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    max-height: min(52vh, 360px);
+    width: 100%;
+    background: #201e1d;
+  }
+
+  body.modernist-home .mh-poster-hero-media {
+    position: absolute;
+    inset: 0;
+    background: #201e1d;
+  }
+
+  body.modernist-home .mh-poster-hero-media img,
+  body.modernist-home .mh-poster-hero-img {
+    object-fit: contain !important;
+    object-position: center center !important;
+  }
+
+  /* Lighter scrim so the slide stays readable/viewable */
+  body.modernist-home .mh-poster-hero-scrim {
+    background: linear-gradient(
+      to top,
+      rgba(32, 30, 29, 0.45) 0%,
+      rgba(32, 30, 29, 0.12) 40%,
+      transparent 72%
+    );
   }
 
   body.modernist-home .mh-poster-hero-content,
@@ -1280,21 +1448,47 @@ body.modernist-home .mh-close .mh-btn {
 
   body.modernist-home .mh-poster-hero-logo {
     left: 0.35rem;
-    top: 0.3rem;
-    bottom: clamp(15rem, 48vh, 22rem);
-    max-width: min(36vw, 220px);
-    max-height: 34%;
+    top: 0.35rem;
+    bottom: auto;
+    height: auto;
+    max-width: min(38vw, 140px);
+    max-height: 32%;
   }
 
   body.modernist-home .mh-poster-hero-content {
-    padding-top: calc(var(--mh-header-clearance) + 1rem);
-    padding-bottom: 48px;
+    padding: 0.5rem 1rem 0.85rem;
     max-width: 100%;
+    min-height: 0;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  body.modernist-home .mh-poster-hero-content .mh-cta-row {
+    margin-top: 0;
+  }
+
+  body.modernist-home .mh-poster-hero-content .mh-btn {
+    padding: 10px 14px;
+    font-size: 13px;
   }
 
   body.modernist-home .mh-poster-hero-ticket-overlay {
-    bottom: 0.75rem;
-    right: 0.75rem;
+    bottom: 0.5rem;
+    right: 0.5rem;
+  }
+
+  body.modernist-home .mh-poster-hero-ticket-overlay img {
+    width: 120px !important;
+    height: auto !important;
+  }
+
+  body.modernist-home .mh-poster-hero-controls {
+    padding: 0 0.4rem;
+  }
+
+  body.modernist-home .mh-poster-hero-control {
+    width: 2.35rem;
+    height: 2.35rem;
   }
 
   body.modernist-home .mh-poster-hero-title {
@@ -1306,12 +1500,130 @@ body.modernist-home .mh-close .mh-btn {
   }
 
   body.modernist-home .mh-onsale-band {
-    padding-top: 24px;
-    padding-bottom: 24px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 20px;
+    padding: 28px 20px 32px;
   }
 
-  body.modernist-home .mh-onsale-band .mh-btn {
+  body.modernist-home .mh-onsale-band-copy {
+    flex: 0 1 auto;
+    width: 100%;
+    max-width: 28rem;
+  }
+
+  body.modernist-home .mh-onsale-band-kicker {
+    margin-bottom: 10px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+  }
+
+  body.modernist-home .mh-onsale-band h2 {
+    font-size: clamp(22px, 6.2vw, 28px);
+    line-height: 1.3;
+  }
+
+  body.modernist-home .mh-onsale-band-meta {
+    margin-top: 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  body.modernist-home .mh-onsale-band .mh-btn,
+  body.modernist-home .mh-onsale-band-cta {
     margin-left: 0;
+    width: 100%;
+    max-width: 16rem;
+    justify-content: center;
+    padding: 14px 22px;
+    font-size: 15px;
+    font-weight: 700;
+    /* Solid CTA — stronger than ghost outline on small screens */
+    background: var(--mh-bg);
+    color: var(--mh-accent);
+    border-color: var(--mh-bg);
+  }
+
+  body.modernist-home .mh-onsale-band .mh-btn:hover,
+  body.modernist-home .mh-onsale-band-cta:hover {
+    background: color-mix(in srgb, var(--mh-bg) 92%, #000);
+    color: var(--mh-accent);
+  }
+
+  /* Close CTA — compact, centered, full-width tap targets */
+  body.modernist-home .mh-close {
+    padding: 40px 24px 48px;
+    text-align: center;
+  }
+
+  body.modernist-home .mh-close-kicker {
+    margin-bottom: 10px;
+  }
+
+  body.modernist-home .mh-close h3 {
+    margin: 0 auto;
+    font-size: clamp(26px, 7.2vw, 36px);
+    line-height: 1.15;
+    max-width: 16ch;
+  }
+
+  body.modernist-home .mh-close-lede {
+    margin: 12px auto 0;
+    max-width: 28ch;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  body.modernist-home .mh-close .mh-cta-row {
+    margin-top: 28px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+    max-width: 20rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  body.modernist-home .mh-close .mh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+    padding: 15px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    min-height: 48px;
+    box-sizing: border-box;
+  }
+
+  body.modernist-home .mh-close-cta-primary {
+    background: var(--mh-bg);
+    color: var(--mh-accent);
+    border-color: var(--mh-bg);
+  }
+
+  body.modernist-home .mh-close-cta-primary:hover {
+    background: color-mix(in srgb, var(--mh-bg) 92%, #000);
+    color: var(--mh-accent);
+  }
+
+  body.modernist-home .mh-close-cta-secondary {
+    background: transparent;
+    color: var(--mh-bg);
+    border-color: color-mix(in srgb, var(--mh-bg) 70%, transparent);
+  }
+
+  body.modernist-home .mh-close-cta-secondary:hover {
+    background: color-mix(in srgb, var(--mh-bg) 14%, transparent);
+  }
+
+  /* Tighten gap above close so sponsors → CTA feels continuous */
+  body.modernist-home .mh-home-sponsors {
+    padding-bottom: 40px !important;
   }
 
   body.modernist-home .mh-timetable-row {
@@ -1569,6 +1881,90 @@ body.modernist-home footer.footer-edge-to-edge .bg-gray-800,
 body.modernist-home footer.footer-edge-to-edge [class*='bg-gray-800'] {
   background-color: var(--mh-neutral-200, #eae7e7) !important;
   color: var(--mh-text, #201e1d) !important;
+}
+
+body.modernist-home footer.footer-edge-to-edge .footer-contact-icon {
+  color: var(--mh-accent, #ec3013) !important;
+}
+
+body.modernist-home footer.footer-edge-to-edge .footer-heading {
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+body.modernist-home footer.footer-edge-to-edge .footer-address .font-medium,
+body.modernist-home footer.footer-edge-to-edge .footer-address [class*='text-gray-300'] {
+  color: var(--mh-text, #201e1d) !important;
+}
+
+@media (max-width: 767px) {
+  body.modernist-home footer.footer-edge-to-edge.footer-main {
+    margin-top: 2.5rem !important;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-grid {
+    gap: 1.5rem;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-brand {
+    border-bottom: 1px solid var(--mh-neutral-300, #d7d3d3);
+    margin-bottom: 0.15rem;
+    padding-bottom: 1.15rem;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-brand-desc {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Contact: same visual axis as brand (centered stack) */
+  body.modernist-home footer.footer-edge-to-edge .footer-contact {
+    text-align: center;
+    padding-bottom: 1.15rem;
+    border-bottom: 1px solid var(--mh-neutral-300, #d7d3d3);
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-contact .space-y-3\.5,
+  body.modernist-home footer.footer-edge-to-edge .footer-contact > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-contact .flex {
+    justify-content: center;
+    text-align: left;
+    max-width: 20rem;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-address {
+    text-align: left;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-nav-pair {
+    align-items: start;
+    column-gap: 1.25rem;
+    row-gap: 0;
+    text-align: left;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-heading {
+    margin-bottom: 0.75rem !important;
+    font-size: 0.9375rem !important;
+    min-height: 2.4em;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-link {
+    line-height: 1.4;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+  }
+
+  body.modernist-home footer.footer-edge-to-edge .footer-bottom p {
+    max-width: 22rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 /* —— Events listing page (Modernist poster grid) —— */

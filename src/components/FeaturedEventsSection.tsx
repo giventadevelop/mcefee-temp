@@ -9,6 +9,7 @@ import { useDeferredFetch } from '@/hooks/usePageReady';
 import { getHomepageCacheKey } from '@/lib/homepageCacheKeys';
 import {
   MAX_FEATURED_EVENTS_HOMEPAGE,
+  getFeaturedEventImageUrl,
   type FeaturedEventWithMedia,
 } from '@/lib/homepage/featuredEvents';
 import { EventStripBannerImage } from '@/components/EventStripBannerImage';
@@ -110,7 +111,7 @@ const FeaturedEventsSection: React.FC<FeaturedEventsSectionProps> = ({
             >
               <div className="featured-event-card-inner flex flex-col md:flex-row md:items-stretch">
                 <div className="featured-event-card-media relative w-full shrink-0 md:w-[70%]">
-                  {featuredEvent.media.fileUrl ? (
+                  {getFeaturedEventImageUrl(featuredEvent) ? (
                     <Link
                       href={`/events/${featuredEvent.event.id}`}
                       className="block h-full w-full min-h-0"
@@ -118,8 +119,8 @@ const FeaturedEventsSection: React.FC<FeaturedEventsSectionProps> = ({
                       aria-label={`View ${featuredEvent.event.title}`}
                     >
                       <EventStripBannerImage
-                        src={featuredEvent.media.fileUrl}
-                        alt={featuredEvent.media.altText || featuredEvent.event.title}
+                        src={getFeaturedEventImageUrl(featuredEvent) || ''}
+                        alt={featuredEvent.media?.altText || featuredEvent.event.title}
                         priority={index === 0}
                         variant="featured"
                       />
