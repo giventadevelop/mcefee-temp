@@ -276,16 +276,9 @@ body.modernist-home .mh-poster-hero-img.is-visible {
   opacity: 1;
 }
 
+/* No darkening overlay — keep hero image bright/clear under logo + CTAs */
 body.modernist-home .mh-poster-hero-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    90deg,
-    rgba(32, 30, 29, 0.86) 0%,
-    rgba(32, 30, 29, 0.62) 52%,
-    rgba(32, 30, 29, 0.18) 100%
-  );
+  display: none;
 }
 
 /*
@@ -1428,14 +1421,9 @@ body.modernist-home .mh-close .mh-btn {
     object-position: center center !important;
   }
 
-  /* Lighter scrim so the slide stays readable/viewable */
+  /* No darkening overlay on mobile either */
   body.modernist-home .mh-poster-hero-scrim {
-    background: linear-gradient(
-      to top,
-      rgba(32, 30, 29, 0.45) 0%,
-      rgba(32, 30, 29, 0.12) 40%,
-      transparent 72%
-    );
+    display: none;
   }
 
   body.modernist-home .mh-poster-hero-content,
