@@ -65,9 +65,7 @@ export default function SponsorEditClient({
       const updatedSponsor = await updateEventSponsorServer(sponsor.id, formData);
       setSponsor(updatedSponsor);
       setToastMessage({ type: 'success', message: 'Sponsor updated successfully' });
-
-      // Refresh media list after update in case URLs changed
-      setMediaRefreshKey(prev => prev + 1);
+      router.push('/admin/event-sponsors');
     } catch (err: any) {
       setToastMessage({ type: 'error', message: err.message || 'Failed to update sponsor' });
     } finally {

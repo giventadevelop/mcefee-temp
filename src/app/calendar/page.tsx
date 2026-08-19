@@ -43,9 +43,9 @@ export default async function CalendarPage({
       <CalendarPageBackground />
       <main className="mh-events-page modernist-home mh-calendar-page">
         <section className="mh-events-hero" aria-label="Calendar">
-          <figure className="mh-events-hero-media mh-grayscale">
+          <figure className="mh-events-hero-media">
             <Image
-              src="/images/default_placeholder_hero_image.jpeg"
+              src="/images/mcefee_event/mcefee_ribbon_image_transparent.png"
               alt=""
               fill
               priority

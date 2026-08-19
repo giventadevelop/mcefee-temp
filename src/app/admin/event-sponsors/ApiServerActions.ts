@@ -9,6 +9,38 @@ function getApiBase() {
 }
 const baseUrl = getAppUrl();
 
+/**
+ * DB check constraints (check_url_format_*, check_email_format, check_phone_format)
+ * reject '' — these columns must be null or a well-formed value.
+ */
+const SPONSOR_FORMAT_CHECKED_FIELDS = [
+  'websiteUrl',
+  'logoUrl',
+  'heroImageUrl',
+  'bannerImageUrl',
+  'facebookUrl',
+  'twitterUrl',
+  'linkedinUrl',
+  'instagramUrl',
+  'youtubeUrl',
+  'tiktokUrl',
+  'contactEmail',
+  'contactPhone',
+] as const;
+
+function normalizeSponsorFormatFields<T extends Record<string, unknown>>(sponsor: T): T {
+  const next = { ...sponsor };
+  for (const key of SPONSOR_FORMAT_CHECKED_FIELDS) {
+    if (!(key in next)) continue;
+    const value = next[key as keyof T];
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      (next as Record<string, unknown>)[key] = trimmed === '' ? null : trimmed;
+    }
+  }
+  return next;
+}
+
 export async function fetchEventSponsorsServer(page: number = 0, pageSize: number = 10) {
   const params = new URLSearchParams();
   params.append('page', String(page));
@@ -55,7 +87,9 @@ export async function fetchEventSponsorServer(id: number) {
 
 export async function createEventSponsorServer(sponsor: Omit<EventSponsorsDTO, 'id' | 'createdAt' | 'updatedAt'>) {
   const now = new Date().toISOString();
-  const payload = withTenantId({ ...sponsor, createdAt: now, updatedAt: now });
+  const payload = withTenantId(
+    normalizeSponsorFormatFields({ ...sponsor, createdAt: now, updatedAt: now } as Record<string, unknown>)
+  );
 
   const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-sponsors`, {
     method: 'POST',
@@ -72,7 +106,9 @@ export async function createEventSponsorServer(sponsor: Omit<EventSponsorsDTO, '
 }
 
 export async function updateEventSponsorServer(id: number, sponsor: Partial<EventSponsorsDTO>) {
-  const payload = withTenantId({ ...sponsor, id });
+  const payload = withTenantId(
+    normalizeSponsorFormatFields({ ...sponsor, id } as Record<string, unknown>)
+  );
 
   const response = await fetchWithJwtRetry(`${getApiBase()}/api/event-sponsors/${id}`, {
     method: 'PATCH',
