@@ -3873,3 +3873,239 @@ body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-contacts:empty {
 body.modernist-home .mh-sponsor-detail .mh-sponsor-detail-contacts {
   padding-top: 0.5rem;
 }
+
+/* Competition results panel + Result button (ported from kcnj-temp) */
+body.modernist-home .mh-btn-results {
+  background: #b45309;
+  border-color: #b45309;
+  color: #fff;
+}
+body.modernist-home .mh-btn-results:hover,
+body.modernist-home .mh-btn-results.is-open {
+  background: #92400e;
+  border-color: #92400e;
+}
+body.modernist-home.organic-home .mh-btn-results {
+  background: #8a5a1a;
+  border-color: #8a5a1a;
+  color: var(--mh-bg);
+}
+body.modernist-home.organic-home .mh-btn-results:hover,
+body.modernist-home.organic-home .mh-btn-results.is-open {
+  background: #643312;
+  border-color: #643312;
+}
+
+body.modernist-home .mh-event-results-panel {
+  margin-top: 14px;
+  padding: 18px 18px 20px;
+  background: var(--mh-surface);
+  border-top: 3px solid var(--mh-accent);
+  animation: mh-results-open 0.28s ease;
+}
+
+@keyframes mh-results-open {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+body.modernist-home .mh-event-results-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mh-accent-800);
+}
+
+body.modernist-home .mh-event-results-kicker svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+body.modernist-home .mh-event-results-group + .mh-event-results-group {
+  margin-top: 16px;
+}
+
+body.modernist-home .mh-event-results-group-title {
+  margin: 0 0 10px;
+  font-family: var(--mh-font-heading);
+  font-weight: var(--mh-font-heading-weight);
+  font-size: 16px;
+  color: var(--mh-brand-green);
+}
+
+body.modernist-home .mh-event-results-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+body.modernist-home .mh-event-results-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--mh-neutral-100);
+  border-left: 3px solid var(--mh-neutral-300);
+}
+
+body.modernist-home .mh-event-results-row--gold {
+  border-left-color: #c9a227;
+  background: color-mix(in srgb, #c9a227 10%, var(--mh-neutral-100));
+}
+
+body.modernist-home .mh-event-results-row--silver {
+  border-left-color: #8a8478;
+  background: color-mix(in srgb, #8a8478 10%, var(--mh-neutral-100));
+}
+
+body.modernist-home .mh-event-results-row--bronze {
+  border-left-color: var(--mh-accent);
+  background: color-mix(in srgb, var(--mh-accent) 10%, var(--mh-neutral-100));
+}
+
+body.modernist-home .mh-event-results-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+  font-feature-settings: 'tnum' 1;
+  background: var(--mh-neutral-300);
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-event-results-row--gold .mh-event-results-medal {
+  background: #c9a227;
+  color: #fff8e8;
+}
+
+body.modernist-home .mh-event-results-row--silver .mh-event-results-medal {
+  background: #8a8478;
+  color: #fff8f0;
+}
+
+body.modernist-home .mh-event-results-row--bronze .mh-event-results-medal {
+  background: var(--mh-accent);
+  color: var(--mh-bg);
+}
+
+body.modernist-home .mh-event-results-copy {
+  min-width: 0;
+}
+
+body.modernist-home .mh-event-results-photo {
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--mh-neutral-300);
+  background: var(--mh-neutral-100);
+}
+
+body.modernist-home .mh-event-results-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-event-results-place {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mh-accent-800);
+}
+
+body.modernist-home .mh-event-results-detail {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-event-results-docs {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mh-neutral-300);
+}
+
+body.modernist-home .mh-event-results-doc {
+  padding: 10px 0 0;
+}
+
+body.modernist-home .mh-event-results-doc h5 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-event-results-doc p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-event-results-empty {
+  padding: 6px 0 2px;
+}
+
+body.modernist-home .mh-event-results-empty-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--mh-brand-green);
+}
+
+body.modernist-home .mh-event-results-empty-copy {
+  margin: 0;
+  max-width: 42rem;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-event-results-pending {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 2px;
+}
+
+body.modernist-home .mh-event-results-pending-line {
+  display: block;
+  height: 12px;
+  width: 72%;
+  background: color-mix(in srgb, var(--mh-neutral-500) 28%, var(--mh-surface));
+}
+
+body.modernist-home .mh-event-results-pending-line--short {
+  width: 44%;
+}
+
+body.modernist-home .mh-event-card-loc-tools {
+  display: inline-flex;
