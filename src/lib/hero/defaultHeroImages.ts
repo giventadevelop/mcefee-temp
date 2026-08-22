@@ -11,6 +11,11 @@ export interface DefaultHeroSlide {
   fileName?: string;
 }
 
+/**
+ * Platform emergency homepage hero. Tenants replace this file in `public/`;
+ * do not hardcode a different path in hero components.
+ * Path: `/images/hero_section/hero_images/fallback/default-hero.webp`
+ */
 export const BUNDLED_EMERGENCY_HERO_IMAGE =
   '/images/hero_section/hero_images/fallback/default-hero.webp';
 
@@ -371,13 +376,19 @@ export function resolveHeroImages(input: ResolveHeroImagesInput): ResolveHeroIma
     const imageUrls = includeDefaults ? [...eventUrls, ...tenantUrls] : [...eventUrls];
     const durationsMs = [
       ...eventDurations,
-      ...tenantUrls.map(() => TENANT_HERO_SLIDE_DURATION_MS),
+      ...(includeDefaults ? tenantUrls.map(() => TENANT_HERO_SLIDE_DURATION_MS) : []),
     ];
+
+    if (imageUrls.length < 2 && fallback && !imageUrls.includes(fallback)) {
+      imageUrls.push(fallback);
+      durationsMs.push(TENANT_HERO_SLIDE_DURATION_MS);
+    }
+
     return {
       imageUrls,
       durationsMs,
       eventSlideCount: eventUrls.length,
-      defaultSlideCount: tenantUrls.length,
+      defaultSlideCount: imageUrls.length - eventUrls.length,
     };
   }
 
