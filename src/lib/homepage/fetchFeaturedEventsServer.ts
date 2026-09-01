@@ -1,4 +1,6 @@
-import { getAppUrlFromRequestHeaders, getTenantId } from '@/lib/env';
+import { getApiBaseUrl, getTenantId } from '@/lib/env';
+import { fetchWithJwtRetry } from '@/lib/proxyHandler';
+import { logServerFetchFailure } from '@/lib/logServerFetchFailure';
 import type { EventDetailsDTO } from '@/types';
 import {
   computeFeaturedEventsFromMedia,
@@ -28,17 +30,17 @@ function isEventInNextYear(eventDate: string, today: Date): boolean {
  */
 export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEventWithMedia[]> {
   try {
-    const baseUrl = await getAppUrlFromRequestHeaders();
+    const apiBase = getApiBaseUrl();
     const tenantId = getTenantId();
 
-    let eventsResponse = await fetch(
-      `${baseUrl}/api/proxy/event-details?tenantId.equals=${encodeURIComponent(tenantId)}&sort=startDate,asc`,
+    let eventsResponse = await fetchWithJwtRetry(
+      `${apiBase}/api/event-details?tenantId.equals=${encodeURIComponent(tenantId)}&sort=startDate,asc`,
       { cache: 'no-store' }
     );
 
     if (!eventsResponse.ok) {
-      eventsResponse = await fetch(
-        `${baseUrl}/api/proxy/event-details?tenantId.equals=${encodeURIComponent(tenantId)}&sort=startDate,desc`,
+      eventsResponse = await fetchWithJwtRetry(
+        `${apiBase}/api/event-details?tenantId.equals=${encodeURIComponent(tenantId)}&sort=startDate,desc`,
         { cache: 'no-store' }
       );
     }
@@ -79,8 +81,8 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
     for (const event of eventsToLoad) {
       try {
         // Prefer dedicated featured-image media, then fall back to all event media
-        let mediaResponse = await fetch(
-          `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isFeaturedEventImage.equals=true`,
+        let mediaResponse = await fetchWithJwtRetry(
+          `${apiBase}/api/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isFeaturedEventImage.equals=true`,
           { cache: 'no-store' }
         );
         let mediaArray = mediaResponse.ok
@@ -88,8 +90,8 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
           : [];
 
         if (mediaArray.length === 0) {
-          mediaResponse = await fetch(
-            `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isHomePageHeroImage.equals=true`,
+          mediaResponse = await fetchWithJwtRetry(
+            `${apiBase}/api/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isHomePageHeroImage.equals=true`,
             { cache: 'no-store' }
           );
           mediaArray = mediaResponse.ok
@@ -98,8 +100,8 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
         }
 
         if (mediaArray.length === 0) {
-          mediaResponse = await fetch(
-            `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isHeroImage.equals=true`,
+          mediaResponse = await fetchWithJwtRetry(
+            `${apiBase}/api/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&isHeroImage.equals=true`,
             { cache: 'no-store' }
           );
           mediaArray = mediaResponse.ok
@@ -108,8 +110,8 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
         }
 
         if (mediaArray.length === 0) {
-          mediaResponse = await fetch(
-            `${baseUrl}/api/proxy/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&size=50`,
+          mediaResponse = await fetchWithJwtRetry(
+            `${apiBase}/api/event-medias?tenantId.equals=${encodeURIComponent(tenantId)}&eventId.equals=${event.id}&size=50`,
             { cache: 'no-store' }
           );
           mediaArray = mediaResponse.ok
@@ -126,7 +128,7 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
     const featured = computeFeaturedEventsFromMedia(eventsWithMedia);
     return featured.slice(0, MAX_FEATURED_EVENTS_HOMEPAGE);
   } catch (e) {
-    console.warn('[fetchFeaturedEventsForHomepageServer]', e);
+    logServerFetchFailure('fetchFeaturedEventsForHomepageServer', e);
     return [];
   }
 }
