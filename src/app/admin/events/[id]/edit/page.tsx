@@ -2,6 +2,7 @@
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { EventForm } from '@/components/EventForm';
+import AgendaFlyerPanel from '@/app/admin/events/[id]/agenda/AgendaFlyerPanel';
 import type { EventDetailsDTO, EventTypeDetailsDTO } from '@/types';
 import Link from 'next/link';
 import { FaUsers, FaPhotoVideo, FaCalendarAlt, FaTags, FaTicketAlt, FaHome, FaMicrophone, FaAddressBook, FaHandshake, FaEnvelope, FaUserTie, FaClipboardCheck, FaChartLine, FaDollarSign } from 'react-icons/fa';
@@ -292,6 +293,8 @@ export default function EditEventPage() {
           and program directors with this event.
         </div>
       </div>
+
+      {eventId && <AgendaFlyerPanel eventId={String(eventId)} />}
 
       <h1 className="text-2xl font-bold mb-4">Edit Event - ID: {eventId}</h1>
       <div className="border rounded p-4 bg-white shadow-sm min-h-[200px]">
