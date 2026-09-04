@@ -399,6 +399,8 @@ export default function EventDetailsPage() {
       const params = new URLSearchParams({
         'eventId.equals': eventId.toString(),
         'isEventManagementOfficialDocument.equals': 'false',
+        'isPublic.equals': 'true',
+        size: '100',
         sort: 'updatedAt,desc',
       });
       if (eventFocusGroupIdFilter != null) {
@@ -435,12 +437,48 @@ export default function EventDetailsPage() {
   }
 
   // Find hero image - Prioritize isHomePageHeroImage, then fallback to eventFlyer
+  const isAgendaItemThumbnail = (m: EventMediaDTO) =>
+    /\bagenda thumbnail\b/i.test(m.title || '');
+  const isWrongEventMediaPath = (m: EventMediaDTO) => {
+    const match = (m.fileUrl || '').match(/\/event-id\/(\d+)\//i);
+    return Boolean(match && eventId && String(match[1]) !== String(eventId));
+  };
+  const galleryPriority = (m: EventMediaDTO) => {
+    if (m.isHomePageHeroImage || m.isActiveHeroImage) return 100;
+    if (m.isFeaturedEventImage || m.isHeroImage) return 90;
+    if (m.eventFlyer) return 80;
+    if (m.isAgendaFlyer) return 70;
+    if (m.isLiveEventImage) return 60;
+    return 0;
+  };
+
   const heroImage = media.find((m) => m.isHomePageHeroImage && m.fileUrl && !m.isAgendaFlyer) ||
                     media.find((m) => m.eventFlyer && m.fileUrl && !m.isAgendaFlyer) ||
-                    media.find((m) => m.fileUrl && !m.isAgendaFlyer);
+                    media.find((m) => m.fileUrl && !m.isAgendaFlyer && !isAgendaItemThumbnail(m));
   // Use default hero image if no hero image found (same as events page)
   const heroImageUrl = heroImage?.fileUrl || "/images/default_placeholder_hero_image.jpeg";
-  const gallery = media.filter((m) => m.fileUrl && (!heroImage || m.id !== heroImage.id) && !m.isAgendaFlyer);
+
+  // Bottom gallery: include hero / cover / agenda flyer and other current event images.
+  // Exclude per-row agenda thumbnails and stale S3 paths from a different event-id.
+  const gallerySources = [...media];
+  if (agendaFlyer?.id && !gallerySources.some((m) => m.id === agendaFlyer.id)) {
+    gallerySources.push(agendaFlyer);
+  }
+  const gallery = gallerySources
+    .filter((m) =>
+      Boolean(m.fileUrl || m.preSignedUrl) &&
+      !isAgendaItemThumbnail(m) &&
+      !isWrongEventMediaPath(m) &&
+      m.isPublic !== false
+    )
+    .slice()
+    .sort((a, b) => {
+      const byPriority = galleryPriority(b) - galleryPriority(a);
+      if (byPriority !== 0) return byPriority;
+      const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      return bTime - aTime;
+    });
   const agendaFlyerUrl = agendaFlyer?.fileUrl || agendaFlyer?.preSignedUrl || null;
 
   // Get preview images (first 12 media items for grid display)
@@ -1353,9 +1391,9 @@ export default function EventDetailsPage() {
                           }}
                           className={`${styles.galleryThumbnail} relative overflow-hidden cursor-pointer group`}
                         >
-                          {mediaItem.fileUrl ? (
+                          {(mediaItem.fileUrl || mediaItem.preSignedUrl) ? (
                             <Image
-                              src={mediaItem.fileUrl}
+                              src={mediaItem.fileUrl || mediaItem.preSignedUrl || ''}
                               alt={mediaItem.altText || mediaItem.title}
                               fill
                               className="object-cover transition-transform duration-500 group-hover:scale-110"
