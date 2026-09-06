@@ -1963,6 +1963,7 @@ export interface EventCompetitionResultDTO {
   prizeDetails?: string | null;
   pointsAwarded: number;
   winnerPhotoUrl?: string | null;
+  workPhotoUrl?: string | null;
   notes?: string | null;
   isPublished: boolean;
   publishedAt?: string | null;
@@ -1973,6 +1974,7 @@ export interface EventCompetitionResultDTO {
   participantProfile?: EventCompetitionParticipantDTO;
   registration?: EventCompetitionRegistrationDTO;
   winnerMedia?: EventMediaDTO;
+  workMedia?: EventMediaDTO;
 }
 
 export interface EventCompetitionContentBlockDTO {
