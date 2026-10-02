@@ -9,7 +9,7 @@ import type { EventWithMedia, EventDetailsDTO } from "@/types";
 import { formatInTimeZone } from 'date-fns-tz';
 import { isRecurringEvent, getNextOccurrenceDate } from '@/lib/eventUtils';
 import { isDonationBasedEvent, isTicketedFundraiserEvent } from '@/lib/donation/utils';
-import { resolveBuyTicketsTarget } from '@/lib/eventcube/utils';
+import { resolveBuyTicketsTarget, resolveRegisterTarget } from '@/lib/eventcube/utils';
 import { getTenantId } from '@/lib/env';
 import { useDeferredFetch } from '@/hooks/usePageReady';
 import { getHomepageCacheKey } from '@/lib/homepageCacheKeys';
@@ -68,7 +68,7 @@ function ModernistUpcomingEventCard({
   formatDate: (dateString: string, timezone?: string) => string;
   formatTime: (time: string) => string;
 }) {
-  const showRegister = isUpcomingEvents && event.isRegistrationRequired === true;
+  const registerTarget = isUpcomingEvents ? resolveRegisterTarget(event) : null;
   const buyTicketsTarget = isUpcomingEvents ? resolveBuyTicketsTarget(event) : null;
   const showDonation =
     isUpcomingEvents && isDonationBasedEvent(event) && !isTicketedFundraiserEvent(event);
@@ -121,12 +121,15 @@ function ModernistUpcomingEventCard({
             See Event Details
           </Link>
 
-          {showRegister && (
+          {registerTarget && (
             <Link
-              href={`/events/${event.id}/register`}
+              href={registerTarget.href}
               className="mh-btn mh-btn-register"
               title="Register"
               aria-label="Register"
+              {...(registerTarget.kind === 'external'
+                ? { target: '_blank', rel: 'noopener noreferrer' }
+                : {})}
             >
               <IconRegister />
               Register
@@ -389,11 +392,19 @@ function UpcomingEventGlassCard({
               </Link>
 
               <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                {isUpcomingEvents && event.isRegistrationRequired === true && (
+                {isUpcomingEvents && (() => {
+                  const registerTarget = resolveRegisterTarget(event);
+                  if (!registerTarget) return null;
+                  return (
                   <Link
-                    href={`/events/${event.id}/register`}
+                    href={registerTarget.href}
                     onClick={(e) => e.stopPropagation()}
                     className="inline-block transition-transform hover:scale-105"
+                    title="Register Here"
+                    aria-label="Register Here"
+                    {...(registerTarget.kind === 'external'
+                      ? { target: '_blank', rel: 'noopener noreferrer' }
+                      : {})}
                   >
                     <img
                       src="/images/register_here_button.jpg"
@@ -403,7 +414,8 @@ function UpcomingEventGlassCard({
                       height={70}
                     />
                   </Link>
-                )}
+                  );
+                })()}
 
                 {isUpcomingEvents && (() => {
                   const buyTarget = resolveBuyTicketsTarget(event);
@@ -960,18 +972,16 @@ const UpcomingEventsSection: React.FC<{ variant?: UpcomingEventsSectionVariant }
             />
           ))}
         </div>
-        {hasMoreEvents && (
-          <div className="mh-home-events-more">
-            <Link
-              href="/events"
-              className="mh-btn mh-btn-readmore"
-              title="See more events"
-              aria-label="See more events"
-            >
-              See more events
-            </Link>
-          </div>
-        )}
+        <div className="mh-home-events-more">
+          <Link
+            href="/events"
+            className="mh-btn mh-btn-readmore"
+            title="View all events"
+            aria-label="View all events"
+          >
+            View all events
+          </Link>
+        </div>
       </section>
     );
   }

@@ -8,6 +8,7 @@ import { getTenantId } from "@/lib/env";
 import type { EventDetailsDTO, EventMediaDTO, EventAttendeeDTO, EventAttendeeGuestDTO, UserProfileDTO } from "@/types";
 import { FaPlus, FaTrashAlt, FaCheck, FaPaperclip, FaTimes, FaUpload } from "react-icons/fa";
 import LocationDisplay from '@/components/LocationDisplay';
+import { resolveRegisterTarget } from '@/lib/eventcube/utils';
 
 const NOTES_MAX_LENGTH = 1500;
 const MAX_ATTACHMENTS = 2;
@@ -74,6 +75,14 @@ export default function EventRegisterPage({ params }: { params: Promise<{ id: st
     }
     fetchEvent();
   }, [eventId]);
+
+  useEffect(() => {
+    if (!event) return;
+    const target = resolveRegisterTarget(event);
+    if (target?.kind === 'external') {
+      window.location.replace(target.href);
+    }
+  }, [event]);
 
   // Prepopulate attendee fields from user profile if logged in
   useEffect(() => {
