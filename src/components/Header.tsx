@@ -93,6 +93,12 @@ const navItemCatalog = [
     active: false,
   },
   {
+    key: 'family' as const,
+    name: 'Family',
+    href: '/family',
+    active: false,
+  },
+  {
     key: 'links' as const,
     name: 'Links',
     href: '/links',
@@ -716,6 +722,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     showProfileAchievements,
     showProfileAffiliations,
     showProfileProjects,
+    showProfileFamily,
     showHeaderHome,
     showHeaderAbout,
     showHeaderEvents,
@@ -730,6 +737,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     showHeaderAchievements,
     showHeaderAffiliations,
     showHeaderProjects,
+    showHeaderFamily,
     loading: settingsLoading,
   } = useTenantSettings();
   const mounted = useMounted();
@@ -743,7 +751,8 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
       showProfileServices ||
       showProfileAchievements ||
       showProfileAffiliations ||
-      showProfileProjects);
+      showProfileProjects ||
+      showProfileFamily);
   const [isAdmin, setIsAdmin] = useState(!!isTenantAdmin);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -1117,6 +1126,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
     achievements: showHeaderAchievements,
     affiliations: showHeaderAffiliations,
     projects: showHeaderProjects,
+    family: showHeaderFamily,
     links: showHeaderLinks,
     contact: showHeaderContact,
   };

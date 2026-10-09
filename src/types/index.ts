@@ -758,6 +758,7 @@ export interface TenantSettingsDTO {
   showProfileContactSection?: boolean;
   showProfileProjectsSection?: boolean;
   showProfileServicesSection?: boolean;
+  showProfileFamilySection?: boolean;
   // Header menu visibility (null = app default: legacy items ON; news/downloads/links/services OFF)
   showHeaderHome?: boolean | null;
   showHeaderAbout?: boolean | null;
@@ -773,6 +774,7 @@ export interface TenantSettingsDTO {
   showHeaderAchievements?: boolean | null;
   showHeaderAffiliations?: boolean | null;
   showHeaderProjects?: boolean | null;
+  showHeaderFamily?: boolean | null;
   // Gas station COO module (GAS_STATION site type)
   /** Master on/off for the gas station admin module for this tenant */
   enableGasStationModule?: boolean;
@@ -1233,7 +1235,6 @@ export interface EventProgramDirectorsDTO {
   updatedAt: string;
   event?: EventDetailsDTO;
 }
-
 
 /**
  * Timed event-day program item (Onam-style agenda). Overlapping times are allowed.
@@ -1820,6 +1821,7 @@ export type CompetitionDisciplineCode =
   | 'MUSIC'
   | 'SPORTS'
   | 'ART'
+  | 'PAINTING'
   | 'OTHER';
 export type CompetitionGroupMemberRole = 'CAPTAIN' | 'MEMBER';
 export type RegistrationActorMode = 'PARENT' | 'SELF' | 'TEAM_CAPTAIN';
