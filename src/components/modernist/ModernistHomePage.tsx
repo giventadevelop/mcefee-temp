@@ -8,6 +8,7 @@ import {
   getFeaturedEventImageUrl,
   MAX_FEATURED_EVENTS_HOMEPAGE,
   mediaImageUrl,
+  selectHomepageFeaturedEvents,
   type FeaturedEventWithMedia,
 } from '@/lib/homepage/featuredEvents';
 import { normalizeEventMediasList } from '@/lib/homepage/homepageApiNormalize';
@@ -15,9 +16,11 @@ import { getTenantId } from '@/lib/env';
 import { parseExecutiveCommitteeTeamMembersResponse } from '@/lib/parseExecutiveCommitteeTeamMembersResponse';
 import { resolveRegisterTarget } from '@/lib/eventcube/utils';
 import ModernistPosterHero from '@/components/modernist/ModernistPosterHero';
+import UpcomingEventsSection from '@/components/UpcomingEventsSection';
 import { useTenantSettings } from '@/components/TenantSettingsProvider';
 import { useEventsData } from '@/hooks/useEventsData';
 import { useDeferredFetch } from '@/hooks/usePageReady';
+import { useSilentListingRefresh } from '@/hooks/useSilentListingRefresh';
 import '@/styles/modernist-homepage.css';
 
 const SERVICES = [
@@ -397,8 +400,10 @@ export default function ModernistHomePage({
   initialFeaturedEvents: FeaturedEventWithMedia[];
 }) {
   const {
+    showEventsSection,
     showExecutiveCommitteeSection,
     showSponsorsSection,
+    loading: tenantSettingsLoading,
   } = useTenantSettings();
 
   const [team, setTeam] = useState<ExecutiveCommitteeTeamMemberDTO[]>([]);
@@ -410,16 +415,23 @@ export default function ModernistHomePage({
     upcomingEvents,
     isLoading: featuredLoading,
   } = useEventsData(featuredFetchEnabled);
+  const [backgroundRefreshNonce, setBackgroundRefreshNonce] = useState(0);
+
+  useSilentListingRefresh(() => {
+    setBackgroundRefreshNonce((n) => n + 1);
+  });
 
   const clientFeatured = useMemo(
     () => computeFeaturedEventsFromMedia(eventsWithMedia),
     [eventsWithMedia]
   );
 
-  const featuredItems =
-    !featuredLoading && clientFeatured.length > 0
-      ? clientFeatured.slice(0, MAX_FEATURED_EVENTS_HOMEPAGE)
-      : initialFeaturedEvents.slice(0, MAX_FEATURED_EVENTS_HOMEPAGE);
+  const hasUpcomingEvents = upcomingEvents.length > 0;
+  const featuredSource =
+    !featuredLoading && clientFeatured.length > 0 ? clientFeatured : initialFeaturedEvents;
+  const featuredItems = featuredLoading
+    ? initialFeaturedEvents.slice(0, MAX_FEATURED_EVENTS_HOMEPAGE)
+    : selectHomepageFeaturedEvents(featuredSource, hasUpcomingEvents, MAX_FEATURED_EVENTS_HOMEPAGE);
   const upcomingFeaturedEvent =
     featuredItems.find((item) => isUpcomingStartDate(item.event.startDate))?.event ?? null;
   // On sale band — upcoming only; hide when nothing upcoming
@@ -460,7 +472,7 @@ export default function ModernistHomePage({
     return () => {
       cancelled = true;
     };
-  }, [showExecutiveCommitteeSection]);
+  }, [showExecutiveCommitteeSection, backgroundRefreshNonce]);
 
   useEffect(() => {
     let cancelled = false;
@@ -492,7 +504,7 @@ export default function ModernistHomePage({
     return () => {
       cancelled = true;
     };
-  }, [showSponsorsSection]);
+  }, [showSponsorsSection, backgroundRefreshNonce]);
 
   return (
     <main className="modernist-home">
@@ -547,8 +559,13 @@ export default function ModernistHomePage({
         );
       })()}
 
-      {/* Featured events — event.isFeaturedEvent checkbox from admin edit */}
+      {/* Featured: upcoming featured if any; otherwise past featured only when no future events. Max 3. */}
       <FeaturedEventsModernist items={featuredItems} />
+
+      {/* Upcoming (max 6), or Past Events (max 6) when there are no future events */}
+      {!tenantSettingsLoading && showEventsSection !== false && (
+        <UpcomingEventsSection variant="modernist" fallbackToPast />
+      )}
 
       {/* 1a — What we do (interactive cards) */}
       <WhatWeDoSection />

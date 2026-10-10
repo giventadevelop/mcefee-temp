@@ -4,7 +4,9 @@ import { logServerFetchFailure } from '@/lib/logServerFetchFailure';
 import type { EventDetailsDTO } from '@/types';
 import {
   computeFeaturedEventsFromMedia,
+  isPastHomepageEvent,
   MAX_FEATURED_EVENTS_HOMEPAGE,
+  selectHomepageFeaturedEvents,
   type EventWithMedia,
   type FeaturedEventWithMedia,
 } from '@/lib/homepage/featuredEvents';
@@ -54,27 +56,28 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Prefer upcoming active featured events; if none, still include any featured active event
-    // so a checked Featured Event checkbox always has a chance to surface on the homepage.
+    const isFeaturedEvent = (event: EventDetailsDTO) =>
+      isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).isFeaturedEvent) ||
+      isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).is_featured_event);
+
     const upcomingEvents = events.filter(
       (event) => event.startDate && isEventInNextYear(event.startDate, today) && event.isActive !== false
     );
+    const upcomingFeatured = upcomingEvents.filter(isFeaturedEvent);
 
-    const featuredCandidates = upcomingEvents.filter(
-      (event) =>
-        isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).isFeaturedEvent) ||
-        isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).is_featured_event)
-    );
-
+    // Upcoming featured first. Past featured only when there are no future events.
     const eventsToLoad =
-      featuredCandidates.length > 0
-        ? featuredCandidates
-        : events.filter(
-            (event) =>
-              event.isActive !== false &&
-              (isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).isFeaturedEvent) ||
-                isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).is_featured_event))
-          );
+      upcomingFeatured.length > 0
+        ? upcomingFeatured
+        : upcomingEvents.length === 0
+          ? events.filter(
+              (event) => event.isActive !== false && isPastHomepageEvent(event) && isFeaturedEvent(event)
+            )
+          : [];
+
+    if (eventsToLoad.length === 0) {
+      return [];
+    }
 
     const eventsWithMedia: EventWithMedia[] = [];
 
@@ -125,8 +128,11 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
       }
     }
 
-    const featured = computeFeaturedEventsFromMedia(eventsWithMedia);
-    return featured.slice(0, MAX_FEATURED_EVENTS_HOMEPAGE);
+    return selectHomepageFeaturedEvents(
+      computeFeaturedEventsFromMedia(eventsWithMedia),
+      upcomingEvents.length > 0,
+      MAX_FEATURED_EVENTS_HOMEPAGE
+    );
   } catch (e) {
     logServerFetchFailure('fetchFeaturedEventsForHomepageServer', e);
     return [];
