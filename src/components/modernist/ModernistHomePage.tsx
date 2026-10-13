@@ -485,7 +485,7 @@ export default function ModernistHomePage({
           'tenantId.equals': tenantId,
           'isActive.equals': 'true',
           sort: 'priorityRanking,asc',
-          size: '12',
+          size: '8',
         });
         const res = await fetch(`/api/proxy/event-sponsors?${params.toString()}`, {
           cache: 'no-store',
