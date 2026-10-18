@@ -501,6 +501,24 @@ const UpcomingEventsSection: React.FC<{
   // Bump version when event hero media is reseeded so cards pick up new image URLs
   const CACHE_KEY = getHomepageCacheKey('homepage_events_cache', 6);
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  const [listingRefreshNonce, setListingRefreshNonce] = useState(0);
+  const hasCompletedInitialLoadRef = useRef(false);
+
+  useEffect(() => {
+    if (!loading) {
+      hasCompletedInitialLoadRef.current = true;
+    }
+  }, [loading]);
+
+  // Same silent refresh pattern as kcnj-prod — refetch in background without unloading cards
+  useSilentListingRefresh(() => {
+    try {
+      sessionStorage.removeItem(CACHE_KEY);
+    } catch {
+      /* ignore quota / private mode */
+    }
+    setListingRefreshNonce((n) => n + 1);
+  });
 
   // Run cache read before paint so cached data shows immediately (no delay on refresh)
   useLayoutEffect(() => {
@@ -509,14 +527,21 @@ const UpcomingEventsSection: React.FC<{
       if (cachedData) {
         const { data, timestamp, isUpcoming, hasMore } = JSON.parse(cachedData);
         if (Date.now() - timestamp < CACHE_DURATION) {
-          setEvents(data ?? []);
-          setIsUpcomingEvents(isUpcoming !== false);
-          setHasMoreEvents(hasMore === true);
-          setLoading(false);
+          if (!fallbackToPast && isUpcoming === false) {
+            setEvents([]);
+            setIsUpcomingEvents(true);
+            setHasMoreEvents(false);
+            setLoading(false);
+          } else {
+            setEvents(data ?? []);
+            setIsUpcomingEvents(isUpcoming !== false);
+            setHasMoreEvents(hasMore === true);
+            setLoading(false);
+          }
         }
       }
     } catch (_) { /* ignore */ }
-  }, [CACHE_KEY, CACHE_DURATION]);
+  }, [CACHE_KEY, CACHE_DURATION, fallbackToPast]);
 
   // Array of modern background colors (same as events page)
   const cardBackgrounds = [
@@ -539,29 +564,42 @@ const UpcomingEventsSection: React.FC<{
 
   useEffect(() => {
     async function fetchEvents() {
-      // Check cache first (instant, no deferral needed for cached data)
-      try {
-        const cachedData = sessionStorage.getItem(CACHE_KEY);
-        if (cachedData) {
-          const { data, timestamp, isUpcoming, hasMore } = JSON.parse(cachedData);
-          if (Date.now() - timestamp < CACHE_DURATION) {
-            console.log('✅ Using cached events data');
-            setEvents(data);
-            setIsUpcomingEvents(isUpcoming);
-            setHasMoreEvents(hasMore === true);
-            setLoading(false);
-            return;
+      const silent = listingRefreshNonce > 0 && hasCompletedInitialLoadRef.current;
+
+      if (!silent) {
+        // Check cache first (instant, no deferral needed for cached data)
+        try {
+          const cachedData = sessionStorage.getItem(CACHE_KEY);
+          if (cachedData) {
+            const { data, timestamp, isUpcoming, hasMore } = JSON.parse(cachedData);
+            if (Date.now() - timestamp < CACHE_DURATION) {
+              if (!fallbackToPast && isUpcoming === false) {
+                setEvents([]);
+                setIsUpcomingEvents(true);
+                setHasMoreEvents(false);
+                setLoading(false);
+                return;
+              }
+              console.log('✅ Using cached events data');
+              setEvents(data);
+              setIsUpcomingEvents(isUpcoming);
+              setHasMoreEvents(hasMore === true);
+              setLoading(false);
+              return;
+            }
           }
+        } catch (error) {
+          console.warn('Failed to read events cache:', error);
         }
-      } catch (error) {
-        console.warn('Failed to read events cache:', error);
       }
 
       // Defer network request until page is ready + delay
       if (!shouldFetch) return;
 
-      setLoading(true);
-      setFetchError(false);
+      if (!silent) {
+        setLoading(true);
+        setFetchError(false);
+      }
       try {
         // First try to get upcoming events
         // Fetch more events (15) to account for recurring events being grouped into single occurrences
