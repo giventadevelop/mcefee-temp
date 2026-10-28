@@ -142,11 +142,11 @@ export default function EventDetailsPage() {
   const [focusGroupNameByAssociationId, setFocusGroupNameByAssociationId] = useState<Record<number, string>>({});
   const [resultsOpen, setResultsOpen] = useState(false);
 
-  // Match homepage /events list modernist design system
+  // Match homepage /events list modernist design system (also set by PublicOrganicDesignBody).
   useLayoutEffect(() => {
-    document.body.classList.add('modernist-home');
+    document.body.classList.add('modernist-home', 'organic-home');
     return () => {
-      document.body.classList.remove('modernist-home');
+      /* PublicOrganicDesignBody owns cleanup on route change */
     };
   }, []);
 

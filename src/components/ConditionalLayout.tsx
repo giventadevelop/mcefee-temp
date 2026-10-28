@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
+import PublicOrganicDesignBody from '@/components/PublicOrganicDesignBody';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export default function ConditionalLayout({ children, header, footer }: Conditio
   // For all other routes, render the full layout with header and footer
   return (
     <>
+      <PublicOrganicDesignBody />
       {header}
       <div className="flex-1 flex flex-col">
         {children}

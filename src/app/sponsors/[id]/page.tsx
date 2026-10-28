@@ -48,9 +48,9 @@ export default function SponsorDetailsPage() {
   const [bannerImageError, setBannerImageError] = useState(false);
 
   useLayoutEffect(() => {
-    document.body.classList.add('modernist-home');
+    document.body.classList.add('modernist-home', 'organic-home');
     return () => {
-      document.body.classList.remove('modernist-home');
+      /* PublicOrganicDesignBody owns cleanup on route change */
     };
   }, []);
 

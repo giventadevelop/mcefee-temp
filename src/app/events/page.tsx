@@ -77,11 +77,11 @@ export default function EventsPage() {
     setListingRefreshNonce((n) => n + 1);
   });
 
-  // Apply the Modernist design system to this page (see src/styles/modernist-homepage.css).
+  // Apply the Modernist design system (also set globally by PublicOrganicDesignBody).
   useLayoutEffect(() => {
-    document.body.classList.add('modernist-home');
+    document.body.classList.add('modernist-home', 'organic-home');
     return () => {
-      document.body.classList.remove('modernist-home');
+      /* PublicOrganicDesignBody owns cleanup on route change */
     };
   }, []);
 
