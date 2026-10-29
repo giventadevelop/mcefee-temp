@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+// Permanent root CSS bundle — do not rely only on client-component imports.
+// Client HMR after idle can drop those chunks and leave public pages unstyled.
+import "@/styles/modernist-homepage.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import TrpcProvider from "@/lib/trpc/Provider";
 import Script from "next/script";
