@@ -36,6 +36,10 @@ export const metadata: Metadata = {
   },
   description: 'Event management, ticketing, membership, and church website for your organization.',
   applicationName: 'Event Site Manager',
+  icons: {
+    icon: [{ url: '/images/logos/Mcefee/mcefee_favicon.ico', type: 'image/x-icon' }],
+    shortcut: [{ url: '/images/logos/Mcefee/mcefee_favicon.ico', type: 'image/x-icon' }],
+  },
 };
 
 const DEBUG_LAYOUT = process.env.NEXT_PUBLIC_DEBUG_LAYOUT === 'true';
@@ -444,6 +448,13 @@ export default async function RootLayout({
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
         </head>
         <body className={inter.className + " flex flex-col min-h-screen"} suppressHydrationWarning>
+          {/* Apply modernist body classes before React hydrates so a cold/idle
+              remount cannot paint unstyled public pages (header-only Tailwind). */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(){try{var p=location.pathname||'';if(p.indexOf('/admin')!==0&&p.indexOf('/mosc')!==0){document.body.classList.add('modernist-home','organic-home');}}catch(e){}})();`,
+            }}
+          />
           {CLERK_KEY ? (
           <ClerkProvider publishableKey={CLERK_KEY} {...clerkProps}>
           <ClerkSyncUrlCleanup />
@@ -485,6 +496,7 @@ export default async function RootLayout({
           </ClerkProvider>
           ) : (
           <>
+          {/* Body classes already set by the early script above the Clerk branch. */}
           <ClerkSyncUrlCleanup />
           <ClerkSatelliteSyncGate />
           <PaginationScrollToTop />

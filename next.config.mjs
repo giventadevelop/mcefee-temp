@@ -72,6 +72,13 @@ const nextConfig = {
     return config;
   },
 
+  // Keep compiled pages in memory longer so idle tabs are less likely to hit
+  // cold recompiles that race HMR stylesheet re-injection (unstyled public UI).
+  onDemandEntries: {
+    maxInactiveAge: 60 * 60 * 1000,
+    pagesBufferLength: 8,
+  },
+
   // Production builds use `next build --webpack` (see package.json) so `.next/dev` is not
   // produced (~hundreds of MB). Amplify deploy artifact is `.next` only; shipping `.next/dev`
   // exceeds the ~220MB SSR cap. `next dev` still uses Turbopack by default.
