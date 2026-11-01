@@ -2,7 +2,6 @@ import Image from 'next/image';
 import { fetchEventsForMonthServer } from './ApiServerActions';
 import CalendarClient from './CalendarClient';
 import CalendarPageBackground from './CalendarPageBackground';
-import '@/styles/modernist-homepage.css';
 
 export default async function CalendarPage({
   searchParams,

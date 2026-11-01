@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import Image from 'next/image';
 import GalleryPageBackground from './GalleryPageBackground';
 import { GalleryContent } from './GalleryContent';
-import '@/styles/modernist-homepage.css';
 
 export default function GalleryPage() {
   return (

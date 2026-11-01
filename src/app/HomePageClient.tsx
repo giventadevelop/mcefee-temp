@@ -55,12 +55,7 @@ export default function HomePageClient({
   const { user } = useUser();
   const [hasCheckedRedirect, setHasCheckedRedirect] = useState(false);
 
-  useEffect(() => {
-    document.body.classList.add('modernist-home', 'organic-home');
-    return () => {
-      /* PublicOrganicDesignBody owns cleanup on route change */
-    };
-  }, []);
+  // Body classes (modernist-home / organic-home) come from layout SSR + PublicOrganicDesignBody.
 
   useEffect(() => {
     if (isLoaded && isSignedIn && userId && user && !hasCheckedRedirect && typeof window !== 'undefined') {

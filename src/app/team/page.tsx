@@ -7,7 +7,6 @@ import { parseExecutiveCommitteeTeamMembersResponse } from '@/lib/parseExecutive
 import Modal from '@/components/ui/Modal';
 import { getHomepageCacheKey } from '@/lib/homepageCacheKeys';
 import TeamPageBackground from './TeamPageBackground';
-import '@/styles/modernist-homepage.css';
 
 /** Max characters to show in card before "Read more". Longer bios open in popup. */
 const BIO_TRUNCATE_LENGTH = 120;

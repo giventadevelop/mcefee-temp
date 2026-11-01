@@ -1,5 +1,5 @@
 /* Modernist homepage + events — scoped to body.modernist-home so other routes stay unchanged */
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap');
+/* Archivo is loaded from layout <head> (not @import) to avoid font FOUC */
 
 body.modernist-home {
   --mh-bg: #f3f2f2;
@@ -2070,7 +2070,6 @@ body.modernist-home .mh-events-hero-content {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 1200px;
   margin: 0 auto;
   padding: var(--mh-header-clearance) 72px 1.5rem;
 }
@@ -2105,9 +2104,10 @@ body.modernist-home .mh-events-hero-lede {
 }
 
 body.modernist-home .mh-events-body {
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 64px 72px 96px;
+  box-sizing: border-box;
 }
 
 body.modernist-home .mh-events-toolbar {
@@ -2803,9 +2803,10 @@ body.modernist-home .mh-event-detail-hero-img {
 }
 
 body.modernist-home .mh-event-detail-body {
-  max-width: 1100px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 4.5rem;
+  padding: 2.5rem 72px 4.5rem;
+  box-sizing: border-box;
 }
 
 body.modernist-home .mh-event-detail-panel {

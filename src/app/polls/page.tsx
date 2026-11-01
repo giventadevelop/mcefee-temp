@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { PollList } from '@/components/polls/PollList';
 import { fetchUserProfileServer } from '@/app/profile/ApiServerActions';
 import PollsPageBackground from './PollsPageBackground';
-import '@/styles/modernist-homepage.css';
 
 export default async function PollsPage() {
   // CRITICAL: Next.js 15+ requires headers() to be awaited before calling auth()

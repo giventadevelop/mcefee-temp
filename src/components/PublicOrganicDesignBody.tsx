@@ -49,15 +49,28 @@ function pageNeedsModernistCss(): boolean {
   );
 }
 
+/** Reject doubled `/_next/_next/` paths (Turbopack/HMR corruption) that 404. */
+function isHealthyNextCssHref(href: string): boolean {
+  if (!href || !href.includes('/_next/')) return false;
+  if (href.includes('/_next/_next/') || href.includes('/_next//_next/')) return false;
+  return true;
+}
+
+function normalizeNextCssHref(href: string): string {
+  return href.replace(/\/_next\/+(_next\/)+/g, '/_next/');
+}
+
 function getNextCssLinks(): HTMLLinkElement[] {
   return Array.from(
     document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
-  ).filter((l) => (l.href || '').includes('/_next/'));
+  ).filter((l) => isHealthyNextCssHref(l.href || ''));
 }
 
 /** Remember healthy Next CSS hrefs so we can reinject after idle HMR removes them. */
 function rememberNextCssHrefs() {
-  const hrefs = getNextCssLinks().map((l) => l.href).filter(Boolean);
+  const hrefs = getNextCssLinks()
+    .map((l) => normalizeNextCssHref(l.href))
+    .filter(isHealthyNextCssHref);
   if (hrefs.length === 0) return;
   try {
     sessionStorage.setItem(CSS_HREF_KEY, JSON.stringify(hrefs));
@@ -71,7 +84,11 @@ function rememberedNextCssHrefs(): string[] {
     const raw = sessionStorage.getItem(CSS_HREF_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((h) => typeof h === 'string') : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((h): h is string => typeof h === 'string')
+      .map(normalizeNextCssHref)
+      .filter(isHealthyNextCssHref);
   } catch {
     return [];
   }

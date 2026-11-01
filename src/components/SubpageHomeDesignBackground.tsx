@@ -1,7 +1,6 @@
 'use client';
 
 import { useLayoutEffect } from 'react';
-import '@/styles/modernist-homepage.css';
 import HomeParticleBackground from '@/components/HomeParticleBackground';
 
 type SubpageHomeDesignBackgroundProps = {
@@ -10,19 +9,17 @@ type SubpageHomeDesignBackgroundProps = {
 };
 
 /**
- * Applies the homepage design system to public subpages.
- * Body classes `modernist-home` + `organic-home` are also set globally by
- * PublicOrganicDesignBody; this keeps optional page-specific body classes.
+ * Applies home-page-background (+ optional bodyClass) for glass/particle subpages.
+ * modernist-home / organic-home come from layout SSR + PublicOrganicDesignBody;
+ * modernist CSS is imported once from root layout.
  */
 export default function SubpageHomeDesignBackground({ bodyClass }: SubpageHomeDesignBackgroundProps) {
   useLayoutEffect(() => {
     document.body.classList.add('home-page-background');
-    document.body.classList.add('modernist-home', 'organic-home');
     if (bodyClass) document.body.classList.add(bodyClass);
     return () => {
       document.body.classList.remove('home-page-background');
       if (bodyClass) document.body.classList.remove(bodyClass);
-      /* PublicOrganicDesignBody owns modernist-home / organic-home cleanup */
     };
   }, [bodyClass]);
 

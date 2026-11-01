@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { EventSponsorsDTO } from '@/types';
 import { proxyApiPath } from '@/lib/proxyApiPath';
 import { SponsorContactSocialIconRow } from '@/components/sponsors/SponsorCard';
-import '@/styles/modernist-homepage.css';
 
 const PAGE_SIZE = 20;
 
@@ -27,12 +26,7 @@ export default function SponsorsPage() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
-  useLayoutEffect(() => {
-    document.body.classList.add('modernist-home', 'organic-home');
-    return () => {
-      /* PublicOrganicDesignBody owns cleanup on route change */
-    };
-  }, []);
+  // Body classes from layout SSR + PublicOrganicDesignBody.
 
   useEffect(() => {
     async function fetchSponsors() {

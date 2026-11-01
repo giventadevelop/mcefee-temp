@@ -7,7 +7,7 @@
     "dev": "next dev --webpack",
     "dev:turbo": "next dev --turbopack",
     "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
-    "dev:clean": "npm run clean && npx --no-install next dev",
+    "dev:clean": "npm run clean && npx --no-install next dev --webpack",
     "build": "node scripts/build-next-with-memory.mjs",
     "start": "next start",
     "lint": "eslint .",

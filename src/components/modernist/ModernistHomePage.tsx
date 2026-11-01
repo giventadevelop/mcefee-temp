@@ -21,6 +21,7 @@ import { useTenantSettings } from '@/components/TenantSettingsProvider';
 import { useEventsData } from '@/hooks/useEventsData';
 import { useDeferredFetch } from '@/hooks/usePageReady';
 import { useSilentListingRefresh } from '@/hooks/useSilentListingRefresh';
+// Keep a client import as HMR backup; root layout also imports this permanently.
 import '@/styles/modernist-homepage.css';
 
 const SERVICES = [

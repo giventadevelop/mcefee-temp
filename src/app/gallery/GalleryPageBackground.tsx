@@ -1,18 +1,9 @@
 'use client';
 
-import { useLayoutEffect } from 'react';
-import '@/styles/modernist-homepage.css';
-
 /**
- * Applies the Modernist design system (same as home / events) to the Gallery page.
+ * Mount marker for Gallery. Body classes and modernist CSS come from
+ * layout SSR + PublicOrganicDesignBody (root layout import).
  */
 export default function GalleryPageBackground() {
-  useLayoutEffect(() => {
-    document.body.classList.add('modernist-home', 'organic-home');
-    return () => {
-      /* PublicOrganicDesignBody owns cleanup on route change */
-    };
-  }, []);
-
   return null;
 }

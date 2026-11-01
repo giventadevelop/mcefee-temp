@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,7 +15,6 @@ import { SocialIconLink } from '@/components/social/SocialIconLink';
 import { isDonationBasedEvent, isTicketedFundraiserEvent } from '@/lib/donation/utils';
 import { resolveBuyTicketsTarget, resolveRegisterTarget } from '@/lib/eventcube/utils';
 import EventCardResultsPanel from '@/components/competitions/EventCardResultsPanel';
-import '@/styles/modernist-homepage.css';
 
 // Helper function to get initials from a name
 function getInitials(name: string): string {
@@ -142,13 +141,7 @@ export default function EventDetailsPage() {
   const [focusGroupNameByAssociationId, setFocusGroupNameByAssociationId] = useState<Record<number, string>>({});
   const [resultsOpen, setResultsOpen] = useState(false);
 
-  // Match homepage /events list modernist design system (also set by PublicOrganicDesignBody).
-  useLayoutEffect(() => {
-    document.body.classList.add('modernist-home', 'organic-home');
-    return () => {
-      /* PublicOrganicDesignBody owns cleanup on route change */
-    };
-  }, []);
+  // Body classes from layout SSR + PublicOrganicDesignBody.
 
   useEffect(() => {
     async function fetchEventDetails() {

@@ -64,12 +64,14 @@ export default async function RootLayout({
   let isTenantAdmin = false;
   const satelliteDomain = getClerkSatelliteHost() || process.env.NEXT_PUBLIC_CLERK_DOMAIN || process.env.AMPLIFY_NEXT_PUBLIC_CLERK_DOMAIN || 'www.mosc-temp.com';
   let clerkProps: { isSatellite?: boolean; domain?: string; signInUrl?: string; signUpUrl?: string; allowedRedirectOrigins?: string[] } = {};
+  // Hoisted so SSR <body> can keep modernist classes through hydration (avoids mint-header FOUC).
+  let pathname = '';
 
   try {
   // CRITICAL: Next.js 15+ - await headers() first before any other async or header-dependent code (e.g. auth()).
   const headersList = await headers();
   const hostname = headersList.get('host') || '';
-  const pathname = headersList.get('x-pathname') || '';
+  pathname = headersList.get('x-pathname') || '';
 
   // Define public routes that don't require authentication checks
   // These routes can skip auth() calls to avoid Next.js 15+ headers() async errors
@@ -436,20 +438,33 @@ export default async function RootLayout({
   // We inline the ClerkProvider wrapping instead of using a separate layoutContent variable.
   const sharedAdsensePublisherId = getSharedAdsensePublisherIdForMeta();
 
+  // Same rules as PublicOrganicDesignBody / early inline script: public pages keep
+  // modernist-home on the SSR body so React hydration does not strip classes and
+  // briefly flash the mint .header-glass from globals.css.
+  const applyModernistBodyClasses =
+    !pathname ||
+    (!pathname.startsWith('/admin') && !pathname.startsWith('/mosc'));
+  const bodyClassName = [
+    inter.className,
+    'flex flex-col min-h-screen',
+    applyModernistBodyClasses ? 'modernist-home organic-home' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
       <html lang="en" suppressHydrationWarning>
         <head>
           {/* Google AdSense account association (Model A shared Publisher ID — giventa.com) */}
           <meta name="google-adsense-account" content={sharedAdsensePublisherId} />
-          {/* Header Design System Fonts - DM Serif Display + Plus Jakarta Sans */}
+          {/* Header + modernist fonts (Archivo for body.modernist-home — not CSS @import) */}
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Epilogue:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+          <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Epilogue:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
         </head>
-        <body className={inter.className + " flex flex-col min-h-screen"} suppressHydrationWarning>
-          {/* Apply modernist body classes before React hydrates so a cold/idle
-              remount cannot paint unstyled public pages (header-only Tailwind). */}
+        <body className={bodyClassName} suppressHydrationWarning>
+          {/* Backup if x-pathname was missing on SSR — harmless when classes already present. */}
           <script
             dangerouslySetInnerHTML={{
               __html: `(function(){try{var p=location.pathname||'';if(p.indexOf('/admin')!==0&&p.indexOf('/mosc')!==0){document.body.classList.add('modernist-home','organic-home');}}catch(e){}})();`,

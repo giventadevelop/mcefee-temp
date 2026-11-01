@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,7 +9,6 @@ import { Camera, Video, Eye } from 'lucide-react';
 import styles from '../../events/[id]/GalleryThumbnails.module.css';
 import { EventMediaSlideshow } from '@/app/gallery/components/EventMediaSlideshow';
 import { SponsorContactSocialIconRow } from '@/components/sponsors/SponsorCard';
-import '@/styles/modernist-homepage.css';
 
 const getMediaTypeIcon = (mediaType: string) => {
   if (mediaType.startsWith('video/')) {
@@ -47,12 +46,7 @@ export default function SponsorDetailsPage() {
   const [slideshowInitialIndex, setSlideshowInitialIndex] = useState(0);
   const [bannerImageError, setBannerImageError] = useState(false);
 
-  useLayoutEffect(() => {
-    document.body.classList.add('modernist-home', 'organic-home');
-    return () => {
-      /* PublicOrganicDesignBody owns cleanup on route change */
-    };
-  }, []);
+  // Body classes from layout SSR + PublicOrganicDesignBody.
 
   useEffect(() => {
     async function fetchSponsorDetails() {

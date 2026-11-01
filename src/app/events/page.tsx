@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSilentListingRefresh } from '@/hooks/useSilentListingRefresh';
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +9,6 @@ import { isRecurringEvent, getNextOccurrenceDate } from '@/lib/eventUtils';
 import { isDonationBasedEvent, isTicketedFundraiserEvent } from '@/lib/donation/utils';
 import { resolveBuyTicketsTarget, resolveRegisterTarget } from '@/lib/eventcube/utils';
 import EventCardResultsPanel from '@/components/competitions/EventCardResultsPanel';
-import '@/styles/modernist-homepage.css';
 
 const EVENTS_PAGE_SIZE = 20; // Minimum events to display per page
 const BACKEND_FETCH_SIZE = 50; // Fetch more from backend to account for recurring event filtering
@@ -77,13 +76,7 @@ export default function EventsPage() {
     setListingRefreshNonce((n) => n + 1);
   });
 
-  // Apply the Modernist design system (also set globally by PublicOrganicDesignBody).
-  useLayoutEffect(() => {
-    document.body.classList.add('modernist-home', 'organic-home');
-    return () => {
-      /* PublicOrganicDesignBody owns cleanup on route change */
-    };
-  }, []);
+  // Body classes from layout SSR + PublicOrganicDesignBody.
 
   useEffect(() => {
     // Skip reload if we're currently auto-switching (prevents double-load)

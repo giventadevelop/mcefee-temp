@@ -5,7 +5,6 @@ import Link from 'next/link';
 import type { EventPollDTO, EventPollOptionDTO } from '@/types';
 import { fetchEventPollsServer, fetchEventPollOptionsServer } from '@/app/admin/polls/ApiServerActions';
 import { PollVotingCard } from './PollVotingCard';
-import '@/styles/modernist-homepage.css';
 
 interface PollListProps {
   eventId?: number;

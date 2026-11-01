@@ -8,7 +8,6 @@ import { GallerySearch } from './components/GallerySearch';
 import { GalleryPagination } from './components/GalleryPagination';
 import { fetchEventsForGallery, fetchAlbumsForGallery } from './ApiServerActions';
 import type { GalleryPageData, GalleryAlbumWithMedia } from './ApiServerActions';
-import '@/styles/modernist-homepage.css';
 
 const ITEMS_PER_PAGE = 20;
 
