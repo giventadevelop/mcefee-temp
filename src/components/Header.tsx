@@ -40,8 +40,6 @@ const navItemCatalog = [
       { name: 'Profile', href: '/profile', requiresAuth: true },
       { name: 'Members', href: '/member-portal', requiresAuth: true },
       { name: 'Membership', href: '/membership' },
-      { name: 'MOSC', href: '/mosc' },
-      { name: 'MOSC_Redesign', href: '/mosc-redesign' },
     ],
   },
   {
@@ -351,16 +349,6 @@ function useLocationHash(): string {
   return hash;
 }
 
-function pathnameMatchesMosc(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return pathname === '/mosc' || pathname.startsWith('/mosc/');
-}
-
-function pathnameMatchesMoscRedesign(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return pathname === '/mosc-redesign' || pathname.startsWith('/mosc-redesign/');
-}
-
 /** SSR + first paint: hide auth/membership items (matches server Clerk/settings state) */
 function shouldShowNavSubItem(
   subItem: NavSubItem,
@@ -476,9 +464,7 @@ function HeaderNavDropdown({
       (subItem) =>
         subItem.href === pathname ||
         (subItem.href === '/profile' && pathname === '/profile') ||
-        (subItem.href === '/membership' && pathname?.startsWith('/membership')) ||
-        (subItem.href === '/mosc' && pathnameMatchesMosc(pathname)) ||
-        (subItem.href === '/mosc-redesign' && pathnameMatchesMoscRedesign(pathname))
+        (subItem.href === '/membership' && pathname?.startsWith('/membership'))
     );
 
   const isActive =
@@ -533,8 +519,6 @@ function HeaderNavDropdown({
               mounted &&
               (subItem.href === pathname ||
                 (subItem.href === '/membership' && pathname?.startsWith('/membership')) ||
-                (subItem.href === '/mosc' && pathnameMatchesMosc(pathname)) ||
-                (subItem.href === '/mosc-redesign' && pathnameMatchesMoscRedesign(pathname)) ||
                 (subItem.href === '/#about-us' && pathname === '/' && locationHash === '#about-us') ||
                 (subItem.href === '/team' && pathname === '/team'));
 
@@ -542,7 +526,6 @@ function HeaderNavDropdown({
               <Link
                 key={subItem.name}
                 href={subItem.href}
-                prefetch={subItem.href === '/mosc' || subItem.href === '/mosc-redesign' ? false : undefined}
                 onClick={(e) => {
                   if (subItem.href.startsWith('/#')) {
                     handleSmoothScroll(e, subItem.href);
@@ -1457,8 +1440,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                               mounted &&
                               (subItem.href === pathname ||
                                 (subItem.href === '/membership' && pathname?.startsWith('/membership')) ||
-                                (subItem.href === '/mosc' && pathnameMatchesMosc(pathname)) ||
-                                (subItem.href === '/mosc-redesign' && pathnameMatchesMoscRedesign(pathname)) ||
                                 (subItem.href === '/#about-us' && pathname === '/' && locationHash === '#about-us') ||
                                 (subItem.href === '/team' && pathname === '/team') ||
                                 (subItem.href === '/sponsors' && pathname === '/sponsors'));
@@ -1467,7 +1448,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                               <li key={subItem.name}>
                                 <Link
                                   href={subItem.href}
-                                  prefetch={subItem.href === '/mosc' || subItem.href === '/mosc-redesign' ? false : undefined}
                                   onClick={(e) => {
                                     // Handle smooth scroll for hash links
                                     if (subItem.href.startsWith('/#')) {
@@ -1684,7 +1664,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                             <Link
                               key={subItem.name}
                               href={subItem.href}
-                              prefetch={subItem.href === '/mosc' ? false : undefined}
                               className={`header-mobile-link block text-sm py-2.5 ${pathname?.startsWith(subItem.href) ? 'active' : ''}`}
                               onClick={closeMobileMenu}
                               role="menuitem"

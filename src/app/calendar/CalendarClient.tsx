@@ -10,7 +10,6 @@ import { MonthView } from './components/MonthView';
 import { WeekView } from './components/WeekView';
 import { DayView } from './components/DayView';
 import { useCalendarNav } from './hooks/useCalendarNav';
-import { LiturgyViewSwitcher } from '@/app/mosc-redesign/(syro)/liturgical-calendar/components/LiturgyViewSwitcher';
 
 export default function CalendarClient({
   initialEvents,
@@ -369,11 +368,7 @@ export default function CalendarClient({
         </div>
       </div>
 
-      {isSyro ? (
-        <LiturgyViewSwitcher view={displayView} onChange={handleViewChange} />
-      ) : (
-        <ViewSwitcher view={displayView} onChange={handleViewChange} />
-      )}
+      <ViewSwitcher view={displayView} onChange={handleViewChange} />
 
       {isSyro && !loading && events.length === 0 && displayView === 'month' && (
         <div className="inline-flex items-center gap-2 px-4 py-3 bg-orange-50 border-2 border-orange-300 rounded-lg shadow-sm mb-4">

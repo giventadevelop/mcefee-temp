@@ -7,9 +7,9 @@ const STYLE_RELOAD_KEY = 'mh-style-guard-reloaded';
 const CSS_HREF_KEY = 'mh-next-css-hrefs';
 
 /**
- * PublicOrganicDesignBody is only mounted on main-app chrome (not /mosc*).
  * Treat a missing pathname as "keep modernist applied" — never strip classes
  * because usePathname() can briefly be null during HMR / remount after idle.
+ * Admin routes keep the admin chrome (no modernist body classes).
  */
 function shouldApplyModernistDesign(pathname: string | null): boolean {
   const path =
@@ -17,7 +17,6 @@ function shouldApplyModernistDesign(pathname: string | null): boolean {
     (typeof window !== 'undefined' ? window.location.pathname : null);
   if (!path) return true;
   if (path.startsWith('/admin')) return false;
-  if (path.startsWith('/mosc')) return false;
   return true;
 }
 
@@ -223,7 +222,7 @@ export default function PublicOrganicDesignBody() {
       // Only strip when leaving public modernist routes. Never strip on null /
       // Fast Refresh remount while still on `/`, `/events`, etc.
       const livePath = window.location.pathname;
-      if (livePath.startsWith('/admin') || livePath.startsWith('/mosc')) {
+      if (livePath.startsWith('/admin')) {
         document.body.classList.remove('modernist-home', 'organic-home');
       }
     };

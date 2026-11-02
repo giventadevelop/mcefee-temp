@@ -9,7 +9,7 @@ import TrpcProvider from "@/lib/trpc/Provider";
 import Script from "next/script";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import ConditionalLayout from "../components/ConditionalLayout";
+import PublicOrganicDesignBody from "../components/PublicOrganicDesignBody";
 import ClerkSyncUrlCleanup from "../components/ClerkSyncUrlCleanup";
 import ClerkSatelliteSyncGate from "../components/ClerkSatelliteSyncGate";
 import PaginationScrollToTop from "../components/PaginationScrollToTop";
@@ -89,8 +89,6 @@ export default async function RootLayout({
     /^\/membership\/qr/,
     /^\/api\/diagnostic/,
     /^\/api\/logs/,
-    /^\/mosc-old/,
-    /^\/mosc(?!-old)/,  // /mosc, /mosc/..., /mosc-redesign/... (Syro + rocket redesign; not /mosc-old)
     /^\/events/,
     /^\/sponsors/,
     /^\/gallery/,
@@ -129,20 +127,18 @@ export default async function RootLayout({
       afterSignOutUrl: '/',
     };
 
-  // Determine tenant-scoped admin flag on the server
-  // Run auth + profile lookup on all routes that show the main Header (including /) so Admin menu appears for admins (per clerk_auth rule).
-  // Only skip /mosc-old, /mosc, /mosc-redesign — ConditionalLayout does not render the main Header there.
-  // CRITICAL: Also skip during Clerk satellite sync (?__clerk_synced=true). On the first
+  // Determine tenant-scoped admin flag on the server.
+  // Run auth + profile lookup on every path (Header is always present).
+  // CRITICAL: Skip during Clerk satellite sync (?__clerk_synced=true). On the first
   // load after redirect from primary, the session cookie is being established for SUBSEQUENT
   // requests. Calling auth() now would either hang (blocking the entire server response for
   // seconds on Lambda cold start) or return null. Skip auth on this request so the server
   // responds fast; the client-side ClerkProvider will process the sync and establish the session.
-  const skipAuthForRoute = pathname.startsWith('/mosc-old') || pathname.startsWith('/mosc');
   const isClerkSyncing = headersList.get('x-clerk-syncing') === 'true';
   if (isClerkSyncing) {
     debugLog('[Layout] ⏳ Skipping auth/profile work during Clerk satellite sync — session not yet established on this request');
   }
-  if (pathname && !skipAuthForRoute && !isClerkSyncing) {
+  if (pathname && !isClerkSyncing) {
     try {
       // CRITICAL: Call auth() immediately after awaiting headers() to ensure proper async context
       // Do not call any other async functions before auth() completes
@@ -438,12 +434,10 @@ export default async function RootLayout({
   // We inline the ClerkProvider wrapping instead of using a separate layoutContent variable.
   const sharedAdsensePublisherId = getSharedAdsensePublisherIdForMeta();
 
-  // Same rules as PublicOrganicDesignBody / early inline script: public pages keep
+  // Same rules as PublicOrganicDesignBody / early inline script: non-admin pages keep
   // modernist-home on the SSR body so React hydration does not strip classes and
   // briefly flash the mint .header-glass from globals.css.
-  const applyModernistBodyClasses =
-    !pathname ||
-    (!pathname.startsWith('/admin') && !pathname.startsWith('/mosc'));
+  const applyModernistBodyClasses = !pathname || !pathname.startsWith('/admin');
   const bodyClassName = [
     inter.className,
     'flex flex-col min-h-screen',
@@ -451,6 +445,15 @@ export default async function RootLayout({
   ]
     .filter(Boolean)
     .join(' ');
+
+  const productChrome = (
+    <>
+      <PublicOrganicDesignBody />
+      <Header hideMenuItems={false} isTenantAdmin={isTenantAdmin} />
+      <div className="flex-1 flex flex-col">{children}</div>
+      <Footer />
+    </>
+  );
 
   return (
       <html lang="en" suppressHydrationWarning>
@@ -467,7 +470,7 @@ export default async function RootLayout({
           {/* Backup if x-pathname was missing on SSR — harmless when classes already present. */}
           <script
             dangerouslySetInnerHTML={{
-              __html: `(function(){try{var p=location.pathname||'';if(p.indexOf('/admin')!==0&&p.indexOf('/mosc')!==0){document.body.classList.add('modernist-home','organic-home');}}catch(e){}})();`,
+              __html: `(function(){try{var p=location.pathname||'';if(p.indexOf('/admin')!==0){document.body.classList.add('modernist-home','organic-home');}}catch(e){}})();`,
             }}
           />
           {CLERK_KEY ? (
@@ -479,12 +482,7 @@ export default async function RootLayout({
           <TenantIdInjector />
           <TrpcProvider>
             <TenantSettingsProvider>
-              <ConditionalLayout
-                header={<Header hideMenuItems={false} isTenantAdmin={isTenantAdmin} />}
-                footer={<Footer />}
-              >
-                {children}
-              </ConditionalLayout>
+              {productChrome}
             </TenantSettingsProvider>
           </TrpcProvider>
           <Script
@@ -519,12 +517,7 @@ export default async function RootLayout({
           <TenantIdInjector />
           <TrpcProvider>
             <TenantSettingsProvider>
-              <ConditionalLayout
-                header={<Header hideMenuItems={false} isTenantAdmin={isTenantAdmin} />}
-                footer={<Footer />}
-              >
-                {children}
-              </ConditionalLayout>
+              {productChrome}
             </TenantSettingsProvider>
           </TrpcProvider>
           <Script
