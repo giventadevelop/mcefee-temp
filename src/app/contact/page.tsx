@@ -1,12 +1,19 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import type { Metadata } from 'next';
 import {
   fetchPublishedPublicProfileForPagesServer,
   fetchTenantOrganizationForProfilePagesServer,
 } from '@/lib/profileSiteServer';
 import { ProfileContactPageClient } from '@/components/profile/ProfileContactPageClient';
+import { PublicContactMessageForm } from '@/components/contact/PublicContactMessageForm';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Contact',
+  description: 'Send a message to MCEFEE. We reply to the email address you enter.',
+};
 
 function formatOrgAddress(org: {
   addressLine1?: string | null;
@@ -22,12 +29,50 @@ function formatOrgAddress(org: {
   return parts.length ? parts.join(' · ') : null;
 }
 
+function ContactHero() {
+  return (
+    <section className="mh-events-hero" aria-label="Contact">
+      <figure className="mh-events-hero-media mh-grayscale">
+        <Image
+          src="/images/default_placeholder_hero_image.jpeg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          style={{ objectFit: 'cover' }}
+        />
+      </figure>
+      <div className="mh-events-hero-scrim" aria-hidden="true" />
+      <div className="mh-events-hero-content">
+        <div className="mh-events-hero-kicker">
+          <span className="mh-dot" aria-hidden="true" />
+          <span>Contact</span>
+        </div>
+        <h1>Contact us</h1>
+        <p className="mh-events-hero-lede">
+          Send a message to our team. A confirmation goes to the email you enter.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export default async function ProfileContactPage() {
   const [profile, org] = await Promise.all([
     fetchPublishedPublicProfileForPagesServer(),
     fetchTenantOrganizationForProfilePagesServer(),
   ]);
-  if (!profile) notFound();
+
+  if (!profile) {
+    return (
+      <main className="mh-events-page modernist-home">
+        <ContactHero />
+        <div className="mh-events-body">
+          <PublicContactMessageForm />
+        </div>
+      </main>
+    );
+  }
 
   const address = org ? formatOrgAddress(org) : null;
 
@@ -56,6 +101,10 @@ export default async function ProfileContactPage() {
           <Link href="/" className="text-primary font-semibold hover:underline">
             Home →
           </Link>
+        </div>
+
+        <div className="mt-16">
+          <PublicContactMessageForm />
         </div>
       </div>
     </main>

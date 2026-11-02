@@ -19,7 +19,7 @@ const navItemCatalog = [
   {
     key: 'about' as const,
     name: 'About',
-    href: '/#about-us',
+    href: '/about',
     active: false,
     dropdown: [] as { name: string; href: string }[],
   },
@@ -105,7 +105,7 @@ const navItemCatalog = [
   {
     key: 'contact' as const,
     name: 'Contact',
-    href: '/#contact',
+    href: '/contact',
     active: false,
   },
 ];
@@ -1084,10 +1084,10 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
   }, [pathname]);
 
   // Build About dropdown dynamically based on tenant settings
-  // Profile sites use dedicated /about; event/church sites keep hash + Team/Sponsors.
+  // Profile sites link About directly. Event sites use About Us, Team, and Sponsors.
   const aboutDropdown = isProfileNav
     ? [{ name: 'About', href: '/about' }]
-    : [{ name: 'About Us', href: '/#about-us' }];
+    : [{ name: 'About Us', href: '/about' }];
   if (!isProfileNav && mounted && !settingsLoading && settings && showTeamSection) {
     aboutDropdown.push({ name: 'Team', href: '/team' });
   }

@@ -2285,6 +2285,187 @@ body.modernist-home .mh-events-search input:focus {
   border-color: var(--mh-accent);
 }
 
+/* Public contact page — details + message form */
+body.modernist-home .mh-contact-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.35fr);
+  gap: 48px 64px;
+  align-items: start;
+}
+
+body.modernist-home .mh-contact-details h2,
+body.modernist-home .mh-contact-form h2 {
+  margin: 0 0 12px;
+  font-family: var(--mh-font);
+  font-weight: 800;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--mh-text);
+}
+
+body.modernist-home .mh-contact-details p,
+body.modernist-home .mh-contact-form > p {
+  margin: 0 0 24px;
+  max-width: 42ch;
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-contact-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+body.modernist-home .mh-contact-facts li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+  border-top: 2px solid var(--mh-divider);
+}
+
+body.modernist-home .mh-contact-facts span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-contact-facts a,
+body.modernist-home .mh-contact-facts strong {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--mh-text);
+  text-decoration: none;
+}
+
+body.modernist-home .mh-contact-facts a[href^='mailto'],
+body.modernist-home .mh-contact-facts a[href^='tel'] {
+  color: var(--mh-accent);
+  text-underline-offset: 3px;
+}
+
+body.modernist-home .mh-contact-facts a:hover {
+  text-decoration: underline;
+}
+
+body.modernist-home .mh-contact-form {
+  background: var(--mh-surface);
+  border-top: 2px solid var(--mh-text);
+  padding: 28px 24px 32px;
+}
+
+body.modernist-home .mh-contact-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+body.modernist-home .mh-contact-fields label,
+body.modernist-home .mh-contact-form label.mh-contact-span {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mh-neutral-700);
+}
+
+body.modernist-home .mh-contact-span {
+  grid-column: 1 / -1;
+}
+
+body.modernist-home .mh-contact-form input,
+body.modernist-home .mh-contact-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--mh-font);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--mh-text);
+  background: var(--mh-bg);
+  border: 1px solid var(--mh-neutral-300);
+  border-radius: 0;
+  padding: 12px 14px;
+}
+
+body.modernist-home .mh-contact-form textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+body.modernist-home .mh-contact-form input:focus,
+body.modernist-home .mh-contact-form textarea:focus {
+  outline: 2px solid var(--mh-accent);
+  outline-offset: 1px;
+  border-color: var(--mh-accent);
+}
+
+body.modernist-home .mh-contact-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 22px;
+  color: var(--mh-neutral-800);
+}
+
+body.modernist-home .mh-contact-consent input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--mh-accent);
+}
+
+body.modernist-home .mh-contact-status {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+body.modernist-home .mh-contact-status--ok {
+  color: #15803d;
+}
+
+body.modernist-home .mh-contact-status--err {
+  color: #b91c1c;
+}
+
+body.modernist-home .mh-contact-form .mh-btn {
+  margin-top: 4px;
+  padding: 14px 22px;
+  font-size: 14px;
+}
+
+body.modernist-home .mh-contact-form .mh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  body.modernist-home .mh-contact-layout,
+  body.modernist-home .mh-contact-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
 body.modernist-home .mh-events-search-dates {
   display: grid;
   grid-template-columns: 1fr 1fr;
