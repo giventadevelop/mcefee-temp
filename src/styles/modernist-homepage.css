@@ -1988,7 +1988,9 @@ body.modernist-home .mh-events-hero {
   --mh-header-clearance: 1.25rem;
   position: relative;
   margin-top: var(--header-bar-height, 8rem);
-  min-height: 160px;
+  /* Fixed frame so every ribbon shows the same slice of the banner art. */
+  height: 180px;
+  min-height: 180px;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
@@ -2042,6 +2044,8 @@ body.modernist-home .mh-events-hero-media {
 body.modernist-home .mh-events-hero-media img,
 body.modernist-home .mh-events-hero-img {
   object-fit: cover;
+  /* Same slice as the About ribbon: art sits low in the short frame. */
+  object-position: center 26%;
   width: 100%;
   height: 100%;
 }
@@ -2049,7 +2053,7 @@ body.modernist-home .mh-events-hero-img {
 body.modernist-home .mh-events-hero--ribbon .mh-events-hero-media img,
 body.modernist-home .mh-events-hero--ribbon .mh-events-hero-img {
   object-fit: cover !important;
-  object-position: center center !important;
+  object-position: center 26% !important;
   width: 100% !important;
   height: 100% !important;
 }
@@ -2844,7 +2848,8 @@ body.modernist-home .mh-events-error {
 
   body.modernist-home .mh-events-hero {
     --mh-header-clearance: 1rem;
-    min-height: 140px;
+    height: 160px;
+    min-height: 160px;
   }
 
   body.modernist-home .mh-events-hero--ribbon {
@@ -3518,21 +3523,6 @@ body.modernist-home .mh-polls-vote-panel [class*='bg-clip-text'] {
 }
 
 /* —— Calendar page (shares mh-events-* shell) —— */
-/*
- * Hero ribbon art is 1818×456 (~3.987:1). Matching the container to that
- * ratio fills it edge to edge with no crop and no background bands.
- */
-body.modernist-home .mh-calendar-page .mh-events-hero {
-  min-height: 0;
-  aspect-ratio: 1818 / 456;
-  align-items: center;
-}
-
-body.modernist-home .mh-calendar-page .mh-events-hero-media img,
-body.modernist-home .mh-calendar-page .mh-events-hero-img {
-  object-fit: cover;
-  object-position: center center;
-}
 
 body.modernist-home .mh-calendar-page .mh-events-head {
   justify-content: space-between;
