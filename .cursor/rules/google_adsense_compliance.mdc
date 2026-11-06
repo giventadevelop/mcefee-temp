@@ -1,0 +1,77 @@
+---
+description: Google AdSense compliance checklist for a satellite site — ads.txt, privacy, terms, footer links, public routes, and cookie consent
+globs: public/ads.txt,src/middleware.ts,src/app/privacy/**,src/app/terms/**,src/components/Footer.tsx,src/components/ads/**,src/lib/adsense/**
+alwaysApply: false
+---
+
+# Google AdSense compliance checklist
+
+Use this when asked whether a satellite project is ready for Google AdSense review. Check every item in that project's repo. Mark each item pass or fail with the file that proves it. Do not treat a generic template page as compliant.
+
+Shared publisher for sites on the Giventa owner account: `ca-pub-1016198353275904`. The `ads.txt` line uses the numeric form `pub-1016198353275904`.
+
+## Checklist
+
+- **ads.txt matches the publisher ID**
+  - `public/ads.txt` is served at `https://DOMAIN/ads.txt` and returns 200.
+  - The line is `google.com, pub-NUMERIC, DIRECT, f08c47fec0942fa0`.
+  - `pub-` matches the admin Publisher ID with the `ca-` prefix removed.
+  - A site on its own AdSense account must not keep another tenant's `pub-` line.
+
+- **Account meta tag**
+  - `src/app/layout.tsx` includes `<meta name="google-adsense-account" content="ca-pub-...">`.
+  - The value is the same publisher ID stored in tenant settings.
+
+- **Tenant settings**
+  - `enableGoogleAdsense` is true.
+  - `googleAdsensePublisherId` is `ca-pub-` plus digits.
+  - `googleAdsensePlacementsJson` maps at least one region (`footer_strip`, `sidebar`, `between_sections`, `article_inline`) to a numeric slot ID.
+  - The public footer or page actually renders `GoogleAdSenseRegion` for that region.
+
+- **About and contact**
+  - `/about` and `/contact` exist, name this organization, and are public without sign-in.
+
+- **Privacy policy**
+  - Route is `/privacy`.
+  - It names this organization, a real contact email, and a real location. No placeholder phone, address, or another tenant's email.
+  - It states that the site uses Google AdSense and that Google may use cookies to serve and measure ads.
+  - It links to Google's privacy policy and to an opt-out (`https://adssettings.google.com`).
+  - It states that the ad script loads only after Accept.
+
+- **Terms**
+  - Route is `/terms`.
+  - It names this organization and links to `/privacy`.
+  - It says third-party ads are delivered by Google AdSense and are not the organization's own offers.
+
+- **Footer links on every public page**
+  - The public footer links to `/privacy` and `/terms`.
+  - A registration checkbox is not a substitute. Google's crawler must reach both pages from the site chrome.
+
+- **Public routes**
+  - `src/middleware.ts` includes `/privacy(.*)` and `/terms(.*)` in the public matcher.
+  - A signed-out request must not be sent to sign-in. `auth.protect()` must not run for these paths.
+
+- **Cookie choice before ads**
+  - A banner offers Accept and Reject and links to the privacy policy and terms.
+  - `GoogleAdSenseSlot` does not inject `adsbygoogle.js` until the stored choice is `accepted`.
+  - Reject leaves the ad script unloaded.
+  - The footer offers a way to open the choice again.
+  - This is the required gate before ads in the EU/UK. It is not a full IAB TCF CMP.
+
+## How to record a project
+
+When a project is checked, add or update a status block under this rule in that project's `.cursor/rules/google_adsense_compliance.mdc`. One line per checklist item: pass or fail, and the file.
+
+## MCEFEE status (November 6, 2026)
+
+Project: `mcefee-temp`. Organization: Malayali Cultural Exchange Foundation for Education and Events. Contact: `Contactus@mcefee.org`. Publisher: `ca-pub-1016198353275904`.
+
+- **ads.txt:** pass — [ads.txt](mdc:public/ads.txt)
+- **Meta tag:** pass — [layout.tsx](mdc:src/app/layout.tsx)
+- **Tenant settings:** pass in local DB for settings id 12 (`footer_strip` slot `2719184137`). Confirm the deployed domain after the next satellite release.
+- **About and contact:** pass — [about/page.tsx](mdc:src/app/about/page.tsx), [contact/page.tsx](mdc:src/app/contact/page.tsx)
+- **Privacy:** pass — [privacy/page.tsx](mdc:src/app/privacy/page.tsx)
+- **Terms:** pass — [terms/page.tsx](mdc:src/app/terms/page.tsx)
+- **Footer links:** pass — [Footer.tsx](mdc:src/components/Footer.tsx)
+- **Public routes:** pass — [middleware.ts](mdc:src/middleware.ts)
+- **Cookie choice:** pass — [AdSenseConsentBanner.tsx](mdc:src/components/ads/AdSenseConsentBanner.tsx), [adsenseConsent.ts](mdc:src/lib/adsense/adsenseConsent.ts), [GoogleAdSenseSlot.tsx](mdc:src/components/ads/GoogleAdSenseSlot.tsx)
