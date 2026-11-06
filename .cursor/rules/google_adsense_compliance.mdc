@@ -1,5 +1,5 @@
 ---
-description: Google AdSense compliance checklist for a satellite site — ads.txt, privacy, terms, footer links, public routes, and cookie consent
+description: Google AdSense compliance checklist — ads.txt, ownership snippet, privacy, terms, footer links, public routes, cookie consent, and the live-site checks Google's crawler actually runs
 globs: public/ads.txt,src/middleware.ts,src/app/privacy/**,src/app/terms/**,src/components/Footer.tsx,src/components/ads/**,src/lib/adsense/**
 alwaysApply: false
 ---
@@ -18,9 +18,11 @@ Shared publisher for sites on the Giventa owner account: `ca-pub-101619835327590
   - `pub-` matches the admin Publisher ID with the `ca-` prefix removed.
   - A site on its own AdSense account must not keep another tenant's `pub-` line.
 
-- **Account meta tag**
+- **Account meta tag and verification script**
   - `src/app/layout.tsx` includes `<meta name="google-adsense-account" content="ca-pub-...">`.
-  - The value is the same publisher ID stored in tenant settings.
+  - The same head includes the AdSense code snippet: `adsbygoogle.js?client=ca-pub-...` with `crossorigin="anonymous"`.
+  - That script must be in the server-rendered HTML. Loading it only after cookie Accept fails Google's "AdSense code snippet" check.
+  - Ad units (`ins.adsbygoogle` and `push`) still wait for Accept.
 
 - **Tenant settings**
   - `enableGoogleAdsense` is true.
@@ -67,7 +69,7 @@ When a project is checked, add or update a status block under this rule in that 
 Project: `mcefee-temp`. Organization: Malayali Cultural Exchange Foundation for Education and Events. Contact: `Contactus@mcefee.org`. Publisher: `ca-pub-1016198353275904`.
 
 - **ads.txt:** pass — [ads.txt](mdc:public/ads.txt)
-- **Meta tag:** pass — [layout.tsx](mdc:src/app/layout.tsx)
+- **Meta tag:** pass on the live site — [layout.tsx](mdc:src/app/layout.tsx). The AdSense code snippet was added to that head on November 6, 2026 and is not on https://mcefee-temp.com until the next release.
 - **Tenant settings:** pass in local DB for settings id 12 (`footer_strip` slot `2719184137`). Confirm the deployed domain after the next satellite release.
 - **About and contact:** pass — [about/page.tsx](mdc:src/app/about/page.tsx), [contact/page.tsx](mdc:src/app/contact/page.tsx)
 - **Privacy:** pass — [privacy/page.tsx](mdc:src/app/privacy/page.tsx)
