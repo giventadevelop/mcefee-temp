@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { EventSponsorsDTO } from '@/types';
 import { proxyApiPath } from '@/lib/proxyApiPath';
+import { fetchPublicTypeahead } from '@/lib/publicTypeaheadSearch';
+import PublicListSearchCombobox from '@/components/public/PublicListSearchCombobox';
 import { SponsorContactSocialIconRow } from '@/components/sponsors/SponsorCard';
 
 const PAGE_SIZE = 20;
@@ -86,10 +88,15 @@ export default function SponsorsPage() {
     fetchSponsors();
   }, [currentPage, searchTerm]);
 
-  const handleSearch = () => {
+  const commitSearch = (value: string) => {
     setIsSearching(true);
-    setSearchTerm(searchDraft.trim());
+    setSearchDraft(value);
+    setSearchTerm(value.trim());
     setCurrentPage(1);
+  };
+
+  const handleSearch = () => {
+    commitSearch(searchDraft);
   };
 
   const clearSearch = () => {
@@ -165,18 +172,30 @@ export default function SponsorsPage() {
           <div className="mh-events-search">
             <div>
               <label htmlFor="sponsorSearch">Search by Name</label>
-              <input
-                type="text"
-                id="sponsorSearch"
-                value={searchDraft}
-                onChange={(e) => setSearchDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSearch();
-                  }
-                }}
+              <PublicListSearchCombobox<EventSponsorsDTO & Record<string, unknown>>
+                items={sponsors as (EventSponsorsDTO & Record<string, unknown>)[]}
+                committedValue={searchTerm}
+                onCommit={commitSearch}
+                onInputChange={setSearchDraft}
+                inputId="sponsorSearch"
                 placeholder="Enter sponsor name…"
+                searchRemote={(query) =>
+                  fetchPublicTypeahead<EventSponsorsDTO & Record<string, unknown>>({
+                    resource: 'event-sponsors',
+                    query,
+                    containsFields: ['name', 'companyName'],
+                    extraParams: {
+                      'isActive.equals': 'true',
+                      sort: 'priorityRanking,asc',
+                    },
+                  })
+                }
+                getSearchFields={(s) => [s.name, s.companyName, s.type, s.tagline, s.id]}
+                getCommitValue={(s) => s.name || ''}
+                formatPrimary={(s) => s.name || 'Unnamed sponsor'}
+                formatSecondary={(s) =>
+                  [s.companyName, s.type].filter(Boolean).join(' · ')
+                }
               />
             </div>
 

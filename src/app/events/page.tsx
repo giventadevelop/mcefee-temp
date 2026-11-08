@@ -9,6 +9,8 @@ import { isRecurringEvent, getNextOccurrenceDate } from '@/lib/eventUtils';
 import { isDonationBasedEvent, isTicketedFundraiserEvent } from '@/lib/donation/utils';
 import { resolveBuyTicketsTarget, resolveRegisterTarget } from '@/lib/eventcube/utils';
 import EventCardResultsPanel from '@/components/competitions/EventCardResultsPanel';
+import PublicListSearchCombobox from '@/components/public/PublicListSearchCombobox';
+import { fetchPublicTypeahead } from '@/lib/publicTypeaheadSearch';
 
 const EVENTS_PAGE_SIZE = 20; // Minimum events to display per page
 const BACKEND_FETCH_SIZE = 50; // Fetch more from backend to account for recurring event filtering
@@ -52,6 +54,7 @@ export default function EventsPage() {
   const [heroImageUrl, setHeroImageUrl] = useState<string>("/images/default_placeholder_hero_image.jpeg");
   const [fetchError, setFetchError] = useState(false);
   const [showPastEvents, setShowPastEvents] = useState(false);
+  const [searchTitleDraft, setSearchTitleDraft] = useState("");
   const [searchTitle, setSearchTitle] = useState("");
   const [searchDateFrom, setSearchDateFrom] = useState("");
   const [searchDateTo, setSearchDateTo] = useState("");
@@ -359,20 +362,26 @@ export default function EventsPage() {
     return formatInTimeZone(dateString, timezone, 'EEEE, MMMM d, yyyy');
   }
 
-  // Search functionality
+  const commitTitleSearch = (value: string) => {
+    setIsSearching(true);
+    setSearchTitleDraft(value);
+    setSearchTitle(value.trim());
+    setPage(0);
+  };
+
   const handleSearch = async () => {
     setIsSearching(true);
-    setPage(0); // Reset to first page when searching
-    // The useEffect will trigger automatically due to dependency changes
+    setSearchTitle(searchTitleDraft.trim());
+    setPage(0);
   };
 
   const clearSearch = () => {
+    setSearchTitleDraft("");
     setSearchTitle("");
     setSearchDateFrom("");
     setSearchDateTo("");
     setPage(0);
     setIsSearching(false);
-    // Reset to future events when clearing search
     setShowPastEvents(false);
   };
 
@@ -454,12 +463,29 @@ export default function EventsPage() {
           <div className="mh-events-search">
             <div>
               <label htmlFor="searchTitle">Search by Title</label>
-              <input
-                type="text"
-                id="searchTitle"
-                value={searchTitle}
-                onChange={(e) => setSearchTitle(e.target.value)}
+              <PublicListSearchCombobox<EventDetailsDTO & Record<string, unknown>>
+                items={events as unknown as (EventDetailsDTO & Record<string, unknown>)[]}
+                committedValue={searchTitle}
+                onCommit={commitTitleSearch}
+                onInputChange={setSearchTitleDraft}
+                inputId="searchTitle"
                 placeholder="Enter event title..."
+                searchRemote={(query) =>
+                  fetchPublicTypeahead<EventDetailsDTO & Record<string, unknown>>({
+                    resource: 'event-details',
+                    query,
+                    containsFields: ['title', 'caption'],
+                    extraParams: { 'isActive.equals': 'true', sort: 'startDate,asc' },
+                  })
+                }
+                getSearchFields={(e) => [e.title, e.caption, e.id]}
+                getCommitValue={(e) => e.title || ''}
+                formatPrimary={(e) => e.title || 'Untitled event'}
+                formatSecondary={(e) =>
+                  [e.caption, e.id != null ? `ID: ${e.id}` : null]
+                    .filter(Boolean)
+                    .join(' · ')
+                }
               />
             </div>
 
