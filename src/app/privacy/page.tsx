@@ -58,9 +58,9 @@ export default function PrivacyPage() {
                 sites, after you allow them.
               </p>
               <p>
-                The Google AdSense script does not load until you choose <strong>Accept</strong> on the cookie banner.
-                <strong> Reject</strong> keeps AdSense cookies off. You can change that choice later from Cookie settings
-                in the footer.
+                The site ownership script is in the page head so Google can verify the site. Ad units do not
+                load until you choose <strong>Accept</strong> on the cookie banner. <strong>Reject</strong> keeps those
+                ad units off. You can change that choice later from Cookie settings in the footer.
               </p>
               <p>
                 You can also control personalized ads in{' '}

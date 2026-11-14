@@ -523,7 +523,7 @@ export default async function HomeBackupPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div className="contact-item">
               <h6 className="text-lg font-semibold mb-2">Location</h6>
-              <p>Unite India
+              <p>Malayali Cultural Exchange Foundation for Education and Events
                 <br />New Jersey, USA</p>
             </div>
             <div className="contact-item">

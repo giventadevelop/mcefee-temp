@@ -204,7 +204,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
               <Link href="/charity-theme" className="flex items-center">
                 <div className="text-left">
                   <div className="text-xl font-bold text-purple-600 leading-snug">
-                    Unite India
+                    MCEFEE
                   </div>
                   <div className="text-[10px] font-medium text-purple-500 uppercase tracking-wider">
                     A NONPROFIT CORPORATION
@@ -501,7 +501,7 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
           <div className="flex items-center justify-between p-6">
             <div className="text-left">
               <div className="text-lg font-bold text-purple-600 leading-tight">
-                Unite India
+                MCEFEE
               </div>
               <div className="text-[10px] font-medium text-purple-500 uppercase tracking-wider">
                 A NONPROFIT CORPORATION

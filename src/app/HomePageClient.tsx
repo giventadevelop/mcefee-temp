@@ -6,8 +6,17 @@ import { usePathname } from 'next/navigation';
 import { bootstrapUserProfile } from '@/components/ProfileBootstrapperApiServerActions';
 import type { FeaturedEventWithMedia } from '@/lib/homepage/featuredEvents';
 import ModernistHomePage from '@/components/modernist/ModernistHomePage';
+import type { EventSponsorsDTO, EventWithMedia, ExecutiveCommitteeTeamMemberDTO } from '@/types';
 
-function HomePageContent({ initialFeaturedEvents }: { initialFeaturedEvents: FeaturedEventWithMedia[] }) {
+type HomePageClientProps = {
+  initialFeaturedEvents: FeaturedEventWithMedia[];
+  initialListingEvents: EventWithMedia[];
+  initialListingIsUpcoming: boolean;
+  initialTeam: ExecutiveCommitteeTeamMemberDTO[];
+  initialSponsors: EventSponsorsDTO[];
+};
+
+function HomePageContent(props: HomePageClientProps) {
   // Hash navigation for #team-section and other anchors
   useEffect(() => {
     const handleHashNavigation = () => {
@@ -42,14 +51,10 @@ function HomePageContent({ initialFeaturedEvents }: { initialFeaturedEvents: Fea
     return () => window.removeEventListener('hashchange', handleHashNavigation);
   }, []);
 
-  return <ModernistHomePage initialFeaturedEvents={initialFeaturedEvents} />;
+  return <ModernistHomePage {...props} />;
 }
 
-export default function HomePageClient({
-  initialFeaturedEvents,
-}: {
-  initialFeaturedEvents: FeaturedEventWithMedia[];
-}) {
+export default function HomePageClient(props: HomePageClientProps) {
   const pathname = usePathname();
   const { isSignedIn, userId, isLoaded } = useAuth();
   const { user } = useUser();
@@ -91,5 +96,5 @@ export default function HomePageClient({
     }
   }, [isLoaded, isSignedIn, userId, user, pathname, hasCheckedRedirect]);
 
-  return <HomePageContent initialFeaturedEvents={initialFeaturedEvents} />;
+  return <HomePageContent {...props} />;
 }

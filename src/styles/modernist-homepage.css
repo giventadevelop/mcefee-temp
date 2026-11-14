@@ -2317,6 +2317,27 @@ body.modernist-home .mh-events-search .mh-typeahead [role='option'] button:hover
   background: color-mix(in srgb, var(--mh-accent) 12%, transparent);
 }
 
+/* Sponsors catalog: name-only search + "Click Enter for more" */
+body.modernist-home .mh-events-search--sponsors {
+  grid-template-columns: 1fr auto;
+}
+
+body.modernist-home .mh-sponsors-search-more {
+  border-top: 1px solid var(--mh-neutral-300);
+  margin-top: 2px;
+  color: var(--mh-accent);
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  cursor: pointer;
+  font-family: var(--mh-font);
+}
+
+body.modernist-home .mh-sponsors-search-more:hover {
+  background: color-mix(in srgb, var(--mh-accent) 12%, transparent);
+}
+
 body.modernist-home .mh-events-search label {
   display: block;
   font-size: 12px;

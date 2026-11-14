@@ -5,8 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { EventSponsorsDTO } from '@/types';
 import { proxyApiPath } from '@/lib/proxyApiPath';
-import { fetchPublicTypeahead } from '@/lib/publicTypeaheadSearch';
-import PublicListSearchCombobox from '@/components/public/PublicListSearchCombobox';
+import SponsorsCatalogSearch from '@/components/sponsors/SponsorsCatalogSearch';
 import { SponsorContactSocialIconRow } from '@/components/sponsors/SponsorCard';
 
 const PAGE_SIZE = 20;
@@ -169,33 +168,16 @@ export default function SponsorsPage() {
             possible.
           </p>
 
-          <div className="mh-events-search">
+          <div className="mh-events-search mh-events-search--sponsors">
             <div>
               <label htmlFor="sponsorSearch">Search by Name</label>
-              <PublicListSearchCombobox<EventSponsorsDTO & Record<string, unknown>>
-                items={sponsors as (EventSponsorsDTO & Record<string, unknown>)[]}
+              <SponsorsCatalogSearch
                 committedValue={searchTerm}
                 onCommit={commitSearch}
                 onInputChange={setSearchDraft}
                 inputId="sponsorSearch"
                 placeholder="Enter sponsor name…"
-                searchRemote={(query) =>
-                  fetchPublicTypeahead<EventSponsorsDTO & Record<string, unknown>>({
-                    resource: 'event-sponsors',
-                    query,
-                    containsFields: ['name', 'companyName'],
-                    extraParams: {
-                      'isActive.equals': 'true',
-                      sort: 'priorityRanking,asc',
-                    },
-                  })
-                }
-                getSearchFields={(s) => [s.name, s.companyName, s.type, s.tagline, s.id]}
-                getCommitValue={(s) => s.name || ''}
-                formatPrimary={(s) => s.name || 'Unnamed sponsor'}
-                formatSecondary={(s) =>
-                  [s.companyName, s.type].filter(Boolean).join(' · ')
-                }
+                disabled={loading || isSearching}
               />
             </div>
 

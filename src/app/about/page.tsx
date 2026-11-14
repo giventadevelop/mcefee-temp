@@ -51,7 +51,7 @@ export default async function ProfileAboutPage() {
           </div>
           <div className="mh-about-copy">
             <p>
-              The Unite India Corporation Foundation for Education and Events is a vibrant,
+              The Malayali Cultural Exchange Foundation for Education and Events is a vibrant,
               community-driven organization based in New Jersey, USA, dedicated to reviving real
               Malayali culture, empowering the next generation through education, and offering a
               nostalgic sense of home to our community.

@@ -60,20 +60,32 @@ Shared publisher for sites on the Giventa owner account: `ca-pub-101619835327590
   - The footer offers a way to open the choice again.
   - This is the required gate before ads in the EU/UK. It is not a full IAB TCF CMP.
 
+- **One organization, in the first HTML response**
+  - The homepage, `/about`, and any other public page use this organization's legal name, location, phone, and email. A leftover template name ("Unite India") is a fail even when the legal name appears later on the same page.
+  - Events, team, and sponsors that already exist in the tenant API must be in the server-rendered homepage HTML. A crawler that does not run the browser fetch sees only the first response.
+  - Do not leave headings that say the section will appear when available. Omit the section until records exist.
+  - Do not add empty routes or generic paragraphs to pass a low-value review. If news or writings are not published, do not invent them.
+  - Request review only after that HTML is on the live host and readable while signed out.
+
 ## How to record a project
 
 When a project is checked, add or update a status block under this rule in that project's `.cursor/rules/google_adsense_compliance.mdc`. One line per checklist item: pass or fail, and the file.
 
-## MCEFEE status (November 6, 2026)
+## MCEFEE status (November 14, 2026)
 
-Project: `mcefee-temp`. Organization: Malayali Cultural Exchange Foundation for Education and Events. Contact: `Contactus@mcefee.org`. Publisher: `ca-pub-1016198353275904`.
+Project: `mcefee-temp`. Organization: Malayali Cultural Exchange Foundation for Education and Events, New Jersey. Phone: `(908) 516-8781`. Contact: `Contactus@mcefee.org`. Publisher: `ca-pub-1016198353275904`. Amplify app `d2tmdoilinq9sy`, branch `release/v1.0.0`.
 
-- **ads.txt:** pass — [ads.txt](mdc:public/ads.txt)
-- **Meta tag:** pass on the live site — [layout.tsx](mdc:src/app/layout.tsx). The AdSense code snippet was added to that head on November 6, 2026 and is not on https://mcefee-temp.com until the next release.
-- **Tenant settings:** pass in local DB for settings id 12 (`footer_strip` slot `2719184137`). Confirm the deployed domain after the next satellite release.
-- **About and contact:** pass — [about/page.tsx](mdc:src/app/about/page.tsx), [contact/page.tsx](mdc:src/app/contact/page.tsx)
-- **Privacy:** pass — [privacy/page.tsx](mdc:src/app/privacy/page.tsx)
+AdSense finished review as Needs attention: verify site ownership, and low-value content. ads.txt was already Authorized.
+
+- **ads.txt:** pass on the live host — `https://mcefee-temp.com/ads.txt` redirects once to `www` and returns `google.com, pub-1016198353275904, DIRECT, f08c47fec0942fa0`. [ads.txt](mdc:public/ads.txt)
+- **Meta tag and code snippet:** pass on the live homepage as of November 14, 2026. Both `google-adsense-account` and `adsbygoogle.js?client=ca-pub-1016198353275904` are in the server HTML. [layout.tsx](mdc:src/app/layout.tsx). Use **Verify site ownership**. Do not delete and re-add the site. Job 70 (`59df638`, November 7) is the release that put the snippet online.
+- **Tenant settings:** pass in local DB for settings id 12 (`footer_strip` slot `2719184137`).
+- **About and contact:** pass in source. Homepage and About now use the MCEFEE legal name, New Jersey, the phone, and `Contactus@mcefee.org`. The same replacement is in [AboutSection.tsx](mdc:src/components/AboutSection.tsx), the charity-theme header and about copy, and [home-backup/page.tsx](mdc:src/app/home-backup/page.tsx).
+- **Published content in the first HTML:** fixed locally, not deployed. [fetchHomepageDirectoryServer.ts](mdc:src/lib/homepage/fetchHomepageDirectoryServer.ts) renders existing team, sponsors, and current events on the server. Empty "will appear when available" blocks are omitted. An in-progress event stays listed while `endDate` is today or later. Local `http://localhost:3002/` included Shaji Varghese, Josco Jewellers, and Nadha Varnika Veena Concert.
+- **News or writings:** none are published. Do not add filler posts.
+- **Privacy:** the Accept sentence now matches the head script — ownership script is in the head; ad units wait for Accept. [privacy/page.tsx](mdc:src/app/privacy/page.tsx). Not deployed yet.
 - **Terms:** pass — [terms/page.tsx](mdc:src/app/terms/page.tsx)
 - **Footer links:** pass — [Footer.tsx](mdc:src/components/Footer.tsx)
 - **Public routes:** pass — [middleware.ts](mdc:src/middleware.ts)
 - **Cookie choice:** pass — [AdSenseConsentBanner.tsx](mdc:src/components/ads/AdSenseConsentBanner.tsx), [adsenseConsent.ts](mdc:src/lib/adsense/adsenseConsent.ts), [GoogleAdSenseSlot.tsx](mdc:src/components/ads/GoogleAdSenseSlot.tsx)
+- **Redeploy:** not ready to start a job. The November 14 corrections are uncommitted on local `main`. `origin/main` and `origin/release/v1.0.0` are both `59df638`, which Amplify job 70 already published. Commit and push to `release/v1.0.0` before a new RELEASE job. Do not request another AdSense review until that HTML is on `https://www.mcefee-temp.com`.

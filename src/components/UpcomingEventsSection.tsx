@@ -483,15 +483,21 @@ const UpcomingEventsSection: React.FC<{
   variant?: UpcomingEventsSectionVariant;
   /** When false, hide the section if there are no upcoming events (homepage uses Featured instead). */
   fallbackToPast?: boolean;
+  /** Server-rendered listings so the first HTML response includes published events. */
+  initialEvents?: EventWithMedia[];
+  initialIsUpcoming?: boolean;
 }> = ({
   variant = 'default',
   fallbackToPast = true,
+  initialEvents = [],
+  initialIsUpcoming = true,
 }) => {
   const isModernist = variant === 'modernist';
-  const [events, setEvents] = useState<EventWithMedia[]>([]);
-  const [loading, setLoading] = useState(true);
+  const hadInitialEventsRef = useRef(initialEvents.length > 0);
+  const [events, setEvents] = useState<EventWithMedia[]>(initialEvents);
+  const [loading, setLoading] = useState(initialEvents.length === 0);
   const [fetchError, setFetchError] = useState(false);
-  const [isUpcomingEvents, setIsUpcomingEvents] = useState(true);
+  const [isUpcomingEvents, setIsUpcomingEvents] = useState(initialIsUpcoming);
   const [hasMoreEvents, setHasMoreEvents] = useState(false);
 
   // Defer upcoming events API call until page ready + 300ms
@@ -596,7 +602,7 @@ const UpcomingEventsSection: React.FC<{
       // Defer network request until page is ready + delay
       if (!shouldFetch) return;
 
-      if (!silent) {
+      if (!silent && !hadInitialEventsRef.current) {
         setLoading(true);
         setFetchError(false);
       }
@@ -611,7 +617,7 @@ const UpcomingEventsSection: React.FC<{
           sort: 'startDate,asc',
           page: '0',
           size: '15', // Increased from 6 to 15 to ensure we have enough after recurring event grouping
-          'startDate.greaterThanOrEqual': today,
+          'endDate.greaterThanOrEqual': today,
           'isActive.equals': 'true' // Only show active events
         });
 

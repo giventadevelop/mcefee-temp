@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import type { EventDetailsDTO, EventSponsorsDTO, ExecutiveCommitteeTeamMemberDTO } from '@/types';
+import type { EventDetailsDTO, EventSponsorsDTO, EventWithMedia, ExecutiveCommitteeTeamMemberDTO } from '@/types';
 import {
   computeFeaturedEventsFromMedia,
   getFeaturedEventImageUrl,
@@ -397,8 +397,16 @@ function FeaturedEventsModernist({ items }: { items: FeaturedEventWithMedia[] })
 
 export default function ModernistHomePage({
   initialFeaturedEvents,
+  initialListingEvents,
+  initialListingIsUpcoming,
+  initialTeam,
+  initialSponsors,
 }: {
   initialFeaturedEvents: FeaturedEventWithMedia[];
+  initialListingEvents: EventWithMedia[];
+  initialListingIsUpcoming: boolean;
+  initialTeam: ExecutiveCommitteeTeamMemberDTO[];
+  initialSponsors: EventSponsorsDTO[];
 }) {
   const {
     showEventsSection,
@@ -407,8 +415,8 @@ export default function ModernistHomePage({
     loading: tenantSettingsLoading,
   } = useTenantSettings();
 
-  const [team, setTeam] = useState<ExecutiveCommitteeTeamMemberDTO[]>([]);
-  const [sponsors, setSponsors] = useState<EventSponsorsDTO[]>([]);
+  const [team, setTeam] = useState<ExecutiveCommitteeTeamMemberDTO[]>(initialTeam);
+  const [sponsors, setSponsors] = useState<EventSponsorsDTO[]>(initialSponsors);
 
   const featuredFetchEnabled = useDeferredFetch(400);
   const {
@@ -565,7 +573,12 @@ export default function ModernistHomePage({
 
       {/* Upcoming (max 6), or Past Events (max 6) when there are no future events */}
       {!tenantSettingsLoading && showEventsSection !== false && (
-        <UpcomingEventsSection variant="modernist" fallbackToPast />
+        <UpcomingEventsSection
+          variant="modernist"
+          fallbackToPast
+          initialEvents={initialListingEvents}
+          initialIsUpcoming={initialListingIsUpcoming}
+        />
       )}
 
       {/* 1a — What we do (interactive cards) */}
@@ -581,7 +594,7 @@ export default function ModernistHomePage({
         </div>
         <div className="mh-about-copy">
           <p>
-            The Unite India Corporation Foundation for Education and Events is a vibrant,
+            The Malayali Cultural Exchange Foundation for Education and Events is a vibrant,
             community-driven organization based in New Jersey, USA, dedicated to reviving real
             Malayali culture, empowering the next generation through education, and offering a
             nostalgic sense of home to our community.
@@ -608,7 +621,7 @@ export default function ModernistHomePage({
       </section>
 
       {/* Team — executive committee volunteers (charity-site roster) */}
-      {showExecutiveCommitteeSection !== false && (
+      {showExecutiveCommitteeSection !== false && team.length > 0 && (
         <section
           id="team-section"
           className="mh-section"
@@ -632,10 +645,7 @@ export default function ModernistHomePage({
           >
             The volunteers who keep MCEFEE&apos;s cultural calendar and community work moving.
           </p>
-          {team.length === 0 ? (
-            <p className="mh-empty">Team members will appear here when available.</p>
-          ) : (
-            <div className="mh-team-grid">
+          <div className="mh-team-grid">
               {team.map((m) => {
                 const name = [m.firstName, m.lastName].filter(Boolean).join(' ') || m.title;
                 return (
@@ -665,13 +675,12 @@ export default function ModernistHomePage({
                   </div>
                 );
               })}
-            </div>
-          )}
+          </div>
         </section>
       )}
 
       {/* Sponsors — same card layout as upcoming events */}
-      {showSponsorsSection !== false && (
+      {showSponsorsSection !== false && sponsors.length > 0 && (
         <section
           className="mh-section mh-home-sponsors mh-section-tight-top"
           aria-label="Sponsors"
@@ -695,10 +704,7 @@ export default function ModernistHomePage({
             Partners who help keep Malayali culture visible — thank you for supporting the calendar.
           </p>
 
-          {sponsors.length === 0 ? (
-            <p className="mh-empty">Sponsors will appear here when available.</p>
-          ) : (
-            <div className="mh-home-events-grid mh-home-sponsors-grid">
+          <div className="mh-home-events-grid mh-home-sponsors-grid">
               {sponsors.map((sp) => {
                 const title = sp.companyName || sp.name;
                 const websiteHref = sponsorWebsiteHref(sp.websiteUrl);
@@ -774,8 +780,7 @@ export default function ModernistHomePage({
                   </article>
                 );
               })}
-            </div>
-          )}
+          </div>
         </section>
       )}
     </main>
