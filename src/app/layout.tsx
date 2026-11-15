@@ -22,8 +22,6 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { getTenantId, getApiBaseUrl, getAppUrlFromRequestHeaders, originFromRequestHost } from "@/lib/env";
 import { fetchWithJwtRetry } from "@/lib/proxyHandler";
 import { logServerFetchFailure } from "@/lib/logServerFetchFailure";
-import { isAdminRole } from "@/lib/utils";
-import { resolveIsTenantAdmin } from "@/lib/resolveTenantAdminStatus";
 import { getAuthPrimaryHost, getClerkSatelliteHost, isSatelliteHostname } from "@/lib/clerkSatellite";
 import { buildClerkProfileInsert, decideClerkProfileIdentity } from "@/lib/clerkProfileIdentity";
 import { getSharedAdsensePublisherIdForMeta } from "@/lib/adsense/sharedPublisherId";
@@ -61,7 +59,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   debugLog('[LAYOUT] Root layout executing');
-  let isTenantAdmin = false;
   const satelliteDomain = getClerkSatelliteHost() || process.env.NEXT_PUBLIC_CLERK_DOMAIN || process.env.AMPLIFY_NEXT_PUBLIC_CLERK_DOMAIN || 'www.mosc-temp.com';
   let clerkProps: { isSatellite?: boolean; domain?: string; signInUrl?: string; signUpUrl?: string; allowedRedirectOrigins?: string[] } = {};
   // Hoisted so SSR <body> can keep modernist classes through hydration (avoids mint-header FOUC).
@@ -127,8 +124,8 @@ export default async function RootLayout({
       afterSignOutUrl: '/',
     };
 
-  // Determine tenant-scoped admin flag on the server.
-  // Run auth + profile lookup on every path (Header is always present).
+  // Profile bootstrap: ensure a user_profile row exists for the signed-in Clerk user
+  // (needed by /profile and /membership). Run on every path (Header is always present).
   // CRITICAL: Skip during Clerk satellite sync (?__clerk_synced=true). On the first
   // load after redirect from primary, the session cookie is being established for SUBSEQUENT
   // requests. Calling auth() now would either hang (blocking the entire server response for
@@ -234,7 +231,7 @@ export default async function RootLayout({
 
                   if (identity.action === 'use') {
                     const owned = emailRows.find((row: { userId?: string; clerkUserId?: string }) => row?.userId === userId || row?.clerkUserId === userId);
-                    isTenantAdmin = isAdminRole(owned?.userRole);
+                    debugLog('[Layout] Profile already owned by this Clerk user', { id: owned?.id });
                   } else if (identity.action === 'insert') {
                     debugLog('[Layout] Inserting a profile row for this Clerk user id');
                     const payload = buildClerkProfileInsert({
@@ -252,8 +249,7 @@ export default async function RootLayout({
                       body: JSON.stringify(payload),
                     });
                     if (createRes.ok) {
-                      const created = await createRes.json().catch(() => null);
-                      isTenantAdmin = isAdminRole(created?.userRole ?? payload.userRole);
+                      debugLog('[Layout] Inserted profile row for Clerk user');
                     } else {
                       console.error('[Layout] Failed to insert Clerk profile:', createRes.status);
                     }
@@ -332,14 +328,7 @@ export default async function RootLayout({
                         tenantId: updated?.tenantId,
                         rawProfile: JSON.stringify(updated, null, 2)
                       });
-                      isTenantAdmin = isAdminRole(updated?.userRole);
-                      debugLog('[Layout] ✅ Successfully updated userId. Admin status:', {
-                        isTenantAdmin,
-                        userRole: updated?.userRole,
-                        roleMatch: isAdminRole(updated?.userRole),
-                        roleType: typeof updated?.userRole,
-                        roleValue: JSON.stringify(updated?.userRole)
-                      });
+                      debugLog('[Layout] ✅ Successfully updated userId', { id: updated?.id });
                     } else {
                       const errorText = await updateRes.text();
                       console.error('[Layout] Failed to update userId:', updateRes.status);
@@ -383,7 +372,7 @@ export default async function RootLayout({
               logServerFetchFailure('Layout profile create/update', err);
             }
           } else {
-            // Step 5: Profile found by userId + tenantId - check admin status
+            // Step 5: Profile found by userId + tenantId - nothing to do
             debugLog('[Layout] 🔍 Profile data:', {
               id: p?.id,
               userId: p?.userId,
@@ -393,41 +382,23 @@ export default async function RootLayout({
               tenantId: p?.tenantId,
               rawProfile: JSON.stringify(p, null, 2)
             });
-            isTenantAdmin = isAdminRole(p?.userRole);
-            debugLog('[Layout] ✅ Found existing profile. Admin status:', {
-              isTenantAdmin,
-              userRole: p?.userRole,
-              roleMatch: isAdminRole(p?.userRole),
-              roleType: typeof p?.userRole,
-              roleValue: JSON.stringify(p?.userRole)
-            });
+            debugLog('[Layout] ✅ Found existing profile', { id: p?.id });
           }
-        }
-
-        // Direct backend lookup (by-user + email fallback) when proxy path did not set admin
-        if (!isTenantAdmin) {
-          const email = currentUserData?.emailAddresses?.[0]?.emailAddress ?? null;
-          isTenantAdmin = await resolveIsTenantAdmin(userId, email);
-          debugLog('[Layout] resolveIsTenantAdmin fallback:', { isTenantAdmin, userId, email });
         }
       }
     } catch (e) {
-      // Fail closed (no admin) on error
-      logServerFetchFailure('Layout admin status', e);
-      isTenantAdmin = false;
+      logServerFetchFailure('Layout profile bootstrap', e);
     }
   } else {
     // pathname empty - skip auth to avoid edge cases
     debugLog('[Layout] 🔍 No pathname, skipping auth checks');
-    isTenantAdmin = false;
   }
 
-  debugLog('[Layout] 🔍 Final admin status:', { isTenantAdmin, isPublicRoute, pathname });
+  debugLog('[Layout] 🔍 Layout resolved:', { isPublicRoute, pathname });
   } catch (layoutError: unknown) {
     const err = layoutError instanceof Error ? layoutError : new Error(String(layoutError));
     console.error('[LAYOUT-ERROR] Root layout failed:', err.message);
     console.error('[LAYOUT-ERROR] Stack:', err.stack);
-    isTenantAdmin = false;
   }
 
   // Clerk v7 / Core 3: ClerkProvider must be inside <body>, not wrapping <html>.
@@ -449,7 +420,7 @@ export default async function RootLayout({
   const productChrome = (
     <>
       <PublicOrganicDesignBody />
-      <Header hideMenuItems={false} isTenantAdmin={isTenantAdmin} />
+      <Header hideMenuItems={false} />
       <div className="flex-1 flex flex-col">{children}</div>
       <Footer />
     </>

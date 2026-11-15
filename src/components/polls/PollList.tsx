@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { EventPollDTO, EventPollOptionDTO } from '@/types';
-import { fetchEventPollsServer, fetchEventPollOptionsServer } from '@/app/admin/polls/ApiServerActions';
+import { fetchEventPollsServer, fetchEventPollOptionsServer } from '@/app/polls/ApiServerActions';
 import { PollVotingCard } from './PollVotingCard';
 import PublicListSearchCombobox from '@/components/public/PublicListSearchCombobox';
 import { fetchPublicTypeahead } from '@/lib/publicTypeaheadSearch';

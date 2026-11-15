@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { Search, ChevronDown, X, Menu } from 'lucide-react';
 import { useAuth } from "@clerk/nextjs";
 import { UserButton } from "@clerk/nextjs";
-import { useUser } from "@clerk/nextjs";
 import { useTenantSettings } from '@/components/TenantSettingsProvider';
 
 const navItems = [
@@ -53,26 +52,9 @@ const navItems = [
   }
 ];
 
-// Admin submenu items
-const adminSubmenuItems = [
-  { name: 'Admin Home', href: '/admin' },
-  { name: 'Manage Users', href: '/admin/manage-usage' },
-  { name: 'Manage Events', href: '/admin' },
-  { name: 'Focus Groups', href: '/admin/focus-groups' },
-  { name: 'Poll Management', href: '/admin/polls' },
-  { name: 'Promotion Emails', href: '/admin/promotion-emails' },
-  { name: 'Test Stripe', href: '/admin/test-stripe' },
-  { name: 'Media Management', href: '/admin/media' },
-  { name: 'Executive Committee', href: '/admin/executive-committee' },
-  { name: 'Event Sponsors', href: '/admin/event-sponsors' }
-];
-
-const ORG_NAME = "Adwiise";
-
 type HeaderProps = {
   hideMenuItems?: boolean;
   variant?: 'charity' | 'default';
-  isTenantAdmin?: boolean;
 };
 
 const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -94,41 +76,12 @@ const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string
   }
 };
 
-export default function Header({ hideMenuItems = false, variant = 'charity', isTenantAdmin }: HeaderProps) {
+export default function Header({ hideMenuItems = false, variant = 'charity' }: HeaderProps) {
   const pathname = usePathname();
   const { userId } = useAuth();
-  const { user, isLoaded: userLoaded } = useUser();
   const { showTeamSection, loading: settingsLoading, settings } = useTenantSettings();
-  const [isAdmin, setIsAdmin] = useState(!!isTenantAdmin);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openMobileDropdowns, setOpenMobileDropdowns] = useState<Record<string, boolean>>({});
-
-  // Check admin status
-  useEffect(() => {
-    if (typeof isTenantAdmin === 'boolean') {
-      setIsAdmin(isTenantAdmin);
-      return;
-    }
-    async function checkAdminInOrg() {
-      if (!userLoaded || !user) {
-        setIsAdmin(false);
-        return;
-      }
-      try {
-        const memberships = await user.getOrganizationMemberships();
-        const targetOrgMembership = memberships.find(
-          (membership: any) => membership.organization.name === ORG_NAME
-        );
-        setIsAdmin(
-          targetOrgMembership?.role === 'org:admin' ||
-          targetOrgMembership?.role === 'admin'
-        );
-      } catch {
-        setIsAdmin(false);
-      }
-    }
-    checkAdminInOrg();
-  }, [user, userLoaded, isTenantAdmin]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -359,56 +312,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                     >
                       <span className="tracking-[0.025em]">Profile</span>
                     </Link>
-
-                    {/* Admin Menu with Submenu */}
-                    {isAdmin && (
-                      <div className="relative group">
-                        <Link
-                          href="/admin"
-                          className={`
-                            relative flex items-center space-x-1 font-inter
-                            text-base font-medium tracking-wide
-                            px-3 py-2 mx-1
-                            transition-all duration-300 ease-in-out
-                            focus:outline-none
-                            ${pathname?.startsWith("/admin")
-                              ? 'text-blue-400 font-semibold border-b-2 border-blue-400'
-                              : 'text-blue-400 font-medium hover:text-blue-500 hover:font-semibold border-b-2 border-transparent hover:border-blue-400'
-                            }
-                          `}
-                        >
-                          <span className="tracking-[0.025em]">Admin</span>
-                          <ChevronDown
-                            size={16}
-                            className="text-blue-400 transition-transform duration-300 group-hover:rotate-180"
-                            aria-hidden="true"
-                          />
-                        </Link>
-
-                        {/* Admin Submenu */}
-                        <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-50">
-                          <div className="py-3">
-                            {adminSubmenuItems.map(subItem => (
-                              <Link
-                                key={subItem.name}
-                                href={subItem.href}
-                                className="
-                                  block px-4 py-2 mx-1 rounded-lg
-                                  text-sm font-medium text-blue-400 tracking-[0.025em]
-                                  hover:text-blue-500 hover:font-semibold hover:bg-blue-50
-                                  focus:outline-none
-                                  transition-all duration-300 ease-in-out
-                                "
-                                role="menuitem"
-                                aria-label={`Navigate to ${subItem.name}`}
-                              >
-                                {subItem.name}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     <UserButton />
                   </>
@@ -681,35 +584,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                   >
                     Profile
                   </Link>
-
-                  {/* Mobile Admin Menu */}
-                  {isAdmin && (
-                    <>
-                      <div className="border-t border-gray-200 pt-4 mt-4">
-                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 px-2">
-                          Admin Panel
-                        </div>
-                        {adminSubmenuItems.map(subItem => (
-                          <Link
-                            key={subItem.name}
-                            href={subItem.href}
-                            className="
-                              block py-3 px-4 min-h-[44px] rounded-lg
-                              font-inter text-sm font-medium text-blue-400 tracking-[0.025em]
-                              hover:text-blue-500 hover:font-semibold hover:bg-blue-50
-                              focus:outline-none
-                              transition-all duration-300 ease-in-out
-                            "
-                            onClick={closeMobileMenu}
-                            role="menuitem"
-                            aria-label={`Navigate to ${subItem.name}`}
-                          >
-                            {subItem.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </>
-                  )}
 
                   <div className="flex justify-center pt-4">
                     <UserButton />

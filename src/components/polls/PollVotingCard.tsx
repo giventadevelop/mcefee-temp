@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, Users, BarChart3 } from 'lucide-react';
 import type { EventPollDTO, EventPollOptionDTO, EventPollResponseDTO } from '@/types';
-import { createEventPollResponseServer, fetchEventPollResponsesServer } from '@/app/admin/polls/ApiServerActions';
+import { createEventPollResponseServer, fetchEventPollResponsesServer } from '@/app/polls/ApiServerActions';
 
 interface PollVotingCardProps {
   poll: EventPollDTO;

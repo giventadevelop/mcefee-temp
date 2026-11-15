@@ -110,41 +110,9 @@ const navItemCatalog = [
   },
 ];
 
-// Admin submenu items
-const adminSubmenuItems = [
-  { name: 'Admin Home', href: '/admin' },
-  { name: 'Manage Users', href: '/admin/manage-usage' },
-  { name: 'Manage Events', href: '/admin/manage-events' },
-  { name: 'Profile Site', href: '/admin/profile-site' },
-  { name: 'Event Analytics', href: '/admin/events/dashboard' },
-  { name: 'Registrations', href: '/admin/events/registrations' },
-  { name: 'QR Scanner', href: '/admin/qr-scanner' },
-  { name: 'Check-In Analytics', href: '/admin/check-in-analytics' },
-  { name: 'Sales Analytics', href: '/admin/sales-analytics' },
-  { name: 'Manual Payments', href: '/admin/manual-payments' },
-  { name: 'Poll Management', href: '/admin/polls' },
-  { name: 'Focus Groups', href: '/admin/focus-groups' },
-  {
-    name: 'Membership',
-    href: '#',
-    dropdown: [
-      { name: 'Plans', href: '/admin/membership/plans' },
-      { name: 'Subscriptions', href: '/admin/membership/subscriptions' }
-    ]
-  },
-  { name: 'Bulk Email', href: '/admin/bulk-email' },
-  { name: 'Test Stripe', href: '/admin/test-stripe' },
-  { name: 'Media Management', href: '/admin/media' },
-  { name: 'Official Documents', href: '/admin/official-documents' },
-  { name: 'Document Categories', href: '/admin/official-document-categories' },
-  { name: 'Executive Committee', href: '/admin/executive-committee' },
-  { name: 'Event Sponsors', href: '/admin/event-sponsors' }
-];
-
 type HeaderProps = {
   hideMenuItems?: boolean;
   variant?: 'charity' | 'default';
-  isTenantAdmin?: boolean;
 };
 
 const getNavAriaLabel = (itemName: string) => {
@@ -690,7 +658,7 @@ function UserAvatarDropdown({
   );
 }
 
-export default function Header({ hideMenuItems = false, variant = 'charity', isTenantAdmin }: HeaderProps) {
+export default function Header({ hideMenuItems = false, variant = 'charity' }: HeaderProps) {
   const pathname = usePathname();
   const { userId, isLoaded } = useAuth();
   const { user } = useUser();
@@ -736,14 +704,13 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
       showProfileAffiliations ||
       showProfileProjects ||
       showProfileFamily);
-  const [isAdmin, setIsAdmin] = useState(!!isTenantAdmin);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [openMobileDropdowns, setOpenMobileDropdowns] = useState<Record<string, boolean>>({});
   const [headerScrolled, setHeaderScrolled] = useState(false);
   // CRITICAL: Check for sign-out flag and call signOut() on satellite domain.
   // Just clearing localStorage is NOT enough — Clerk stores session in HTTP-only cookies
-  // that can only be cleared via signOut(). Without this, the avatar/admin menu persist.
+  // that can only be cleared via signOut(). Without this, the avatar menu persists.
   const [pendingSignOut, setPendingSignOut] = useState(false);
 
   // Phase 1: Detect flag on mount (runs immediately, before Clerk loads)
@@ -819,126 +786,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
       hostname: typeof window !== 'undefined' ? window.location.hostname : 'server'
     });
   }, [isLoaded, userId, user]);
-
-  // Prefer server-verified tenant admin flag when provided; re-check admin status when user logs in
-  // CRITICAL: When user logs in client-side, isTenantAdmin prop may be stale (from initial SSR)
-  // We need to re-check admin status from the database when userId changes
-  // On satellite domains, the server-side check is skipped during __clerk_synced, so
-  // the client-side check here is the primary mechanism for showing the admin menu.
-  useEffect(() => {
-    // If auth is not loaded yet, use server-verified flag (from SSR)
-    if (!isLoaded) {
-      setIsAdmin(!!isTenantAdmin);
-      return;
-    }
-
-    // Clear admin only when there is no Clerk userId.
-    // Do NOT require `user` from useUser() — it can load a tick after useAuth() and
-    // briefly clearing admin causes the Admin menu to flicker off.
-    if (!userId) {
-      setIsAdmin(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const applyAdminFallback = () => {
-      if (typeof isTenantAdmin === 'boolean') {
-        setIsAdmin(isTenantAdmin);
-        return;
-      }
-      const publicRole = user?.publicMetadata?.role as string | undefined;
-      const orgRole = user?.organizationMemberships?.[0]?.role;
-      const isAdminUser =
-        publicRole === 'admin' ||
-        publicRole === 'administrator' ||
-        orgRole === 'admin' ||
-        orgRole === 'org:admin';
-      setIsAdmin(!!isAdminUser);
-    };
-
-    // Fetch profile and check admin role, with optional retry for satellite domain timing
-    const checkAdminStatus = async (attempt = 1): Promise<void> => {
-      try {
-        console.log(`[Header] Checking admin status (attempt ${attempt}), userId=${userId}`);
-        const resp = await fetch('/api/auth/admin-status', {
-          cache: 'no-store',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (resp.ok) {
-          const data = await resp.json();
-          const adminResult = data?.isAdmin === true;
-          const lookupFailed = data?.lookupFailed === true;
-          console.log(
-            `[Header] Admin status API: isAdmin=${adminResult}, lookupFailed=${lookupFailed}, userId=${data?.userId ?? userId}, tenantId=${data?.tenantId ?? 'n/a'}, attempt=${attempt}`
-          );
-          if (cancelled) return;
-
-          // lookup_failed must not clear a true SSR admin flag (false-negative flicker)
-          if (lookupFailed) {
-            if (attempt < 2) {
-              console.log('[Header] Admin lookup failed — retrying in 2s...');
-              await new Promise((r) => setTimeout(r, 2000));
-              if (!cancelled) return checkAdminStatus(attempt + 1);
-            }
-            applyAdminFallback();
-            return;
-          }
-
-          setIsAdmin(adminResult);
-        } else {
-          console.warn(`[Header] Admin status check failed (attempt ${attempt}):`, resp.status);
-
-          // On satellite domains, the first API call after sync may fail if session
-          // is not yet established. Retry once after a short delay.
-          if (attempt < 2) {
-            console.log('[Header] Retrying admin status check in 2s...');
-            await new Promise(r => setTimeout(r, 2000));
-            if (!cancelled) return checkAdminStatus(attempt + 1);
-          }
-
-          if (!cancelled) {
-            applyAdminFallback();
-          }
-        }
-      } catch (error) {
-        console.error(`[Header] Error checking admin status (attempt ${attempt}):`, error);
-
-        // Retry once on error (covers network hiccups after satellite sync)
-        if (attempt < 2) {
-          console.log('[Header] Retrying admin status check in 2s...');
-          await new Promise(r => setTimeout(r, 2000));
-          if (!cancelled) return checkAdminStatus(attempt + 1);
-        }
-
-        if (!cancelled) {
-          applyAdminFallback();
-        }
-      }
-    };
-
-    checkAdminStatus();
-
-    // Post-satellite-sync re-check: After Clerk satellite sync completes, the session
-    // may not be fully ready when checkAdminStatus first runs. Detect if we just came
-    // through a sync (ClerkSyncUrlCleanup sets this flag) and re-check after Clerk stabilizes.
-    const wasSynced = typeof window !== 'undefined' && sessionStorage.getItem('clerk_satellite_synced');
-    if (wasSynced) {
-      sessionStorage.removeItem('clerk_satellite_synced');
-      const syncTimer = setTimeout(() => {
-        if (!cancelled) {
-          console.log('[Header] Post-satellite-sync re-check of admin status');
-          checkAdminStatus();
-        }
-      }, 1500);
-      return () => { cancelled = true; clearTimeout(syncTimer); };
-    }
-
-    return () => { cancelled = true; };
-    // Intentionally omit `user` — waiting on useUser() previously cleared admin and re-ran this effect.
-  }, [isLoaded, userId, isTenantAdmin]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -1239,80 +1086,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                   </>
                 ) : (
                   <>
-                    {isAdmin && (
-                      <div className="relative group shrink-0">
-                        <Link
-                          href="/admin"
-                          className={`header-nav-link header-auth-link font-semibold flex shrink-0 items-center gap-1.5 whitespace-nowrap ${pathname?.startsWith("/admin") ? 'active' : ''}`}
-                        >
-                          <span>Admin</span>
-                          <ChevronDown
-                            size={16}
-                            className="header-chevron text-[var(--header-text-muted)]"
-                            aria-hidden="true"
-                          />
-                        </Link>
-
-                        <div className="header-dropdown absolute top-full right-0 mt-2 w-64 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 z-50 max-h-[70vh] overflow-y-auto">
-                          <div className="py-2">
-                            {adminSubmenuItems.map(subItem => {
-                              const hasDropdown = subItem.dropdown && Array.isArray(subItem.dropdown);
-                              const isMembershipActive = hasDropdown && subItem.dropdown.some(
-                                (subSubItem: any) => pathname?.startsWith(subSubItem.href)
-                              );
-
-                              if (hasDropdown) {
-                                return (
-                                  <div key={subItem.name} className="relative group/membership">
-                                    <div
-                                      className={`header-dropdown-item font-semibold flex items-center justify-between cursor-pointer ${isMembershipActive ? 'active' : ''}`}
-                                    >
-                                      <span>{subItem.name}</span>
-                                      <ChevronDown
-                                        size={14}
-                                        className="header-chevron text-[var(--header-text-muted)]"
-                                        aria-hidden="true"
-                                      />
-                                    </div>
-                                    <div className="header-dropdown absolute top-0 left-full ml-2 w-48 group-hover/membership:visible group-hover/membership:opacity-100 group-hover/membership:translate-y-0 group-hover/membership:scale-100 z-50">
-                                      <div className="py-2">
-                                        {subItem.dropdown.map((subSubItem: any) => {
-                                          const isSubSubItemActive = pathname?.startsWith(subSubItem.href);
-                                          return (
-                                            <Link
-                                              key={subSubItem.name}
-                                              href={subSubItem.href}
-                                              className={`header-dropdown-item font-semibold block ${isSubSubItemActive ? 'active' : ''}`}
-                                              role="menuitem"
-                                              aria-label={`Navigate to ${subSubItem.name}`}
-                                            >
-                                              {subSubItem.name}
-                                            </Link>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              }
-
-                              return (
-                                <Link
-                                  key={subItem.name}
-                                  href={subItem.href}
-                                  className={`header-dropdown-item font-semibold block ${pathname?.startsWith(subItem.href) ? 'active' : ''}`}
-                                  role="menuitem"
-                                  aria-label={`Navigate to ${subItem.name}`}
-                                >
-                                  {subItem.name}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     <div className="shrink-0">
                       <UserAvatarDropdown
                         user={user}
@@ -1600,82 +1373,6 @@ export default function Header({ hideMenuItems = false, variant = 'charity', isT
                     <LogOut size={16} aria-hidden="true" />
                     <span>{isSigningOut ? 'Signing Out...' : 'Sign Out'}</span>
                   </button>
-
-                  {/* Mobile Admin Menu */}
-                  {isAdmin && (
-                    <div className="border-t border-[var(--header-border)] pt-4 mt-4">
-                      <div className="text-xs font-semibold text-[var(--header-text-muted)] uppercase tracking-wider mb-3 px-4 font-['Plus_Jakarta_Sans']">
-                        Admin Panel
-                      </div>
-                      <div className="space-y-0.5">
-                        {adminSubmenuItems.map(subItem => {
-                          const hasDropdown = subItem.dropdown && Array.isArray(subItem.dropdown);
-                          const isDropdownOpen = openMobileDropdowns[`admin-${subItem.name}`] || false;
-
-                          if (hasDropdown) {
-                            return (
-                              <div key={subItem.name}>
-                                <button
-                                  onClick={() => setOpenMobileDropdowns(prev => ({ ...prev, [`admin-${subItem.name}`]: !prev[`admin-${subItem.name}`] }))}
-                                  className={`header-mobile-link w-full flex items-center justify-between text-sm py-2.5 ${isDropdownOpen ? 'active' : ''}`}
-                                  aria-label={`Toggle ${subItem.name} submenu`}
-                                  aria-expanded={isDropdownOpen}
-                                >
-                                  <span>{subItem.name}</span>
-                                  <ChevronDown
-                                    size={14}
-                                    className={`text-[var(--header-text-muted)] transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}
-                                    aria-hidden="true"
-                                  />
-                                </button>
-                                {isDropdownOpen && (
-                                  <ul className="pl-3 mt-1 space-y-0.5 border-l-2 border-[var(--header-border)] ml-4">
-                                    {subItem.dropdown.map((subSubItem: any) => {
-                                      const isSubSubItemActive = pathname?.startsWith(subSubItem.href);
-                                      return (
-                                        <li key={subSubItem.name}>
-                                          <Link
-                                            href={subSubItem.href}
-                                            className={`
-                                              block py-2 px-4 rounded-lg
-                                              font-['Plus_Jakarta_Sans'] text-xs font-semibold
-                                              transition-all duration-200
-                                              ${isSubSubItemActive
-                                                ? 'text-[var(--header-accent-primary)] bg-[var(--header-active-bg)]'
-                                                : 'text-[var(--header-text-secondary)] hover:text-[var(--header-accent-primary)] hover:bg-[var(--header-hover-bg)]'
-                                              }
-                                            `}
-                                            onClick={closeMobileMenu}
-                                            role="menuitem"
-                                            aria-label={`Navigate to ${subSubItem.name}`}
-                                          >
-                                            {subSubItem.name}
-                                          </Link>
-                                        </li>
-                                      );
-                                    })}
-                                  </ul>
-                                )}
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <Link
-                              key={subItem.name}
-                              href={subItem.href}
-                              className={`header-mobile-link block text-sm py-2.5 ${pathname?.startsWith(subItem.href) ? 'active' : ''}`}
-                              onClick={closeMobileMenu}
-                              role="menuitem"
-                              aria-label={`Navigate to ${subItem.name}`}
-                            >
-                              {subItem.name}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
             </div>

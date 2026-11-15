@@ -69,10 +69,6 @@ function fileToRoute(relFromApp) {
 }
 
 function classifyKind(routePath) {
-  if (routePath === '/admin' || routePath.startsWith('/admin/')) return 'admin';
-  if (routePath === '/mosc-redesign' || routePath.startsWith('/mosc-redesign/')) return 'mosc-redesign';
-  if (routePath === '/mosc-old' || routePath.startsWith('/mosc-old/')) return 'mosc-old';
-  if (routePath === '/mosc' || routePath.startsWith('/mosc/')) return 'mosc';
   return 'public';
 }
 

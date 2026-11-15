@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { fetchUserSubscriptionServer } from './ApiServerActions';
-import { fetchAdminProfileServer } from '@/app/admin/manage-usage/ApiServerActions';
+import { fetchAdminProfileServer } from '@/lib/userProfileServer';
 import { SubscriptionManagementClient } from './SubscriptionManagementClient';
 
 export const metadata: Metadata = {

@@ -1,6 +1,6 @@
 import { stripe } from '@/lib/stripe';
 import type { UserProfileDTO, EventTicketTypeDTO } from '@/types';
-import { fetchDiscountCodeByIdServer } from '@/app/admin/events/[id]/discount-codes/list/ApiServerActions';
+import { fetchDiscountCodeByIdServer } from '@/lib/payments/discountCodes';
 import Stripe from 'stripe';
 import { getTenantId, getPaymentMethodDomainId, getAppUrl } from '@/lib/env';
 

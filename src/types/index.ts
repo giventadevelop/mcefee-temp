@@ -90,6 +90,10 @@ export interface EventDetailsDTO {
   timezone: string;
   /** Event location */
   location?: string;
+  /** OCR text extracted from flyer/hero images */
+  ocrText?: string;
+  /** Denormalized search blob (title, caption, description, location, ocrText) */
+  searchText?: string;
   /** Directions to venue */
   directionsToVenue?: string;
   /** Event capacity */
@@ -323,6 +327,10 @@ export interface GalleryAlbumDTO {
   tenantId?: string;
   title: string;
   description?: string;
+  /** OCR text extracted from cover image */
+  ocrText?: string;
+  /** Denormalized search blob (title, description, eventLocation, ocrText) */
+  searchText?: string;
   coverImageUrl?: string;
   isPublic?: boolean;
   displayOrder?: number;
@@ -889,6 +897,10 @@ export interface FocusGroupDTO {
   name: string;
   slug: string;
   description?: string;
+  /** OCR text extracted from cover image */
+  ocrText?: string;
+  /** Denormalized search blob (name, slug, description, ocrText) */
+  searchText?: string;
   coverImageUrl?: string;
   isActive?: boolean;
   createdAt: string;
@@ -1177,6 +1189,10 @@ export interface EventSponsorsDTO {
   companyName?: string;
   tagline?: string;
   description?: string;
+  /** Text extracted from sponsor images via OCR (logo/hero/banner). */
+  ocrText?: string;
+  /** Denormalized lowercase search blob (name + company + tagline + description + type + ocr). */
+  searchText?: string;
   websiteUrl?: string;
   contactEmail?: string;
   contactPhone?: string;

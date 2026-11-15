@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminListSearchCombobox from '@/components/admin/AdminListSearchCombobox';
+import Link from 'next/link';
+import AdminListSearchCombobox from '@/components/search/AdminListSearchCombobox';
 
 interface FocusGroupWithEvents {
   id: number;
@@ -9,6 +10,7 @@ interface FocusGroupWithEvents {
   slug?: string;
   description?: string;
   coverImageUrl?: string;
+  searchText?: string;
   events?: any[];
 }
 
@@ -19,14 +21,16 @@ interface FocusGroupsGridWithSearchProps {
 
 export default function FocusGroupsGridWithSearch({ groups, total }: FocusGroupsGridWithSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchDraft, setSearchDraft] = useState('');
   const [page, setPage] = useState(0);
   const pageSize = 20;
 
   const filteredGroups = searchTerm.trim()
     ? groups.filter((g) => {
         const q = searchTerm.trim().toLowerCase();
-        return [g.name, g.slug, g.description, g.id]
-          .some((v) => (v == null ? '' : String(v)).toLowerCase().includes(q));
+        return [g.searchText, g.name, g.slug, g.description, g.id].some((v) =>
+          (v == null ? '' : String(v)).toLowerCase().includes(q),
+        );
       })
     : groups;
 
@@ -42,53 +46,116 @@ export default function FocusGroupsGridWithSearch({ groups, total }: FocusGroups
 
   const isPrevDisabled = page <= 0;
   const isNextDisabled = page + 1 >= totalPages;
-  const displayPage = totalPages === 0 ? 0 : page + 1;
+  const displayPage = page + 1;
+
+  const commitSearch = (value: string) => {
+    setSearchTerm(value.trim());
+    setSearchDraft(value.trim());
+  };
 
   return (
     <div className="space-y-6">
-      {/* Local typeahead — full group set already loaded client-side */}
-      <div className="px-6 py-4 border border-gray-200 rounded-lg bg-gray-50">
-        <label htmlFor="focus-groups-public-search" className="sr-only">
-          Search focus groups
-        </label>
-        <AdminListSearchCombobox
-          items={groups as (FocusGroupWithEvents & Record<string, unknown>)[]}
-          committedValue={searchTerm}
-          onCommit={setSearchTerm}
-          inputId="focus-groups-public-search"
-          ariaLabel="Search focus groups by name, slug, or id"
-          placeholder="Search by name, slug, or id…"
-          className="relative w-full max-w-xl"
-          inputClassName="w-full max-w-xl px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-          getSearchFields={(g) => [g.name, g.slug, g.description, g.id]}
-          getCommitValue={(g) => g.name || g.slug || ''}
-          formatPrimary={(g) => g.name || g.slug || 'Focus group'}
-          formatSecondary={(g) =>
-            [g.slug, g.id != null ? `ID: ${g.id}` : null].filter(Boolean).join(' · ')
-          }
-        />
-        {searchTerm.trim() && (
-          <p className="mt-2 text-sm text-gray-600">
-            Showing {filteredCount} of {groups.length} group{groups.length !== 1 ? 's' : ''}
+      <div className="mh-events-search">
+        <div>
+          <label htmlFor="focus-groups-public-search">Search focus groups</label>
+          <AdminListSearchCombobox
+            items={groups as (FocusGroupWithEvents & Record<string, unknown>)[]}
+            committedValue={searchTerm}
+            onCommit={commitSearch}
+            onInputChange={setSearchDraft}
+            inputId="focus-groups-public-search"
+            ariaLabel="Search focus groups by name, slug, description, or OCR text"
+            placeholder="Search by name, slug, or id…"
+            className="relative w-full max-w-xl"
+            inputClassName="w-full max-w-xl px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+            getSearchFields={(g) => [g.searchText, g.name, g.slug, g.description, g.id]}
+            getCommitValue={(g) => g.name || g.slug || ''}
+            formatPrimary={(g) => g.name || g.slug || 'Focus group'}
+            formatSecondary={(g) =>
+              [g.slug, g.id != null ? `ID: ${g.id}` : null].filter(Boolean).join(' · ')
+            }
+          />
+        </div>
+        <div className="mh-events-search-actions">
+          <button
+            type="button"
+            onClick={() => commitSearch(searchDraft)}
+            className="mh-btn mh-btn-primary"
+            title="Search"
+            aria-label="Search"
+          >
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            Search
+          </button>
+          <button
+            type="button"
+            onClick={() => commitSearch('')}
+            className="mh-btn mh-btn-calendar"
+            title="Clear"
+            aria-label="Clear search"
+          >
+            Clear
+          </button>
+        </div>
+        {searchTerm.trim() ? (
+          <p className="mh-events-search-active">
+            <strong>Search active:</strong> showing {filteredCount} of {groups.length} group
+            {groups.length !== 1 ? 's' : ''}
+            {typeof total === 'number' && total > groups.length
+              ? ` (loaded ${groups.length} of ${total})`
+              : ''}
           </p>
-        )}
+        ) : null}
       </div>
 
-      {/* Focus Groups Grid - colored cards with cycling accent */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
         {paginatedGroups.map((g, index) => {
           const colorScheme = [
-            { card: 'bg-blue-50/80 border-l-4 border-blue-500', title: 'group-hover:text-blue-700', accent: 'text-blue-600', border: 'border-blue-200', eventHover: 'hover:bg-blue-100' },
-            { card: 'bg-teal-50/80 border-l-4 border-teal-500', title: 'group-hover:text-teal-700', accent: 'text-teal-600', border: 'border-teal-200', eventHover: 'hover:bg-teal-100' },
-            { card: 'bg-amber-50/80 border-l-4 border-amber-500', title: 'group-hover:text-amber-700', accent: 'text-amber-600', border: 'border-amber-200', eventHover: 'hover:bg-amber-100' },
-            { card: 'bg-indigo-50/80 border-l-4 border-indigo-500', title: 'group-hover:text-indigo-700', accent: 'text-indigo-600', border: 'border-indigo-200', eventHover: 'hover:bg-indigo-100' },
+            {
+              card: 'bg-blue-50/80 border-l-4 border-blue-500',
+              title: 'group-hover:text-blue-700',
+              accent: 'text-blue-600',
+              border: 'border-blue-200',
+              eventHover: 'hover:bg-blue-100',
+            },
+            {
+              card: 'bg-teal-50/80 border-l-4 border-teal-500',
+              title: 'group-hover:text-teal-700',
+              accent: 'text-teal-600',
+              border: 'border-teal-200',
+              eventHover: 'hover:bg-teal-100',
+            },
+            {
+              card: 'bg-amber-50/80 border-l-4 border-amber-500',
+              title: 'group-hover:text-amber-700',
+              accent: 'text-amber-600',
+              border: 'border-amber-200',
+              eventHover: 'hover:bg-amber-100',
+            },
+            {
+              card: 'bg-indigo-50/80 border-l-4 border-indigo-500',
+              title: 'group-hover:text-indigo-700',
+              accent: 'text-indigo-600',
+              border: 'border-indigo-200',
+              eventHover: 'hover:bg-indigo-100',
+            },
           ][index % 4];
           return (
             <div
               key={g.id}
               className={`group block rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300 ${colorScheme.card}`}
             >
-              <a href={`/focus-groups/${encodeURIComponent(g.slug || '')}`} className="block text-center">
+              <Link
+                href={`/focus-groups/${encodeURIComponent(g.slug || '')}`}
+                className="block text-center"
+              >
                 <div
                   className="h-60 rounded-lg mb-4 overflow-hidden flex items-center justify-center bg-white/60"
                   style={{
@@ -102,37 +169,43 @@ export default function FocusGroupsGridWithSearch({ groups, total }: FocusGroups
                       : { backgroundColor: 'rgba(243, 244, 246, 0.8)' }),
                   }}
                 />
-                <h3 className={`text-xl font-semibold text-gray-900 mb-2 transition-colors duration-300 ${colorScheme.title}`}>
+                <h3
+                  className={`text-xl font-semibold text-gray-900 mb-2 transition-colors duration-300 ${colorScheme.title}`}
+                >
                   {g.name}
                 </h3>
                 <p className="text-gray-700 text-sm leading-relaxed line-clamp-3 mb-4">
                   {g.description || 'No description provided.'}
                 </p>
-              </a>
+              </Link>
 
               {g.events && g.events.length > 0 && (
                 <div className={`mt-4 pt-4 border-t ${colorScheme.border} text-center`}>
-                  <h4 className={`text-sm font-semibold mb-2 ${colorScheme.accent}`}>Upcoming Events</h4>
+                  <h4 className={`text-sm font-semibold mb-2 ${colorScheme.accent}`}>
+                    Upcoming Events
+                  </h4>
                   <div className="space-y-2">
                     {g.events.slice(0, 3).map((event: any) => (
-                      <a
+                      <Link
                         key={event.id}
-                        href={`/event/${event.id}`}
+                        href={`/events/${event.id}`}
                         className={`block p-2 rounded-lg transition-colors duration-300 ${colorScheme.eventHover}`}
                       >
                         <div className="text-xs text-gray-600">
                           {event.startDate} • {event.startTime}
                         </div>
-                        <div className="text-sm font-medium text-gray-900 mt-1 line-clamp-1">{event.title}</div>
-                      </a>
+                        <div className="text-sm font-medium text-gray-900 mt-1 line-clamp-1">
+                          {event.title}
+                        </div>
+                      </Link>
                     ))}
                     {g.events.length > 3 && (
-                      <a
+                      <Link
                         href={`/focus-groups/${encodeURIComponent(g.slug || '')}`}
                         className={`block text-xs mt-2 font-medium transition-colors duration-300 ${colorScheme.accent} hover:opacity-80`}
                       >
                         View all {g.events.length} events →
-                      </a>
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -148,12 +221,13 @@ export default function FocusGroupsGridWithSearch({ groups, total }: FocusGroups
       </div>
 
       {filteredCount === 0 && (
-        <div className="col-span-full text-center py-12 text-gray-500">
+        <div className="mh-events-banner mh-events-banner--info text-center py-12">
           <svg
             className="w-16 h-16 mx-auto mb-4 text-gray-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -162,68 +236,67 @@ export default function FocusGroupsGridWithSearch({ groups, total }: FocusGroups
               d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
             />
           </svg>
-          <p className="text-sm font-medium text-gray-700">
+          <h3>
             {searchTerm.trim() ? 'No focus groups match your search.' : 'No focus groups found'}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            {searchTerm.trim() ? '[Try a different search]' : '[No focus groups match your criteria]'}
+          </h3>
+          <p>
+            {searchTerm.trim()
+              ? 'Try a different search term, or clear the filter.'
+              : 'New focus groups will appear here once they are created.'}
           </p>
         </div>
       )}
 
-      {/* Pagination - only when there are results */}
       {filteredCount > 0 && (
-        <div className="mt-8">
-          <div className="flex justify-between items-center">
+        <div className="mh-events-pagination">
+          <div className="mh-events-pagination-row">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={isPrevDisabled}
-              className={`px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md ${
-                isPrevDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none hover:scale-100' : ''
-              }`}
+              className="mh-btn mh-btn-readmore"
               title="Previous Page"
               aria-label="Previous Page"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
-              <span>Previous</span>
+              Previous
             </button>
 
-            <div className="px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
-              <span className="text-sm font-bold text-blue-700">
-                Page <span className="text-blue-600">{displayPage}</span> of{' '}
-                <span className="text-blue-600">{totalPages}</span>
-              </span>
+            <div className="mh-events-page-info">
+              Page <strong>{displayPage}</strong> of <strong>{totalPages}</strong>
             </div>
 
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={isNextDisabled}
-              className={`px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded-lg shadow-sm border-2 border-blue-400 hover:border-blue-500 disabled:bg-blue-100 disabled:border-blue-300 disabled:text-blue-500 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-md ${
-                isNextDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none hover:scale-100' : ''
-              }`}
+              className="mh-btn mh-btn-readmore"
               title="Next Page"
               aria-label="Next Page"
             >
-              <span>Next</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              Next
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </div>
 
-          <div className="text-center mt-3">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-50 border-2 border-blue-300 rounded-lg shadow-sm">
-              <span className="text-sm text-gray-700">
-                Showing <span className="font-bold text-blue-600">{startItem}</span> to{' '}
-                <span className="font-bold text-blue-600">{endItem}</span> of{' '}
-                <span className="font-bold text-blue-600">{filteredCount}</span> focus groups
-                {searchTerm.trim() ? ` (filtered from ${groups.length})` : ''}
-              </span>
-            </div>
+          <div className="mh-events-count">
+            Showing <strong>{startItem}</strong> to <strong>{endItem}</strong> of{' '}
+            <strong>{filteredCount}</strong> focus groups
+            {searchTerm.trim() ? ` (filtered from ${groups.length})` : ''}
           </div>
         </div>
       )}

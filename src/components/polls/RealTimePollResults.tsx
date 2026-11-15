@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, Users } from 'lucide-react';
 import type { EventPollDTO, EventPollOptionDTO, EventPollResponseDTO } from '@/types';
-import { fetchEventPollResponsesServer } from '@/app/admin/polls/ApiServerActions';
+import { fetchEventPollResponsesServer } from '@/app/polls/ApiServerActions';
 
 interface RealTimePollResultsProps {
   poll: EventPollDTO;

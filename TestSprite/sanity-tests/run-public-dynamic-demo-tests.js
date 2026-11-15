@@ -34,7 +34,6 @@ function buildRoutes(ids) {
     { path: '/donate', name: 'Donate' },
     { path: '/privacy', name: 'Privacy' },
     { path: '/terms', name: 'Terms' },
-    { path: '/mosc-redesign', name: 'MOSC redesign home' },
   ];
 
   if (ids.eventId) {

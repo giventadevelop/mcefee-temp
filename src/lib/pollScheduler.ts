@@ -1,4 +1,4 @@
-import { fetchEventPollsServer, updateEventPollServer } from '@/app/admin/polls/ApiServerActions';
+import { fetchEventPollsServer, updateEventPollServer } from '@/app/polls/ApiServerActions';
 import type { EventPollDTO } from '@/types';
 
 interface PollSchedulerOptions {

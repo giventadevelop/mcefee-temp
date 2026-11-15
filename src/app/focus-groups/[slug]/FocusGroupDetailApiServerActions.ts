@@ -2,14 +2,9 @@
 
 import { fetchWithJwtRetry } from '@/lib/proxyHandler';
 import { getAppUrl, getApiBaseUrl, getTenantId } from '@/lib/env';
-import type { EventDetailsDTO, EventFocusGroupDTO, EventMediaDTO, FocusGroupMemberDTO } from '@/types';
-import { fetchAssociatedEvents } from '@/app/admin/focus-groups/[id]/edit/ApiServerActions';
-import {
-  fetchEventFocusGroupsByFocusGroupIdServer,
-  fetchMediaByEventAndAssociationServer,
-} from '@/app/admin/focus-groups/[id]/media/ApiServerActions';
+import type { EventDetailsDTO, EventMediaDTO, FocusGroupMemberDTO } from '@/types';
 
-export type FocusGroupMemberPublic = {
+type FocusGroupMemberPublic = {
   membershipId: number;
   userProfileId: number;
   role: string;
@@ -17,6 +12,132 @@ export type FocusGroupMemberPublic = {
   displayName: string;
   imageUrl?: string | null;
 };
+
+type FocusGroupAssociation = {
+  id?: number;
+  eventId?: number;
+};
+
+type EventFocusGroupRow = {
+  id?: number;
+  eventId?: number;
+  focusGroupId?: number;
+  event_id?: number;
+  focus_group_id?: number;
+};
+
+function normalizeEventFocusGroupsResponse(data: unknown): EventFocusGroupRow[] {
+  if (Array.isArray(data)) return data as EventFocusGroupRow[];
+  if (data && typeof data === 'object') {
+    const o = data as Record<string, unknown>;
+    if (Array.isArray(o.content)) return o.content as EventFocusGroupRow[];
+    const emb = o._embedded as Record<string, unknown> | undefined;
+    if (emb && Array.isArray(emb.eventFocusGroups)) {
+      return emb.eventFocusGroups as EventFocusGroupRow[];
+    }
+  }
+  return [];
+}
+
+async function fetchLinkedEventIds(baseUrl: string, focusGroupId: number): Promise<number[]> {
+  const params = new URLSearchParams({
+    'focusGroupId.equals': focusGroupId.toString(),
+    size: '500',
+  });
+  const res = await fetchWithJwtRetry(
+    `${baseUrl}/api/proxy/event-focus-groups?${params.toString()}`,
+    { cache: 'no-store' }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return normalizeEventFocusGroupsResponse(data)
+    .map((a) => a.eventId ?? a.event_id)
+    .filter((id): id is number => typeof id === 'number');
+}
+
+async function fetchAssociatedEvents(
+  focusGroupId: number,
+  page: number = 0,
+  pageSize: number = 10,
+  sort: string = 'startDate,desc',
+  showPastEvents?: boolean
+): Promise<{ events: EventDetailsDTO[]; totalCount: number }> {
+  const baseUrl = getAppUrl();
+  const eventIds = await fetchLinkedEventIds(baseUrl, focusGroupId);
+  if (eventIds.length === 0) {
+    return { events: [], totalCount: 0 };
+  }
+
+  const params = new URLSearchParams({
+    'id.in': eventIds.join(','),
+    page: page.toString(),
+    size: pageSize.toString(),
+    sort,
+  });
+
+  if (showPastEvents !== undefined) {
+    const today = new Date().toISOString().split('T')[0];
+    if (showPastEvents) {
+      params.append('endDate.lessThan', today);
+    } else {
+      params.append('startDate.greaterThanOrEqual', today);
+    }
+  }
+
+  const res = await fetchWithJwtRetry(
+    `${baseUrl}/api/proxy/event-details?${params.toString()}`,
+    { cache: 'no-store' }
+  );
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('Failed to fetch associated events:', res.status, errorText);
+    throw new Error(`Failed to fetch events: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  const content = Array.isArray(data)
+    ? data
+    : (data && Array.isArray((data as { content?: unknown }).content)
+      ? (data as { content: EventDetailsDTO[] }).content
+      : []);
+  let totalCount = Number(res.headers.get('X-Total-Count') || res.headers.get('x-total-count')) || 0;
+  if (totalCount === 0 && data && typeof data === 'object' && typeof (data as { totalElements?: number }).totalElements === 'number') {
+    totalCount = (data as { totalElements: number }).totalElements;
+  }
+  if (totalCount === 0) totalCount = content.length;
+
+  return { events: content, totalCount };
+}
+
+async function fetchEventFocusGroupsByFocusGroupIdServer(focusGroupId: number): Promise<FocusGroupAssociation[]> {
+  const baseUrl = getAppUrl();
+  const url = `${baseUrl}/api/proxy/event-focus-groups?focusGroupId.equals=${focusGroupId}`;
+  const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [data];
+}
+
+async function fetchMediaByEventAndAssociationServer(
+  eventId: number,
+  eventFocusGroupId: number
+): Promise<EventMediaDTO[]> {
+  const params = new URLSearchParams({
+    'eventId.equals': String(eventId),
+    'eventFocusGroupId.equals': String(eventFocusGroupId),
+    'isEventManagementOfficialDocument.equals': 'false',
+    sort: 'updatedAt,desc',
+    'tenantId.equals': getTenantId(),
+    page: '0',
+    size: '500',
+  });
+  const url = `${getApiBaseUrl()}/api/event-medias?${params.toString()}`;
+  const res = await fetchWithJwtRetry(url, { cache: 'no-store' });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [data];
+}
 
 function normalizeMembers(data: unknown): FocusGroupMemberDTO[] {
   if (Array.isArray(data)) return data as FocusGroupMemberDTO[];
@@ -116,19 +237,19 @@ export async function fetchFocusGroupGalleryMediaServer(
   focusGroupId: number
 ): Promise<EventMediaDTO[]> {
   const rawAssociations = await fetchEventFocusGroupsByFocusGroupIdServer(focusGroupId);
-  let associations: EventFocusGroupDTO[] = [];
+  let associations: FocusGroupAssociation[] = [];
   if (Array.isArray(rawAssociations)) {
     associations = rawAssociations;
   } else if (rawAssociations && typeof rawAssociations === 'object') {
     const o = rawAssociations as {
-      content?: EventFocusGroupDTO[];
-      _embedded?: { eventFocusGroups?: EventFocusGroupDTO[] };
+      content?: FocusGroupAssociation[];
+      _embedded?: { eventFocusGroups?: FocusGroupAssociation[] };
     };
     if (Array.isArray(o.content)) associations = o.content;
     else if (Array.isArray(o._embedded?.eventFocusGroups)) {
       associations = o._embedded!.eventFocusGroups!;
     } else {
-      associations = [rawAssociations as EventFocusGroupDTO];
+      associations = [rawAssociations as FocusGroupAssociation];
     }
   }
 
@@ -197,5 +318,3 @@ export async function fetchFocusGroupGalleryMediaServer(
 
   return Array.from(byId.values()).slice(0, 36);
 }
-
-export type { EventFocusGroupDTO };

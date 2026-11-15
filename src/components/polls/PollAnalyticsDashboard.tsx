@@ -16,7 +16,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import type { EventPollDTO, EventPollOptionDTO, EventPollResponseDTO } from '@/types';
-import { fetchEventPollResponsesServer } from '@/app/admin/polls/ApiServerActions';
+import { fetchEventPollResponsesServer } from '@/app/polls/ApiServerActions';
 
 interface PollAnalyticsDashboardProps {
   poll: EventPollDTO;

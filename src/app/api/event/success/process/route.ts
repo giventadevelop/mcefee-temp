@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processStripeSessionServer, fetchTransactionQrCode } from '@/app/event/success/ApiServerActions';
-import { fetchEventDetailsByIdServer } from '@/app/admin/events/[id]/media/ApiServerActions';
+import { fetchEventDetailsByIdServer } from '@/lib/events/eventDetails';
 import Stripe from 'stripe';
 import { getTenantId, getPaymentMethodDomainId, getAppUrl } from '@/lib/env';
 

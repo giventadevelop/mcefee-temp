@@ -3,7 +3,7 @@
 import AdminListSearchCombobox, {
   type AdminListSearchComboboxProps,
   type AdminListSearchItem,
-} from '@/components/admin/AdminListSearchCombobox';
+} from '@/components/search/AdminListSearchCombobox';
 
 /**
  * Public listing typeahead wrapper — same behavior as AdminListSearchCombobox,

@@ -218,6 +218,7 @@ const nextConfig = {
     '@zxing/browser',
     'svix',
     'jsonwebtoken',
+    'tesseract.js',
   ],
 
   // Shrink per-route file traces (Amplify SSR ~220MB deploy cap). See scripts/prune-amplify-next-artifact.mjs

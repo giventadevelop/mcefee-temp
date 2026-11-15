@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import type { CheckoutData } from '../checkout/CheckoutServerData';
 import type { EventDetailsDTO, ManualPaymentRequestDTO, ManualPaymentMethodType } from '@/types';
-import { createManualPaymentRequestServer, fetchManualPaymentMethodsServer } from '@/app/admin/manual-payments/ApiServerActions';
+import { createManualPaymentRequestServer, fetchManualPaymentMethodsServer } from './ApiServerActions';
 import { withTenantId } from '@/lib/withTenantId';
 
 interface ManualCheckoutClientProps {

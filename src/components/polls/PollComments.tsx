@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Send, User, Clock, AlertCircle } from 'lucide-react';
 import type { EventPollDTO, EventPollResponseDTO } from '@/types';
-import { fetchEventPollResponsesServer } from '@/app/admin/polls/ApiServerActions';
+import { fetchEventPollResponsesServer } from '@/app/polls/ApiServerActions';
 
 interface PollCommentsProps {
   poll: EventPollDTO;

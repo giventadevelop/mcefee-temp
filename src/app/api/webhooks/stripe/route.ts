@@ -5,7 +5,6 @@ import Stripe from 'stripe';
 import type { UserProfileDTO, UserSubscriptionDTO, EventTicketTransactionDTO } from '@/types';
 import { NextRequest } from 'next/server';
 import getRawBody from 'raw-body';
-import { fetchUserProfileServer } from '@/app/admin/ApiServerActions';
 import { createEventTicketTransactionServer, updateTicketTypeInventoryServer } from './ApiServerActions';
 import { getCachedApiJwt, generateApiJwt } from '@/lib/api/jwt';
 import { getTenantId, getPaymentMethodDomainId, getApiBaseUrl } from '@/lib/env';
