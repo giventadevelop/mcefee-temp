@@ -65,6 +65,7 @@ const isPublicRouteClerk = createRouteMatcher([
   '/contact(.*)',
   '/privacy(.*)',
   '/terms(.*)',
+  '/ads.txt',
   '/polls(.*)',
   '/charity-theme(.*)',
   '/calendar(.*)',
