@@ -5,7 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import type { EventWithMedia, EventDetailsDTO } from "@/types";
 import { formatInTimeZone } from 'date-fns-tz';
-import { isRecurringEvent, getNextOccurrenceDate } from '@/lib/eventUtils';
+import {
+  isRecurringEvent,
+  getNextOccurrenceDate,
+  formatEventListingDateLabel,
+} from '@/lib/eventUtils';
 import { isDonationBasedEvent, isTicketedFundraiserEvent } from '@/lib/donation/utils';
 import { resolveBuyTicketsTarget, resolveRegisterTarget } from '@/lib/eventcube/utils';
 import EventCardResultsPanel from '@/components/competitions/EventCardResultsPanel';
@@ -687,7 +691,9 @@ export default function EventsPageClient({
 
                     <div className="mh-event-card-body">
                     <div className="mh-event-card-meta">
-                      <span className="mh-event-card-date">{formatDate(event.startDate, event.timezone)}</span>
+                      <span className="mh-event-card-date">
+                        {formatEventListingDateLabel(event, formatDate)}
+                      </span>
                       {event.admissionType && (
                         <span
                           className={`mh-event-card-admission ${
