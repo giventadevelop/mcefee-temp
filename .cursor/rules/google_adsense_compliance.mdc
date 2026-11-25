@@ -115,4 +115,4 @@ The shared copy in application-deployments stays a generic checklist. This proje
 
 - **Verify site ownership:** pass. AdSense sites table is green. Do not run Verify again, and do not delete the site or add it again.
 - **ads.txt:** pass. AdSense shows Authorized for https://www.mcefee-temp.com/ads.txt.
-- **Low value content:** fail on the published host until the release that puts the still-running Nadha Varnika Veena Concert (ends 2026-11-29) in the first HTML of https://www.mcefee-temp.com/ and https://www.mcefee-temp.com/events is live. Do not request review before that signed-out check.
+- **Low value content:** pass on the published host after release `175e808` (Amplify job 77, 2026-11-25). Signed-out HTML for https://www.mcefee-temp.com/ and https://www.mcefee-temp.com/events contains “Nadha Varnika Veena Concert” and its description. Neither page contains “Event Site Manager” or “New events will appear here”. Do not click Request review from here; that stays a manual click in AdSense.

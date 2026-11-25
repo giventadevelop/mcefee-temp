@@ -10,7 +10,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Home',
+  title: { absolute: 'Home | MCEFEE' },
   description:
     'The Malayali Cultural Exchange Foundation for Education and Events in New Jersey. Cultural programs, education, and community events.',
   keywords: ['MCEFEE', 'Malayali', 'Kerala culture', 'New Jersey', 'events'],
