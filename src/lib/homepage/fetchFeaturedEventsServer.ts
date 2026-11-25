@@ -4,6 +4,7 @@ import { logServerFetchFailure } from '@/lib/logServerFetchFailure';
 import type { EventDetailsDTO } from '@/types';
 import {
   computeFeaturedEventsFromMedia,
+  isCurrentHomepageEvent,
   isPastHomepageEvent,
   MAX_FEATURED_EVENTS_HOMEPAGE,
   selectHomepageFeaturedEvents,
@@ -15,16 +16,6 @@ import {
   normalizeEventDetailsList,
   normalizeEventMediasList,
 } from '@/lib/homepage/homepageApiNormalize';
-
-function isEventInNextYear(eventDate: string, today: Date): boolean {
-  const oneYearFromNow = new Date();
-  oneYearFromNow.setFullYear(today.getFullYear() + 1);
-  oneYearFromNow.setHours(23, 59, 59, 999);
-  const [year, month, day] = eventDate.split('-').map(Number);
-  const eventStartDate = new Date(year, month - 1, day);
-  eventStartDate.setHours(0, 0, 0, 0);
-  return eventStartDate >= today && eventStartDate <= oneYearFromNow;
-}
 
 /**
  * Server-only: same pipeline as `useEventsData` + featured filter, for SSR first paint.
@@ -53,23 +44,20 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
     }
 
     const events = normalizeEventDetailsList(await eventsResponse.json());
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     const isFeaturedEvent = (event: EventDetailsDTO) =>
       isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).isFeaturedEvent) ||
       isTruthyApiFlag((event as EventDetailsDTO & { is_featured_event?: unknown }).is_featured_event);
 
-    const upcomingEvents = events.filter(
-      (event) => event.startDate && isEventInNextYear(event.startDate, today) && event.isActive !== false
-    );
-    const upcomingFeatured = upcomingEvents.filter(isFeaturedEvent);
+    const currentEvents = events.filter((event) => isCurrentHomepageEvent(event));
+    const currentFeatured = currentEvents.filter(isFeaturedEvent);
 
-    // Upcoming featured first. Past featured only when there are no future events.
+    // Current featured first, including events that already started and have not ended.
+    // Past featured only when nothing is still running or upcoming.
     const eventsToLoad =
-      upcomingFeatured.length > 0
-        ? upcomingFeatured
-        : upcomingEvents.length === 0
+      currentFeatured.length > 0
+        ? currentFeatured
+        : currentEvents.length === 0
           ? events.filter(
               (event) => event.isActive !== false && isPastHomepageEvent(event) && isFeaturedEvent(event)
             )
@@ -130,7 +118,7 @@ export async function fetchFeaturedEventsForHomepageServer(): Promise<FeaturedEv
 
     return selectHomepageFeaturedEvents(
       computeFeaturedEventsFromMedia(eventsWithMedia),
-      upcomingEvents.length > 0,
+      currentEvents.length > 0,
       MAX_FEATURED_EVENTS_HOMEPAGE
     );
   } catch (e) {

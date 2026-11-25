@@ -74,6 +74,26 @@ export async function fetchHomepageListingEventsServer(): Promise<HomepageListin
   }
 }
 
+/** First page of events that are still running or have not started. */
+export async function fetchEventsListPageServer(): Promise<EventWithMedia[]> {
+  try {
+    const tenantId = getTenantId();
+    return await fetchEventPage(
+      new URLSearchParams({
+        'tenantId.equals': tenantId,
+        sort: 'startDate,asc',
+        page: '0',
+        size: '20',
+        'endDate.greaterThanOrEqual': todayIsoDate(),
+        'isActive.equals': 'true',
+      })
+    );
+  } catch (error) {
+    logServerFetchFailure('fetchEventsListPageServer', error);
+    return [];
+  }
+}
+
 export async function fetchHomepageTeamServer(): Promise<ExecutiveCommitteeTeamMemberDTO[]> {
   try {
     const params = new URLSearchParams({

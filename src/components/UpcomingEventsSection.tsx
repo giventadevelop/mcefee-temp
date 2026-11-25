@@ -921,7 +921,7 @@ const UpcomingEventsSection: React.FC<{
 
   // isUpcomingEvents state is managed in useEffect based on which type of events were fetched
 
-  // Don't render anything while loading - section will appear only when fully loaded
+  // Don't render anything while loading. An empty homepage section is omitted.
   if (loading) {
     return null;
   }
@@ -929,18 +929,7 @@ const UpcomingEventsSection: React.FC<{
   // Handle fetch error state - return complete section with header
   if (fetchError) {
     if (isModernist) {
-      return (
-        <section className="mh-section mh-home-events" aria-label="Upcoming events">
-          <div className="mh-section-head">
-            <span className="mh-eyebrow">Events</span>
-            <Link href="/events" className="mh-link">
-              View calendar
-            </Link>
-          </div>
-          <h2 className="mh-h2">Upcoming Events</h2>
-          <p className="mh-empty">Event listings are temporarily unavailable. Please check back soon.</p>
-        </section>
-      );
+      return null;
     }
     return (
       <section className="py-24 bg-green-50">
@@ -974,18 +963,7 @@ const UpcomingEventsSection: React.FC<{
   // Handle no events state - return complete section with header
   if (events.length === 0) {
     if (isModernist) {
-      return (
-        <section className="mh-section mh-home-events" aria-label="Upcoming events">
-          <div className="mh-section-head">
-            <span className="mh-eyebrow">Events</span>
-            <Link href="/events" className="mh-link">
-              View calendar
-            </Link>
-          </div>
-          <h2 className="mh-h2">Upcoming Events</h2>
-          <p className="mh-empty">No events to show right now. Browse the full calendar for more.</p>
-        </section>
-      );
+      return null;
     }
     return (
       <section className="py-24 bg-green-50">

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function ProfileAboutPage() {
   const profile = await fetchPublishedPublicProfileForPagesServer();
-  if (!profile) {
+  if (!profile || !profile.bioMarkdown?.trim()) {
     return (
       <main className="mh-events-page modernist-home">
         <section className="mh-events-hero" aria-label="About">
@@ -101,9 +101,7 @@ export default async function ProfileAboutPage() {
           <div className="font-body text-lg text-muted-foreground whitespace-pre-wrap leading-relaxed mb-10">
             {profile.bioMarkdown}
           </div>
-        ) : (
-          <p className="font-body text-muted-foreground mb-10">Bio coming soon.</p>
-        )}
+        ) : null}
         {(profile.location || profile.languages) && (
           <p className="text-sm text-muted-foreground mb-8">
             {[profile.location, profile.languages].filter(Boolean).join(' · ')}

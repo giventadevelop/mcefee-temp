@@ -109,4 +109,10 @@ Do these in order before clicking Verify:
 
 Write the pass or fail result in **that project's** `.cursor/rules/google_adsense_compliance.mdc`. One line per checklist item, with the file or live URL. Copy this rule into that repo if it does not have one yet.
 
-Do not add a site's status, domain, contact details, commit, or Amplify app id to this file. This file stays the shared checklist.
+The shared copy in application-deployments stays a generic checklist. This project file is where mcefee-temp.com's result is recorded.
+
+## mcefee-temp.com result (2026-11-25)
+
+- **Verify site ownership:** pass. AdSense sites table is green. Do not run Verify again, and do not delete the site or add it again.
+- **ads.txt:** pass. AdSense shows Authorized for https://www.mcefee-temp.com/ads.txt.
+- **Low value content:** fail on the published host until the release that puts the still-running Nadha Varnika Veena Concert (ends 2026-11-29) in the first HTML of https://www.mcefee-temp.com/ and https://www.mcefee-temp.com/events is live. Do not request review before that signed-out check.

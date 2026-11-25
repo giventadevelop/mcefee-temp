@@ -166,6 +166,23 @@ export function isPastHomepageEvent(event: Pick<EventDetailsDTO, 'startDate' | '
   return !!end && end < today;
 }
 
+/** Still running or starting within the next year. A concert that already started stays current until endDate. */
+export function isCurrentHomepageEvent(
+  event: Pick<EventDetailsDTO, 'startDate' | 'endDate' | 'isActive'>
+): boolean {
+  if (event.isActive === false) return false;
+  if (isPastHomepageEvent(event)) return false;
+  const start = eventLocalDate(event.startDate);
+  if (!start) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (start < today) return true;
+  const oneYearFromNow = new Date(today);
+  oneYearFromNow.setFullYear(today.getFullYear() + 1);
+  oneYearFromNow.setHours(23, 59, 59, 999);
+  return start <= oneYearFromNow;
+}
+
 /**
  * Homepage Featured Events: past featured only, newest first, hard cap (no pagination).
  */

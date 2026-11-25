@@ -29,11 +29,11 @@ import { getSharedAdsensePublisherIdForMeta } from "@/lib/adsense/sharedPublishe
 /** Default tab / SEO titles; pages may override. BrowserTabTitle fills unique titles per route. */
 export const metadata: Metadata = {
   title: {
-    default: 'Home | Event Site Manager',
-    template: '%s | Event Site Manager',
+    default: 'Home | MCEFEE',
+    template: '%s | MCEFEE',
   },
-  description: 'Event management, ticketing, membership, and church website for your organization.',
-  applicationName: 'Event Site Manager',
+  description: 'The Malayali Cultural Exchange Foundation for Education and Events in New Jersey. Cultural programs, education, and community events.',
+  applicationName: 'MCEFEE',
   icons: {
     icon: [{ url: '/images/logos/Mcefee/mcefee_favicon.ico', type: 'image/x-icon' }],
     shortcut: [{ url: '/images/logos/Mcefee/mcefee_favicon.ico', type: 'image/x-icon' }],

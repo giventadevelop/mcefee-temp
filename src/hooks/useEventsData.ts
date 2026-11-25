@@ -3,6 +3,7 @@ import { useSilentListingRefresh } from '@/hooks/useSilentListingRefresh';
 import type { EventDetailsDTO, EventMediaDTO } from '@/types';
 import { getTenantId } from '@/lib/env';
 import { proxyApiPath } from '@/lib/proxyApiPath';
+import { isCurrentHomepageEvent } from '@/lib/homepage/featuredEvents';
 
 export interface EventWithMedia {
   event: EventDetailsDTO;
@@ -25,25 +26,6 @@ export const useEventsData = (enabled: boolean = true) => {
     isLoading: true,
     error: null,
   });
-
-  // Check if event is in next 1 year
-  const isEventInNextYear = (eventDate: string, today: Date): boolean => {
-    // Use the same today date as the filtering logic to ensure consistency
-    const oneYearFromNow = new Date();
-    oneYearFromNow.setFullYear(today.getFullYear() + 1);
-    oneYearFromNow.setHours(23, 59, 59, 999); // End of day
-
-    // Parse the event date as local date (not UTC) to avoid timezone issues
-    // The eventDate is in YYYY-MM-DD format, so we need to parse it as local time
-    const [year, month, day] = eventDate.split('-').map(Number);
-    const eventStartDate = new Date(year, month - 1, day); // month is 0-indexed
-    eventStartDate.setHours(0, 0, 0, 0); // Reset time to start of day
-
-    console.log(`Date comparison for ${eventDate}: eventStartDate=${eventStartDate.toISOString()}, today=${today.toISOString()}, oneYearFromNow=${oneYearFromNow.toISOString()}`);
-    console.log(`Event date >= today: ${eventStartDate >= today}, Event date <= oneYearFromNow: ${eventStartDate <= oneYearFromNow}`);
-
-    return eventStartDate >= today && eventStartDate <= oneYearFromNow;
-  };
 
   const fetchEventsData = useCallback(async (silent: boolean, signal?: AbortSignal) => {
     if (!enabled) return;
@@ -103,17 +85,8 @@ export const useEventsData = (enabled: boolean = true) => {
         const events: EventDetailsDTO[] = await eventsResponse.json();
         console.log('Successfully fetched events:', events.length);
 
-        // Use the same today date as the filtering logic to ensure consistency
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time to start of day for consistency
-        console.log(`Events Data - Today's date: ${today.toDateString()} (${today.toISOString()})`);
-
-        // Filter upcoming events (next 1 year and active)
-        const upcomingEvents = events.filter(event =>
-          event.startDate &&
-          isEventInNextYear(event.startDate, today) &&
-          event.isActive
-        );
+        // Current through endDate, plus events that start within the next year.
+        const upcomingEvents = events.filter(event => isCurrentHomepageEvent(event));
 
         console.log('Upcoming events in next 1 year:', upcomingEvents.length);
 

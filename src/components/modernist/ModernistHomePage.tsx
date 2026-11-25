@@ -6,6 +6,7 @@ import type { EventDetailsDTO, EventSponsorsDTO, EventWithMedia, ExecutiveCommit
 import {
   computeFeaturedEventsFromMedia,
   getFeaturedEventImageUrl,
+  isCurrentHomepageEvent,
   MAX_FEATURED_EVENTS_HOMEPAGE,
   mediaImageUrl,
   selectHomepageFeaturedEvents,
@@ -79,16 +80,6 @@ function isTicketedAdmission(event: EventDetailsDTO): boolean {
   return admissionLabel(event) === 'Ticketed';
 }
 
-function isUpcomingStartDate(startDate?: string): boolean {
-  if (!startDate) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const [year, month, day] = startDate.split('-').map(Number);
-  if (!year || !month || !day) return false;
-  const start = new Date(year, month - 1, day);
-  start.setHours(0, 0, 0, 0);
-  return start >= today;
-}
 
 function parseSponsorList(data: unknown): EventSponsorsDTO[] {
   if (Array.isArray(data)) return data;
@@ -267,7 +258,7 @@ function FeaturedEventsModernist({ items }: { items: FeaturedEventWithMedia[] })
         const imageUrl = getFeaturedEventImageUrl(item);
         const timeLabel = formatEventTime(event.startTime, event.endTime);
         const desc = (event.description || '').replace(/<[^>]+>/g, '').trim();
-        const isPastFeatured = !isUpcomingStartDate(event.startDate);
+        const isPastFeatured = !isCurrentHomepageEvent(event);
         const isTicketed = isTicketedAdmission(event);
         const registerTarget = !isPastFeatured && !isTicketed ? resolveRegisterTarget(event) : null;
 
@@ -442,7 +433,7 @@ export default function ModernistHomePage({
     ? initialFeaturedEvents.slice(0, MAX_FEATURED_EVENTS_HOMEPAGE)
     : selectHomepageFeaturedEvents(featuredSource, hasUpcomingEvents, MAX_FEATURED_EVENTS_HOMEPAGE);
   const upcomingFeaturedEvent =
-    featuredItems.find((item) => isUpcomingStartDate(item.event.startDate))?.event ?? null;
+    featuredItems.find((item) => isCurrentHomepageEvent(item.event))?.event ?? null;
   // On sale band — upcoming only; hide when nothing upcoming
   // Same preference as before (ticketed featured → any featured), but upcoming only;
   // then fall back to upcoming events list. Past events never appear here.
@@ -571,8 +562,8 @@ export default function ModernistHomePage({
       {/* Featured: upcoming featured if any; otherwise past featured only when no future events. Max 3. */}
       <FeaturedEventsModernist items={featuredItems} />
 
-      {/* Upcoming (max 6), or Past Events (max 6) when there are no future events */}
-      {!tenantSettingsLoading && showEventsSection !== false && (
+      {/* Upcoming listings are in the first HTML. Hide only after settings load says so. */}
+      {(tenantSettingsLoading || showEventsSection !== false) && (
         <UpcomingEventsSection
           variant="modernist"
           fallbackToPast
@@ -632,7 +623,7 @@ export default function ModernistHomePage({
             Team
           </span>
           <h2 className="mh-h2" style={{ marginBottom: 16 }}>
-            Meet our the best volunteers team
+            Meet our volunteers
           </h2>
           <p
             style={{
